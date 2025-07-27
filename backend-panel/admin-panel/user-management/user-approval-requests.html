@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approval Requests - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+  <style>
+    :root {
+      --primary: #ff6b00;
+      --danger: #d9534f;
+      --success: #28a745;
+      --text-dark: #333;
+      --text-light: #fff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    .admin-container {
+      display: flex;
+    }
+
+    .admin-main {
+      flex-grow: 1;
+      padding: 2rem;
+      background: #fff;
+      box-shadow: inset 0 0 20px #e2e2e2;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background-color: #fafafa;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn.approve {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn.reject {
+      background: var(--danger);
+      color: white;
+    }
+
+    .section-title {
+      margin-top: 2rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-dark);
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html" >Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+            <li><a href="add-user.html" >Add User</a></li>
+            <li><a href="users-list.html">Users List</a></li>
+            <li><a href="delete-user.html">Delete User</a></li>
+            <li><a href="user-approval-requests.html" class="active">Approval Requests</a></li>
+            <li><a href="logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>User Approval Requests</h1>
+
+    <div class="section-title">Pending Author Additions</div>
+    <table>
+      <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Avatar</th>
+        <th>Submitted By</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+
+      <tbody id="author-requests">
+      <!-- JS will populate -->
+      </tbody>
+    </table>
+
+    <div class="section-title">Delete Requests</div>
+    <table>
+      <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Avatar</th>
+        <th>Submitted By</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+
+      <tbody id="delete-requests">
+      <!-- JS will populate -->
+      </tbody>
+    </table>
+  </main>
+</div>
+<script>
+  window.addEventListener('load', async () => {
+
+    // then run other things safely:
+    await loadAuthorRequests?.();
+    await loadDeleteRequests?.();
+
+
+  });
+
+
+  // Session verification on load
+  async function loadAuthorRequests() {
+    try {
+      const res = await fetch('http://localhost:3000/pendingUsers', {
+        credentials: 'include',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+
+      if (res.status === 401) {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!res.ok) throw new Error(await res.text());
+
+      const users = await res.json();
+      const container = document.getElementById('author-requests');
+
+      container.innerHTML = users.map(user => `
+        <tr>
+          <td>${user.fullName || 'N/A'}</td>
+          <td>${user.username}</td>
+          <td>${user.email}</td>
+          <td>${user.role || 'N/A'}</td>
+          <td>
+            ${user.avatar
+              ? `<img src="${user.avatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
+              : 'No avatar'}
+          </td>
+          <td>${user.submittedBy || 'Unknown'}</td>
+          <td>${new Date(user.createdAt).toLocaleString()}</td>
+          <td>
+            <button class="btn approve" onclick="approveUser('${user.id}')">Approve</button>
+            <button class="btn reject" onclick="rejectUser('${user.id}')">Reject</button>
+            <button class="btn" onclick="window.location.href='approval-view-user.html?id=${user.id}'">View</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      console.error("Failed to load author requests:", err);
+      showError("Failed to load pending users");
+    }
+  }
+
+  async function loadDeleteRequests() {
+    try {
+      const res = await fetch('http://localhost:3000/pendingDeletions', {
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      const requests = await res.json();
+      const container = document.getElementById('delete-requests');
+
+      container.innerHTML = requests.map(user => `
+        <tr>
+          <td>${user.targetFullName || 'N/A'}</td>
+          <td>${user.targetUsername}</td>
+          <td>${user.targetEmail}</td>
+          <td>${user.targetRole || 'N/A'}</td>
+          <td>
+            ${user.targetAvatar
+              ? `<img src="${user.targetAvatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
+              : 'No avatar'}
+          </td>
+          <td>${user.requestedBy || 'Unknown'}</td>
+          <td>${new Date(user.createdAt).toLocaleString()}</td>
+          <td>
+            <button class="btn approve" onclick="approveDelete('${user.id}')">Approve</button>
+            <button class="btn reject" onclick="rejectDelete('${user.id}')">Reject</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      console.error("Failed to load delete requests:", err);
+      showError("Failed to load deletion requests");
+    }
+  }
+
+  async function approveUser(userId) {
+    if (!confirm("Approve this user?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/pendingUsers/${userId}/approve`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadAuthorRequests();
+      showSuccess("User approved successfully");
+    } catch (err) {
+      console.error("Approval failed:", err);
+      showError(`Approval failed: ${err.message}`);
+    }
+  }
+
+  async function rejectUser(userId) {
+    if (!confirm("Reject this user?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/pendingUsers/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadAuthorRequests();
+      showSuccess("User rejected");
+    } catch (err) {
+      console.error("Rejection failed:", err);
+      showError(`Rejection failed: ${err.message}`);
+    }
+  }
+
+
+  async function approveDelete(requestId) {
+    if (!confirm("Approve this deletion?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/pendingDeletions/${requestId}/approve`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadDeleteRequests();
+      showSuccess("Deletion approved");
+    } catch (err) {
+      console.error("Deletion approval failed:", err);
+      showError(`Deletion approval failed: ${err.message}`);
+    }
+  }
+
+  async function rejectDelete(requestId) {
+    if (!confirm("Reject this deletion request?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/pendingDeletions/${requestId}/reject`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      await loadDeleteRequests();
+      showSuccess("Deletion request rejected");
+    } catch (err) {
+      console.error("Rejection failed:", err);
+      showError(`Rejection failed: ${err.message}`);
+    }
+  }
+
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

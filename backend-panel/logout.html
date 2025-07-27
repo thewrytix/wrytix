@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logging Out...</title>
+  <link rel="stylesheet" href="backend-panel.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f4f4f4;
+    }
+
+    .message {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+<div class="message">Logging out, please wait...</div>
+
+<script>
+  fetch('http://localhost:3000/logout', {
+    method: 'POST',
+    credentials: 'include',
+  })
+          .then(() => {
+            // Clear session data on frontend
+            sessionStorage.clear();
+            // Redirect to login page
+            window.location.href = 'login.html';
+          })
+          .catch(() => {
+            // Fallback in case server is unreachable
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+          });
+</script>
+</body>
+</html>

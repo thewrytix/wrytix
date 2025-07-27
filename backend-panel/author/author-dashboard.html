@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Author Dashboard - Wrytix</title>
+  <link rel="stylesheet" href="../backend-panel.css"/>
+  <style>
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #555;
+    }
+
+    .card p {
+      font-size: 2rem;
+      margin-top: 8px;
+      color: #ff6b00;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 2rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Author</h2>
+    <nav>
+      <ul>
+        <li><a href="author-dashboard.html" class="active">Author Dashboard</a></li>
+        <li><a href="author-add-post.html">Submit New Post</a></li>
+        <li><a href="author-posts.html">My Posts</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Welcome, Author Dashboard</h1>
+    <p>You can create posts and submit them for editorial review.</p>
+
+    <div class="stats" id="statsContainer">
+      <div class="loading">Loading your post stats...</div>
+    </div>
+  </main>
+</div>
+
+<script>
+
+  const BASE_URL = "http://localhost:3000";
+  const statsContainer = document.getElementById("statsContainer");
+
+  async function loadAuthorStats() {
+    const userData = sessionStorage.getItem("user");
+    if (!userData) {
+      statsContainer.innerHTML = '<p style="color:red;">⚠️ Please log in to view your dashboard.</p>';
+      return;
+    }
+
+    const user = JSON.parse(userData);
+    const username = (user?.username || "").toLowerCase();
+
+    try {
+      const [submissionsRes, approvedRes] = await Promise.all([
+        fetch(`${BASE_URL}/postSubmissions`, { credentials: "include" }),
+        fetch(`${BASE_URL}/posts/all`, { credentials: "include" })
+      ]);
+
+      const submissions = await submissionsRes.json();
+      const approved = await approvedRes.json();
+
+      const mySubmissions = submissions.filter(p => (p.submittedBy || "").toLowerCase() === username);
+      const myApproved = approved.filter(p => (p.submittedBy || "").toLowerCase() === username);
+
+      const pending = mySubmissions.filter(p => p.status === "pending").length;
+      const rejected = mySubmissions.filter(p => p.status === "rejected").length;
+      const approvedCount = myApproved.length;
+      const total = pending + rejected + approvedCount;
+
+      statsContainer.innerHTML = `
+        <div class="card">
+          <h3>Total Posts</h3>
+          <p>${total}</p>
+        </div>
+        <div class="card">
+          <h3>Approved</h3>
+          <p>${approvedCount}</p>
+        </div>
+        <div class="card">
+          <h3>Pending</h3>
+          <p>${pending}</p>
+        </div>
+        <div class="card">
+          <h3>Rejected</h3>
+          <p>${rejected}</p>
+        </div>
+      `;
+    } catch (err) {
+      statsContainer.innerHTML = `<p style="color:red;">Failed to load stats: ${err.message}</p>`;
+    }
+  }
+
+  const userData = sessionStorage.getItem('user');
+  if (!userData) {
+    alert("Please log in.");
+    window.location.href = 'login.html';
+  }
+
+  const user = JSON.parse(userData);
+  if (user.role !== 'author') {
+    alert("Access denied. You are not an Author.");
+    window.location.href = 'login.html';
+  }
+
+
+  window.addEventListener("DOMContentLoaded", loadAuthorStats);
+</script>
+
+<script src="author-panel.js"></script>
+<script src="../backend-panel.js"></script>
+</body>
+</html>

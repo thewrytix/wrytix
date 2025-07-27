@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users List - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html">Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html">Post Approval Requests</a></li>
+          </ul>
+        </li>
+
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+            <li><a href="add-user.html">Add User</a></li>
+            <li><a href="users-list.html" class="active">Users List</a></li>
+            <li><a href="delete-user.html">Delete User</a></li>
+            <li><a href="user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Users List</h1>
+
+    <div class="filter-section">
+      <select id="filterRole">
+        <option value="">All Roles</option>
+        <option value="viewer">Viewer</option>
+        <option value="author">Author</option>
+        <option value="editor">Editor</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <select id="filterStatus">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+
+      <input type="text" id="searchInput" placeholder="Search by username or email" />
+    </div>
+
+    <table class="posts-table">
+      <thead>
+      <tr>
+        <th>Avatar</th>
+        <th>Full Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Created At</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody id="userTableBody">
+      <tr><td colspan="8">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <div id="paginationControls" style="margin-top: 1rem; text-align: center;"></div>
+  </main>
+</div>
+
+<script>
+  const roleFilter = document.getElementById('filterRole');
+  const statusFilter = document.getElementById('filterStatus');
+  const searchBox = document.getElementById('searchInput');
+  const tableBody = document.getElementById('userTableBody');
+  const paginationControls = document.getElementById('paginationControls');
+
+  let allUsers = [];
+  let currentPage = 1;
+  const pageSize = 10;
+
+  async function fetchUsers() {
+    const res = await fetch('http://localhost:3000/users');
+    return await res.json();
+  }
+
+  function createRow(user) {
+    return `
+      <tr>
+        <td><img src="${user.avatar?.startsWith('data:') ? user.avatar : (user.avatar || '')}" alt="avatar" /></td>
+        <td>${user.fullName}</td>
+        <td>${user.username}</td>
+        <td>${user.email}</td>
+        <td>${user.role}</td>
+        <td>${user.status}</td>
+        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+        <td class="action-buttons">
+          <button onclick="viewUser('${user.id}')" class="btn-view">View</button>
+          <button onclick="editUser('${user.id}')" class="btn-edit">Edit</button>
+        </td>
+      </tr>
+    `;
+  }
+
+  function paginate(array, page, pageSize) {
+    const start = (page - 1) * pageSize;
+    return array.slice(start, start + pageSize);
+  }
+
+  function updatePagination(filteredUsers) {
+    const totalPages = Math.ceil(filteredUsers.length / pageSize);
+    let buttons = '';
+
+    if (totalPages <= 1) {
+      paginationControls.innerHTML = '';
+      return;
+    }
+
+    for (let i = 1; i <= totalPages; i++) {
+      buttons += `<button onclick="goToPage(${i})" style="margin: 0 4px; padding: 5px 10px; background: ${i === currentPage ? '#ff6b00' : '#eee'}; color: ${i === currentPage ? 'white' : 'black'}; border: none; border-radius: 4px;">${i}</button>`;
+    }
+
+    paginationControls.innerHTML = buttons;
+  }
+
+  function renderUsers() {
+    const filtered = allUsers.filter(user => {
+      return (
+              (!roleFilter.value || user.role === roleFilter.value) &&
+              (!statusFilter.value || user.status === statusFilter.value) &&
+              (!searchBox.value || user.username.toLowerCase().includes(searchBox.value.toLowerCase()) || user.email.toLowerCase().includes(searchBox.value.toLowerCase()))
+      );
+    });
+
+    const paginated = paginate(filtered, currentPage, pageSize);
+    tableBody.innerHTML = paginated.length
+            ? paginated.map(createRow).join('')
+            : '<tr><td colspan="8">No users found.</td></tr>';
+
+    updatePagination(filtered);
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    renderUsers();
+  }
+
+  roleFilter.addEventListener('change', () => { currentPage = 1; renderUsers(); });
+  statusFilter.addEventListener('change', () => { currentPage = 1; renderUsers(); });
+  searchBox.addEventListener('input', () => { currentPage = 1; renderUsers(); });
+
+  window.onload = async () => {
+    allUsers = await fetchUsers();
+    renderUsers();
+
+    const profileBtn = document.getElementById("profileBtn");
+    const sessionUser = JSON.parse(sessionStorage.getItem("userName"));
+    profileBtn.textContent = sessionUser || "Admin";
+  };
+
+  function viewUser(id) {
+    window.location.href = `view-user.html?id=${id}`;
+  }
+
+  function editUser(id) {
+    window.location.href = `edit-user.html?id=${id}`;
+  }
+</script>
+
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

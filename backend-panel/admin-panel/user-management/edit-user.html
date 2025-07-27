@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit User - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #ff6b00;
+      --danger: #d9534f;
+      --success: #28a745;
+      --text-dark: #333;
+      --text-light: #fff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+      display: flex;
+    }
+
+    .admin-sidebar {
+      width: 250px;
+      background: #222;
+      color: white;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .admin-sidebar h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    .admin-sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .admin-sidebar li {
+      margin: 0.5rem 0;
+    }
+
+    .admin-sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 0.4rem 0.6rem;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .admin-sidebar a.active,
+    .admin-sidebar a:hover {
+      background-color: var(--primary);
+    }
+
+    .admin-main {
+      flex-grow: 1;
+      padding: 2rem;
+      background: #fff;
+      margin: 2rem auto;
+      border-radius: 12px;
+      max-width: 700px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    form label {
+      font-weight: bold;
+      margin-top: 1rem;
+      display: block;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    form button {
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #avatarPreview {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: 1rem 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .alert {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #fff;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .alert.success { background: #28a745; }
+    .alert.error { background: #dc3545; }
+
+    @keyframes slideIn {
+      from { top: -50px; opacity: 0; }
+      to { top: 20px; opacity: 1; }
+    }
+
+    .document-link {
+      margin-top: 0.3rem;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<aside class="admin-sidebar">
+  <h2>Wrytix Admin</h2>
+  <<nav>
+  <ul>
+    <!--Admin Management-->
+    <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+    <!--Post Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">Post Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+        <li><a href="../post-management/add-post.html" >Add Post</a></li>
+        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+        <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+      </ul>
+    </li>
+    <!--Ad Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">Ad Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+      </ul>
+    </li>
+    <!--User Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">User Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="user-dashboard.html">User Dashboard</a></li>
+        <li><a href="add-user.html" >Add User</a></li>
+        <li><a href="users-list.html">Users List</a></li>
+        <li><a href="delete-user.html">Delete User</a></li>
+        <li><a href="user-approval-requests.html">Approval Requests</a></li>
+        <li><a href="logs.html">Logs</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+</aside>
+
+<div class="admin-main">
+  <div class="top-bar">
+    <div class="profile-dropdown">
+      <button class="profile-btn" id="profileBtn">Loading...</button>
+      <div class="profile-menu" id="profileMenu">
+        <button id="logoutBtn">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <h1>Edit User</h1>
+  <form id="editUserForm">
+    <label>Avatar:</label>
+    <img id="avatarPreview" src="" alt="Avatar" />
+    <input type="file" id="avatarInput" accept="image/*" />
+
+    <label>Full Name:</label>
+    <input type="text" id="fullName" required />
+
+    <label>Username:</label>
+    <input type="text" id="username" disabled />
+
+    <label>Email:</label>
+    <input type="email" id="email" required />
+
+    <label>New Password (optional):</label>
+    <input type="password" id="password" placeholder="Leave blank to keep old password" />
+
+    <label>Document Upload (optional):</label>
+    <input type="file" id="document" accept=".pdf,.doc,.docx,.jpg,.png" />
+    <div id="existingDocument"></div>
+
+    <label>Role:</label>
+    <select id="role">
+      <option value="viewer">Viewer</option>
+      <option value="author">Author</option>
+      <option value="editor">Editor</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <label>Status:</label>
+    <select id="status">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="suspended">Suspended</option>
+    </select>
+
+    <button type="submit">Update User</button>
+
+    <div class="back-button">
+      <button onclick="window.location.href='users-list.html'">
+        ← Back to Users List
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  let newAvatarBase64 = null;
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get('id');
+
+  // Session verification on load
+  window.onload = async () => {
+    try {
+      const sessionCheck = await fetch('http://localhost:3000/verify-session', {
+        credentials: 'include'
+      });
+
+      if (!sessionCheck.ok) throw new Error('Session verification failed');
+
+      const { user } = await sessionCheck.json();
+
+      sessionStorage.setItem('currentUser', user.username);
+      sessionStorage.setItem('role', user.role);
+      sessionStorage.setItem('userRole', user.role); // ✅ Fix for endpoint check
+      sessionStorage.setItem('loggedIn', 'true');
+
+      // ✅ Allow only admin
+      if (user.role !== 'admin') {
+        showError('You do not have permission to access this page.');
+        sessionStorage.clear();
+        return window.location.href = '../../login.html';
+      }
+    } catch (err) {
+      console.error('Initialization error:', err);
+      sessionStorage.clear();
+      window.location.href = '../../login.html';
+    }
+  };
+
+  document.getElementById('avatarInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      newAvatarBase64 = reader.result;
+      document.getElementById('avatarPreview').src = newAvatarBase64;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function loadUser() {
+    try {
+      const res = await fetch(`http://localhost:3000/users/${userId}`);
+      const user = await res.json();
+
+      document.getElementById('fullName').value = user.fullName || '';
+      document.getElementById('username').value = user.username || '';
+      document.getElementById('email').value = user.email || '';
+      document.getElementById('role').value = user.role || 'viewer';
+      document.getElementById('status').value = user.status || 'active';
+      document.getElementById('avatarPreview').src = user.avatar || 'default-avatar.png';
+
+      if (user.document) {
+        document.getElementById('existingDocument').innerHTML = `
+          <a class="document-link" href="${user.document}" target="_blank">View Current Document</a>
+        `;
+      }
+    } catch (err) {
+      showError('❌ Could not load user data');
+      setTimeout(() => window.location.href = 'users-list.html', 1500);
+    }
+  }
+
+  document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('fullName', document.getElementById('fullName').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('role', document.getElementById('role').value);
+    formData.append('status', document.getElementById('status').value);
+
+    const password = document.getElementById('password').value.trim();
+    const docFile = document.getElementById('document').files[0];
+    if (password) formData.append('password', password);
+    if (docFile) formData.append('document', docFile);
+    if (newAvatarBase64) formData.append('avatar', newAvatarBase64);
+
+    try {
+      const res = await fetch(`http://localhost:3000/users/${userId}`, {
+        method: 'PUT',
+        body: formData,
+        credentials: 'include' // ✅ Required for session!
+
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+      showSuccess('✅ User updated successfully');
+      setTimeout(() => window.location.href = 'users-list.html', 1000);
+    } catch (err) {
+      console.error(err);
+      showError('❌ Update failed');
+    }
+  });
+
+  function showError(msg) {
+    const div = document.createElement('div');
+    div.className = 'alert error';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  }
+
+  function showSuccess(msg) {
+    const div = document.createElement('div');
+    div.className = 'alert success';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+  }
+
+  loadUser();
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

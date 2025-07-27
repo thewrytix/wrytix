@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post Approval Requests</title>
+    <link rel="stylesheet" href="../backend-panel.css" />
+    <style>
+        :root {
+            --primary: #ff6b00;
+            --danger: #d9534f;
+            --success: #28a745;
+            --text-dark: #333;
+            --text-light: #fff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+        }
+
+        .admin-main {
+            flex-grow: 1;
+            padding: 2rem;
+            background: #fff;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .filter-bar select {
+            padding: 6px 12px;
+            font-size: 1rem;
+        }
+
+        .filter-bar .btn.reset {
+            background-color: #e0e0e0;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f3f3f3;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            margin-right: 5px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn.approve { background-color: var(--success); color: white; }
+        .btn.reject { background-color: var(--danger); color: white; }
+        .btn.edit { background-color: var(--primary); color: white; }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert.error { background: #dc3545; }
+        .alert.success { background: #28a745; }
+
+        @keyframes slideIn {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <<aside class="admin-sidebar">
+    <h2>Editor Panel</h2>
+    <nav>
+        <ul>
+            <li><a href="editor-dashboard.html" >Dashboard</a></li>
+            <li><a href="editor-add-post.html">Add New Post</a></li>
+            <li><a href="editor-posts.html" >Manage Posts</a></li>
+            <li><a href="editor-posts-approval.html" class="active">Post Approval Requests</a></li>
+            <li><a href="editor-add-user.html">Add User</a></li>
+
+        </ul>
+    </nav>
+</aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1>Pending Post Submissions</h1>
+
+        <div class="filter-bar">
+            <select id="categoryFilter">
+                <option value="">Filter by Category</option>
+                <option value="news">News</option>
+                <option value="business">Business</option>
+                <option value="sports">Sports</option>
+                <option value="foreign">Foreign</option>
+                <option value="technology">Technology</option>
+                <option value="lifestyle">Lifestyle</option>
+            </select>
+
+            <select id="authorFilter">
+                <option value="">Filter by Author</option>
+            </select>
+
+            <button class="btn reset" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Category</th>
+                <th>Scheduled</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="submissionTableBody">
+            <!-- Submissions will be injected here -->
+            </tbody>
+        </table>
+    </main>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Reject Post</h3>
+        <textarea id="rejectionReason" rows="4" placeholder="Enter rejection reason..."></textarea>
+        <div class="modal-actions">
+            <button onclick="confirmRejection()" class="btn reject">Reject</button>
+            <button onclick="closeModal()" class="btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let submissions = [];
+    let selectedRejectId = null;
+
+    async function loadSubmissions() {
+        try {
+            const res = await fetch('http://localhost:3000/postSubmissions', {
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error(await res.text());
+            submissions = await res.json();
+            renderTable(submissions);
+            populateAuthorFilter(submissions);
+        } catch (err) {
+            console.error('Error loading submissions:', err.message);
+            showError('❌ Failed to load submissions. Please login again.');
+        }
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('submissionTableBody');
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">No, pending posts.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data
+            .filter(p => p.status === 'pending')
+            .map(post => `
+        <tr>
+          <td>${post.title}</td>
+          <td>${post.submittedBy || 'N/A'}</td>
+          <td>${post.category}</td>
+          <td>${new Date(post.schedule).toLocaleString()}</td>
+          <td>${new Date(post.createdAt || post.date || post.time || Date.now()).toLocaleString()}</td>
+          <td>
+            <button class="btn approve" onclick="approvePost('${post.id}')">Approve</button>
+            <button class="btn edit" onclick="editPost('${post.id}')">Edit</button>
+            <button class="btn reject" onclick="openRejectModal('${post.id}')">Reject</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function populateAuthorFilter(data) {
+        const authorSelect = document.getElementById('authorFilter');
+        const authors = [...new Set(data.map(p => p.submittedBy).filter(Boolean))];
+        authorSelect.innerHTML = '<option value="">Filter by Author</option>';
+        authors.forEach(author => {
+            const option = document.createElement('option');
+            option.value = author;
+            option.textContent = author;
+            authorSelect.appendChild(option);
+        });
+    }
+
+    function applyFilters() {
+        const category = document.getElementById('categoryFilter').value;
+        const author = document.getElementById('authorFilter').value;
+
+        const filtered = submissions.filter(p =>
+            p.status === 'pending' &&
+            (category === '' || p.category === category) &&
+            (author === '' || p.submittedBy === author)
+        );
+
+        renderTable(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('authorFilter').value = '';
+        renderTable(submissions.filter(p => p.status === 'pending'));
+    }
+
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('authorFilter').addEventListener('change', applyFilters);
+
+    function editPost(id) {
+        window.location.href = `editor-edit-submission.html?id=${id}`;
+    }
+
+    async function approvePost(id) {
+        try {
+            const res = await fetch(`http://localhost:3000/postSubmissions/${id}`, {
+                credentials: 'include'
+            });
+            const post = await res.json();
+
+            const approved = {
+                ...post,
+                status: 'approved',
+                editorComments: '',
+                views: 0,
+                lastViewed: new Date().toISOString()
+            };
+
+            await fetch('http://localhost:3000/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(approved)
+            });
+
+            await fetch(`http://localhost:3000/postSubmissions/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            showSuccess('✅ Post approved and published!');
+            loadSubmissions();
+        } catch (err) {
+            console.error('Error approving post:', err.message);
+            showError('❌ Failed to approve post.');
+        }
+    }
+
+    function openRejectModal(id) {
+        selectedRejectId = id;
+        document.getElementById('rejectionReason').value = '';
+        document.getElementById('rejectModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        selectedRejectId = null;
+        document.getElementById('rejectModal').style.display = 'none';
+    }
+
+    async function confirmRejection() {
+        const reason = document.getElementById('rejectionReason').value.trim();
+        if (!reason) return showError("Rejection reason is required.");
+
+        try {
+            const res = await fetch(`http://localhost:3000/postSubmissions/${selectedRejectId}`, {
+                credentials: 'include'
+            });
+            const post = await res.json();
+
+            const updated = { ...post, status: 'rejected', editorComments: reason };
+
+            await fetch(`http://localhost:3000/postSubmissions/${selectedRejectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(updated)
+            });
+
+            closeModal();
+            showSuccess('🚫 Post rejected successfully.');
+            loadSubmissions();
+        } catch (err) {
+            console.error('Error rejecting post:', err.message);
+            showError('❌ Failed to reject post.');
+        }
+    }
+
+
+
+    window.onload = loadSubmissions;
+</script>
+<script src="editor-panel.js"></script>
+<script src="../backend-panel.js"></script>
+</body>
+</html>

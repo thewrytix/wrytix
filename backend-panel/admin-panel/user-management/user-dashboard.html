@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Dashboard - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+  <style>
+
+
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html" >Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html" class="active">User Dashboard</a></li>
+            <li><a href="add-user.html" >Add User</a></li>
+            <li><a href="users-list.html">Users List</a></li>
+            <li><a href="delete-user.html">Delete User</a></li>
+            <li><a href="user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+     </aside>
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>User Management Dashboard</h1>
+    <div class="stats-container">
+      <div class="stat-box">
+        <h2 id="totalUsers">0</h2>
+        <p>Total Users</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="activeUsers">0</h2>
+        <p>Active Users</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="inactiveUsers">0</h2>
+        <p>Inactive Users</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="approvalCount">0</h2>
+        <p>Approval Requests</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="viewerCount">0</h2>
+        <p>Viewers</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="authorCount">0</h2>
+        <p>Authors</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="editorCount">0</h2>
+        <p>Editors</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="adminCount">0</h2>
+        <p>Admins</p>
+      </div>
+    </div>
+
+    <div class="quick-links">
+      <a href="add-user.html">➕ Add New User</a>
+      <a href="user-approval-requests.html">🔔 View Approval Requests</a>
+       <a href="users-list.html">📋 View All Users</a>
+      <a href="delete-user.html">🗑️ Delete User</a>
+        <a href="logs.html">📜 View Logs</a><
+    </div>
+  </main>
+</div>
+<script>
+  async function loadDashboardStats() {
+    const usersRes = await fetch('http://localhost:3000/users');
+    const pendingRes = await fetch('http://localhost:3000/pendingUsers');
+    const users = await usersRes.json();
+    const pending = await pendingRes.json();
+
+    document.getElementById('totalUsers').textContent = users.length;
+    document.getElementById('approvalCount').textContent = pending.length;
+    document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+    document.getElementById('inactiveUsers').textContent = users.filter(u => u.status === 'inactive').length;
+    document.getElementById('viewerCount').textContent = users.filter(u => u.role === 'viewer').length;
+    document.getElementById('authorCount').textContent = users.filter(u => u.role === 'author').length;
+    document.getElementById('editorCount').textContent = users.filter(u => u.role === 'editor').length;
+    document.getElementById('adminCount').textContent = users.filter(u => u.role === 'admin').length;
+  }
+
+  loadDashboardStats();
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

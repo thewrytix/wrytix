@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ads Management - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+  <style>
+
+
+    .recent-activity {
+      margin-top: 2rem;
+    }
+
+    .recent-activity h3 {
+      margin-bottom: 1rem;
+    }
+
+    .activity-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .activity-table th,
+    .activity-table td {
+      border: 1px solid #ddd;
+      padding: 0.6rem;
+      text-align: left;
+    }
+
+    .activity-table th {
+      background: var(--neutral-color);
+    }
+
+    .status-active {
+      color: var(--status-green);
+      font-weight: bold;
+    }
+
+    .status-inactive {
+      color: var(--status-neutral);
+      font-weight: bold;
+    }
+
+    .status-expired {
+      color: var(--status-red);
+      font-weight: bold;
+    }
+
+
+
+    .expiring-soon table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+
+    }
+
+    .expiring-soon th, .expiring-soon td {
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .expiring-soon th {
+      background: var(--primary-color);
+      color: var(--neutral-color);
+    }
+
+    .expiring-soon tr.highlight td {
+      background-color: #fff3cd;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html" >Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="add-ad.html">Add Ad</a></li>
+            <li><a href="ads-list.html">Ads List</a></li>
+            <li><a href="delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
+            <li><a href="../user-management/add-user.html">Add User</a></li>
+            <li><a href="../user-management/users-list.html">Users List</a></li>
+            <li><a href="../user-management/delete-user.html">Delete User</a></li>
+            <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="../user-management/logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Ads Management Dashboard</h1>
+
+    <div class="stats-container">
+      <div class="stat-box">
+        <h2 id="totalAds">0</h2>
+        <p>Total Ads</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="activeAds">0</h2>
+        <p>Active Ads</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="inactiveAds">0</h2>
+        <p>Inactive Ads</p>
+      </div>
+      <div class="stat-box">
+        <h2 id="expiredAds">0</h2>
+        <p>Expired Ads</p>
+      </div>
+    </div>
+
+    <div class="quick-links">
+        <a href="add-ad.html">➕ Add New Ad</a>
+        <a href="ads-list.html">📋 View All Ads</a>
+      <a href="delete-ad.html">🗑️ Delete Ads</a>
+    </div>
+
+    <div class="recent-activity">
+      <h3>Recent Ad Activity</h3>
+      <table class="activity-table" id="recentAdsTable">
+        <thead>
+        <tr>
+          <th>Type</th>
+          <th>Company</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Start</th>
+          <th>End</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr><td colspan="6">Loading recent ads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <section class="expiring-soon">
+      <h2>⚠️ Ads Expiring Soon</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>Company</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Ends In</th>
+          <th>End Date</th>
+        </tr>
+        </thead>
+        <tbody id="soonExpiringBody">
+        <tr><td colspan="5">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+  async function loadDashboardData() {
+    try {
+      const res = await fetch('http://localhost:3000/ads');
+      const ads = await res.json();
+
+      const now = new Date();
+
+      const total = ads.length;
+      const active = ads.filter(ad => ad.active).length;
+      const inactive = ads.filter(ad => !ad.active).length;
+      const expired = ads.filter(ad => new Date(ad.endDate) < now).length;
+
+      document.getElementById('totalAds').textContent = total;
+      document.getElementById('activeAds').textContent = active;
+      document.getElementById('inactiveAds').textContent = inactive;
+      document.getElementById('expiredAds').textContent = expired;
+
+      renderRecentAds(ads);
+    } catch (err) {
+      console.error('Failed to load dashboard data', err);
+    }
+  }
+
+  function renderRecentAds(ads) {
+    const tableBody = document.querySelector('#recentAdsTable tbody');
+    tableBody.innerHTML = '';
+
+    const recentAds = ads
+            .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+            .slice(0, 5);
+
+    if (recentAds.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="6">No recent ads available.</td></tr>';
+      return;
+    }
+
+    recentAds.forEach(ad => {
+      const status = new Date(ad.endDate) < new Date()
+              ? 'Expired'
+              : (ad.active ? 'Active' : 'Inactive');
+
+      const statusClass =
+              status === 'Expired'
+                      ? 'status-expired'
+                      : status === 'Active'
+                              ? 'status-active'
+                              : 'status-inactive';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+          <td>${ad.type}</td>
+          <td>${ad.company || '—'}</td>
+          <td>${ad.category}</td>
+          <td class="${statusClass}">${status}</td>
+          <td>${ad.startDate?.split('T')[0] || ''}</td>
+          <td>${ad.endDate?.split('T')[0] || ''}</td>
+        `;
+      tableBody.appendChild(tr);
+    });
+  }
+
+  loadDashboardData();
+
+
+  async function showExpiringSoon() {
+    const res = await fetch('http://localhost:3000/ads');
+    const ads = await res.json();
+    const body = document.getElementById("soonExpiringBody");
+    const today = new Date();
+    const soon = [];
+
+    ads.forEach(ad => {
+      const end = new Date(ad.endDate);
+      const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+      if (daysLeft <= 7 && daysLeft >= 0) {
+        soon.push({
+          ...ad,
+          endsIn: daysLeft === 0 ? "Today" : `${daysLeft} day(s)`
+        });
+      }
+    });
+
+    body.innerHTML = '';
+    if (soon.length === 0) {
+      body.innerHTML = '<tr><td colspan="5">No ads expiring soon.</td></tr>';
+      return;
+    }
+
+    soon.forEach(ad => {
+      const row = document.createElement("tr");
+      if (ad.endsIn.includes("1") || ad.endsIn === "Today") row.classList.add("highlight");
+      row.innerHTML = `
+        <td>${ad.company}</td>
+        <td>${ad.type}</td>
+        <td>${ad.category}</td>
+        <td>${ad.endsIn}</td>
+        <td>${ad.endDate}</td>
+      `;
+      body.appendChild(row);
+    });
+  }
+
+  // Run when page loads
+  showExpiringSoon();
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

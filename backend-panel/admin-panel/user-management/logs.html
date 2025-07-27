@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+  <style>
+    :root {
+      --primary: #ff6b00;
+      --danger: #d9534f;
+      --success: #28a745;
+      --text-dark: #333;
+      --text-light: #fff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    .admin-main {
+      flex-grow: 1;
+      padding: 2rem;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .filters input, .filters select, .filters button {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .filters button {
+      background-color: #6c757d;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .filters button:hover {
+      background-color: #5a6268;
+    }
+
+    .btn-details {
+      padding: 4px 8px;
+      background: #17a2b8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .pagination button {
+      padding: 5px 10px;
+      border: none;
+      background-color: #eee;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .pagination .active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html" >Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+            <li><a href="add-user.html" >Add User</a></li>
+            <li><a href="users-list.html">Users List</a></li>
+            <li><a href="delete-user.html">Delete User</a></li>
+            <li><a href="user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="logs.html" class="active">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Activity Logs</h1>
+    <div class="filters">
+      <input type="text" id="searchActor" placeholder="Search by actor..." />
+      <input type="text" id="searchTarget" placeholder="Search target user..." />
+      <input type="date" id="filterDate" />
+      <select id="filterAction">
+        <option value="">All Actions</option>
+        <option value="user-add">User Added</option>
+        <option value="user-approve">User Approved</option>
+        <option value="user-delete">User Deleted</option>
+        <option value="post-submit">Post Submitted</option>
+        <option value="post-approve">Post Approved</option>
+        <option value="post-reject">Post Rejected</option>
+      </select>
+      <button id="resetFilters">Reset Filters</button>
+      <button id="clearLogs" style="background-color: var(--danger);">Clear All Logs</button>
+    </div>
+
+    <table id="logsTable">
+      <thead>
+      <tr>
+        <th>Actor</th>
+        <th>Action</th>
+        <th>Target</th>
+        <th>IP</th>
+        <th>Timestamp</th>
+        <th>Details</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="pagination" id="paginationControls"></div>
+  </main>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const logsTable = document.querySelector('#logsTable tbody');
+    const pagination = document.getElementById('paginationControls');
+    const searchInput = document.getElementById('searchActor');
+    const targetInput = document.getElementById('searchTarget');
+    const actionFilter = document.getElementById('filterAction');
+    const dateFilter = document.getElementById('filterDate');
+    const resetBtn = document.getElementById('resetFilters');
+
+    let allLogs = [];
+    let currentPage = 1;
+    const pageSize = 15;
+
+    async function fetchLogs(limit = 500) {
+      try {
+        const url = new URL('http://localhost:3000/logs');
+        url.searchParams.append('limit', limit);
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        allLogs = await res.json();
+        renderLogs();
+      } catch (err) {
+        console.error('Error loading logs:', err);
+        alert('Failed to load logs');
+      }
+    }
+
+    function renderLogs() {
+      const query = searchInput.value.toLowerCase();
+      const targetQuery = targetInput.value.toLowerCase();
+      const selectedAction = actionFilter.value.toLowerCase();
+      const selectedDate = dateFilter.value;
+
+      const filtered = allLogs.filter(log => {
+        const actorMatch = log.actor?.toLowerCase().includes(query);
+        const actionMatch = !selectedAction || log.action?.toLowerCase().includes(selectedAction);
+        const targetMatch = log.username?.toLowerCase().includes(targetQuery) || log.target?.toLowerCase().includes(targetQuery);
+        const dateMatch = !selectedDate || new Date(log.timestamp).toISOString().slice(0, 10) === selectedDate;
+        return actorMatch && actionMatch && targetMatch && dateMatch;
+
+      });
+
+      const totalPages = Math.ceil(filtered.length / pageSize);
+      const start = (currentPage - 1) * pageSize;
+      const paginated = filtered.slice(start, start + pageSize);
+
+      logsTable.innerHTML = paginated.map(log => `
+        <tr>
+          <td>${log.actor || 'Unknown'}</td>
+          <td>${log.action || 'Unknown'}</td>
+          <td>${log.username || log.target || 'N/A'}</td>
+          <td>${log.ip || 'N/A'}</td>
+          <td>${new Date(log.timestamp).toLocaleString()}</td>
+          <td><button class="btn-details" onclick="showLogDetails('${log.id}')">Details</button></td>
+        </tr>
+      `).join('');
+
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      pagination.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.classList.toggle('active', i === currentPage);
+        btn.onclick = () => {
+          currentPage = i;
+          renderLogs();
+        };
+        pagination.appendChild(btn);
+      }
+    }
+
+    window.showLogDetails = (logId) => {
+      const log = allLogs.find(l => l.id === logId);
+      if (!log) return alert("Log not found");
+      alert(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
+    };
+
+
+
+    function handleFilterChange() {
+      currentPage = 1;
+      renderLogs();
+    }
+
+    [searchInput, targetInput, actionFilter, dateFilter].forEach(input =>
+            input.addEventListener('input', handleFilterChange)
+    );
+
+    resetBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      targetInput.value = '';
+      actionFilter.value = '';
+      dateFilter.value = '';
+      currentPage = 1;
+      renderLogs();
+    });
+
+    const clearBtn = document.getElementById('clearLogs');
+
+    clearBtn.addEventListener('click', async () => {
+      if (!confirm("Are you sure you want to delete ALL logs? This action cannot be undone.")) return;
+
+      try {
+        const res = await fetch('http://localhost:3000/logs', {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (!res.ok) throw new Error('Failed to clear logs.');
+
+        showSuccess("All logs have been cleared!")
+        await fetchLogs(); // refresh the table
+      } catch (err) {
+        console.error(err);
+        showError("Error clearing logs.");
+      }
+    });
+    await fetchLogs();
+  });
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

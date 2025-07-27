@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard - Wrytix</title>
+  <link rel="stylesheet" href="../backend-panel.css" />
+  </head>
+<body>
+
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <li><a href="admin-dashboard.html" class="active">Admin Dashboard</a></li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="post-management/posts-list.html">Posts List</a></li>
+            <li><a href="post-management/add-post.html">Add Post</a></li>
+            <li><a href="post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="post-management/post-approval-requests.html">Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-management/user-dashboard.html">User Dashboard</a></li>
+            <li><a href="user-management/add-user.html">Add User</a></li>
+            <li><a href="user-management/users-list.html">Users List</a></li>
+            <li><a href="user-management/delete-user.html">Delete User</a></li>
+            <li><a href="user-management/user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="user-management/logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Welcome to the Admin Dashboard</h1>
+    <p>This is your central dashboard to manage posts, ads, and user activity.</p>
+
+    <section class="dashboard-cards">
+      <div class="card">
+        <h3>Total Posts</h3>
+        <p id="totalPosts">Loading...</p>
+      </div>
+      <div class="card">
+        <h3>Total Ads</h3>
+        <p id="activeAds">Loading...</p>
+      </div>
+      <div class="card">
+        <h3>Approval Requests</h3>
+        <p id="pendingUsers">Loading...</p>
+      </div>
+      <div class="card">
+        <h3>Total Users</h3>
+        <p id="totalUsers">Loading...</p>
+      </div>
+    </section>
+
+    <section class="quick-links">
+      <h2>Quick Links</h2>
+      <a href="post-management/post-dashboard.html">Post Dashboard</a>
+      <a href="ad-management/ads-dashboard.html">Ad Dashboard</a>
+      <a href="user-management/user-dashboard.html">User Dashboard</a>
+      <a href="user-management/logs.html">View Logs</a>
+    </section>
+  </main>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', async () => {
+    const user = await verifyAndSetSession('admin');
+    if (!user) return;
+
+    await fetchDashboardData();
+  });
+
+  async function fetchDashboardData() {
+    try {
+      const [postsRes, usersRes, adsRes, pendingRes] = await Promise.all([
+        fetch('http://localhost:3000/posts'),
+        fetch('http://localhost:3000/users'),
+        fetch('http://localhost:3000/ads'),
+        fetch('http://localhost:3000/pendingUsers')
+      ]);
+
+      const posts = await postsRes.json();
+      const users = await usersRes.json();
+      const ads = await adsRes.json();
+      const pending = await pendingRes.json();
+
+      document.getElementById('totalPosts').innerText = posts.length;
+      document.getElementById('totalUsers').innerText = users.length;
+      document.getElementById('pendingUsers').innerText = pending.length;
+      document.getElementById('activeAds').innerText = ads.filter(a => a.active).length;
+    } catch (err) {
+      console.error("Dashboard data fetch error:", err);
+    }
+  }
+</script>
+
+<!-- 🔁 Correct script order -->
+<script src="admin-panel.js"></script>
+<script src="../backend-panel.js"></script>
+</body>
+</html>

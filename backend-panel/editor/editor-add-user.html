@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add User - Wrytix Admin</title>
+    <link rel="stylesheet" href="../backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        :root {
+            --primary: #ff6b00;
+            --danger: #d9534f;
+            --success: #28a745;
+            --text-dark: #333;
+            --text-light: #fff;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+            display: flex;
+        }
+
+        .admin-sidebar {
+            width: 250px;
+            background: #222;
+            color: white;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .admin-sidebar h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .admin-sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .admin-sidebar li {
+            margin: 0.5rem 0;
+        }
+
+        .admin-sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 0.4rem 0.6rem;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .admin-sidebar a.active,
+        .admin-sidebar a:hover {
+            background-color: var(--primary);
+        }
+
+        .admin-main {
+            flex-grow: 1;
+            padding: 2rem;
+            background: #fff;
+            margin: 2rem auto;
+            border-radius: 12px;
+            max-width: 700px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .tooltip {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+
+        .form-actions {
+            text-align: right;
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .toast {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .toast.success { background: var(--success); color: white; }
+        .toast.error { background: var(--danger); color: white; }
+    </style>
+</head>
+<body>
+<aside class="admin-sidebar">
+    <h2>Editor Panel</h2>
+    <nav>
+        <ul>
+            <li><a href="editor-dashboard.html" >Dashboard</a></li>
+            <li><a href="editor-add-post.html">Add New Post</a></li>
+            <li><a href="editor-posts.html" >Manage Posts</a></li>
+            <li><a href="editor-posts-approval.html" >Post Approval Requests</a></li>
+            <li><a href="editor-add-user.html" class="active">Add User</a></li>
+
+        </ul>
+    </nav>
+</aside>
+
+<div class="admin-main">
+    <div class="top-bar">
+        <div class="profile-dropdown">
+            <button class="profile-btn" id="profileBtn">Loading...</button>
+            <div class="profile-menu" id="profileMenu">
+                <button id="logoutBtn">🚪 Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <h1>Add New User</h1>
+    <form id="addUserForm">
+        <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" required />
+        </div>
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" required />
+            <div id="username-status" class="tooltip"></div>
+
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required />
+            <div id="email-status" class="tooltip"></div>
+        </div>
+
+        <div class="form-group" style="position: relative;">
+            <label for="password">Password</label>
+            <input type="password" id="password" required style="padding-right: 40px;" />
+            <i id="togglePassword" class="fas fa-eye-slash"
+               style="position: absolute; top: 42px; right: 10px; cursor: pointer; color: #888;"></i>
+        </div>
+
+
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" required>
+                <option value="">Select Role</option>
+                <option value="viewer">Viewer - Can only view posts</option>
+                <option value="author">Author - Can write and submit posts</option>
+                <option value="editor">Editor - Can manage author posts</option>
+                <option value="admin">Admin - Full system control</option>
+            </select>
+            <div class="tooltip">Choose role based on responsibilities.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="avatar">Profile Picture (Optional)</label>
+            <input type="file" id="avatar" accept="image/*" />
+        </div>
+
+        <div class="form-group">
+            <label for="document">Attach Document (Optional)</label>
+            <input type="file" id="document" accept=".pdf,.doc,.docx" />
+        </div>
+
+
+        <div class="form-actions">
+            <button type="submit" class="submit-btn">Add User</button>
+        </div>
+
+        <div id="toast" class="toast"></div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('togglePassword').addEventListener('click', () => {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePassword');
+
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type = isHidden ? 'text' : 'password';
+
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+
+    document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const fullName = document.getElementById('fullName').value.trim();
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = document.getElementById('password').value.trim();
+        const role = document.getElementById('role').value;
+        const status = document.getElementById('status').value;
+        const avatar = document.getElementById('avatar').files[0];
+        const documentFile = document.getElementById('document').files[0];
+
+        if (!fullName || !username || !email || !password || !role || !status) {
+            showError('Please fill all required fields.');
+            return;
+        }
+
+        if (!isUsernameAvailable) {
+            showError('Username is not available.');
+            return;
+        }
+
+        if (!isEmailAvailable) {
+            showError('Email is not available.');
+            return;
+        }
+
+        const reader = avatar ? await toBase64(avatar) : null;
+        const documentData = documentFile ? await toBase64(documentFile) : null;
+
+        const newUser = {
+            fullName,
+            username,
+            email,
+            password,
+            role,
+            status,
+            avatar: reader,
+            document: documentData,
+            createdAt: new Date().toISOString(),
+            submittedBy: sessionStorage.getItem('currentUser') || 'unknown',
+            createdBy: sessionStorage.getItem('currentUser') || 'unknown',
+        };
+
+        try {
+            const isAdmin = sessionStorage.getItem('userRole') === 'admin';
+            const endpoint = isAdmin ? '/users' : '/pendingUsers';
+
+            const res = await fetch(`http://localhost:3000${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // ✅ ADD THIS
+                body: JSON.stringify(newUser)
+            });
+
+            const resText = await res.text(); // Read response safely
+            let resData;
+            try {
+                resData = JSON.parse(resText);
+            } catch {
+                resData = { error: resText || 'Invalid JSON response' };
+            }
+
+            if (!res.ok) {
+                console.error(`❌ Add user failed. Status: ${res.status}`, resData);
+                const msg = resData?.message || resData?.error || 'Unknown error';
+                showError(`Failed to add user. (${res.status}) ${msg}`);
+                return;
+            }
+
+            showSuccess(isAdmin ? 'User added successfully!' : 'Submitted for admin approval.');
+            document.getElementById('addUserForm').reset();
+
+            isUsernameAvailable = false;
+            isEmailAvailable = false;
+            usernameStatus.textContent = '';
+            emailStatus.textContent = '';
+
+            console.log("✅ User added:", resData);
+        } catch (err) {
+            console.error("❌ Unexpected Add User error:", err);
+            showError('Unexpected error while adding user.');
+        }
+    });
+
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    const usernameInput = document.getElementById('username');
+    const usernameStatus = document.getElementById('username-status');
+    const emailInput = document.getElementById('email');
+    const emailStatus = document.getElementById('email-status');
+    let usernameTimer;
+    let emailTimer;
+    let isUsernameAvailable = false;
+    let isEmailAvailable = false;
+
+    usernameInput.addEventListener('input', () => {
+        clearTimeout(usernameTimer);
+        const username = usernameInput.value.trim();
+
+        if (username.length < 3) {
+            usernameStatus.textContent = 'Username too short';
+            usernameStatus.style.color = 'gray';
+            isUsernameAvailable = false;
+            return;
+        }
+
+        usernameStatus.textContent = 'Checking...';
+        usernameStatus.style.color = 'gray';
+
+        usernameTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`http://localhost:3000/check-username?username=${encodeURIComponent(username)}`);
+                const { available } = await res.json();
+
+                isUsernameAvailable = available;
+                usernameStatus.textContent = available ? 'Username available ✅' : 'Username already taken ❌';
+                usernameStatus.style.color = available ? 'green' : 'red';
+            } catch (err) {
+                usernameStatus.textContent = 'Error checking username';
+                usernameStatus.style.color = 'gray';
+                isUsernameAvailable = false;
+            }
+        }, 600);
+    });
+
+    emailInput.addEventListener('input', () => {
+        clearTimeout(emailTimer);
+        const email = emailInput.value.trim();
+
+        if (!email.includes('@') || email.length < 5) {
+            emailStatus.textContent = 'Enter a valid email.';
+            emailStatus.style.color = 'gray';
+            isEmailAvailable = false;
+            return;
+        }
+
+        emailStatus.textContent = 'Checking...';
+        emailStatus.style.color = 'gray';
+
+        emailTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`http://localhost:3000/check-email?email=${encodeURIComponent(email)}`);
+                const { available } = await res.json();
+
+                isEmailAvailable = available;
+                emailStatus.textContent = available ? 'Email available ✅' : 'Email already used ❌';
+                emailStatus.style.color = available ? 'green' : 'red';
+            } catch (err) {
+                emailStatus.textContent = 'Error checking email';
+                emailStatus.style.color = 'gray';
+                isEmailAvailable = false;
+            }
+        }, 600);
+    });
+</script>
+<script src="editor-panel.js"></script>
+<script src="../backend-panel.js"></script>
+</body>
+</html>

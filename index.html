@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Wrytix</title>
+    <link rel="stylesheet" href="css/frontend.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+</head>
+<body>
+<header>
+    <section class="top-header">
+        <div class="top-left">
+
+            <a href="html/about.html">About</a>
+            <a href="html/contact.html">Contact</a>
+            <div id="date-time">
+                <!-- Date will be injected with JavaScript -->
+            </div>
+
+        </div>
+
+        <!-- Center section for exchange rate -->
+        <div id="forex-rates" class="top-center">
+            <span id="usd-rate">USD: --</span> |
+            <span id="eur-rate">EUR: --</span> |
+            <span id="gbp-rate">GBP: --</span>
+        </div>
+
+        <div class="top-right">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-x-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://tiktok.com" target="_blank" aria-label="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+        </div>
+
+
+    </section>
+    <nav class="main-nav">
+        <a href="index.html" class="logo">Logo</a>
+
+        <div class="hamburger">&#9776;</div>
+
+        <div class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="html/news.html">News</a>
+            <a href="html/business.html">Business</a>
+            <a href="html/foreign.html">Foreign</a>
+            <a href="html/sports.html">Sports</a>
+            <a href="html/technology.html">Technology</a>
+            <a href="html/lifestyle.html">Lifestyle</a>
+        </div>
+    </nav>
+
+    <section class="headline-section">
+        <h2 class="headline-title">Headlines</h2>
+        <marquee class="headline-marquee" id="headline-marquee" behavior="scroll" direction="left">
+            Loading headlines...
+        </marquee>
+    </section>
+
+</header>
+
+<main class="main-container">
+    <!-- Featured Post -->
+    <!-- Featured Section -->
+    <h2 class="featured-section-h2">Featured</h2>
+    <section class="featured-section">
+
+        <!-- Large Featured Post -->
+        <div class="featured-large">
+            <img src="{post.thumbnail}" alt="Featured Post">
+            <div class="featured-info">
+                <h2><a href="#">How I Flipped My First Laptop for 2x Profit</a></h2>
+                <p>Learn the secrets behind buying low and selling smart in Ghana’s laptop market.</p>
+            </div>
+        </div>
+
+        <!-- Grid of Smaller Featured Posts -->
+        <div class="featured-grid">
+            <div class="small-post">
+                <img src="{post.thumbnail}" alt="Post 2">
+                <div>
+                    <h4><a href="#">Top 5 Tools for Laptop Repairs</a></h4>
+                    <p>Essential gear every laptop flipper should own.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <div class="main-content">
+        <!-- Blog Posts -->
+        <section class="blog-posts">
+
+            <!-- Latest News -->
+            <section class="category-section" id="news">
+                <h2 class="blog-posts-h2">News</h2>
+
+                <!-- Add more posts for Latest News -->
+            </section>
+
+            <!-- Foreign (optional 5th section) -->
+            <section class="category-section" id="foreign">
+                <h2 class="blog-posts-h2">Foreign</h2>
+
+            </section>
+
+            <!-- Business -->
+            <section class="category-section" id="business">
+                <h2 class="blog-posts-h2">Business</h2>
+
+                <!-- More business posts -->
+            </section>
+
+            <!-- Sports -->
+            <section class="category-section" id="sports">
+                <h2 class="blog-posts-h2">Sports</h2>
+
+                <!-- More sports posts -->
+            </section>
+
+            <!-- Lifestyle -->
+            <section class="category-section" id="lifestyle">
+                <h2 class="blog-posts-h2">Lifestyle</h2>
+
+                <!-- More lifestyle posts -->
+            </section>
+
+            <!-- Technology (optional 5th section) -->
+            <section class="category-section" id="technology">
+                <h2 class="blog-posts-h2">Technology</h2>
+
+        </section>
+
+        <!-- Add more blog previews -->
+    </section>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+             <div class="sidebar-section" id="trending-posts">
+                        <h3> Trending </h3><!- (Most viewed last 2 weeks)->
+                        <ul id="trending-list"></ul>
+                    </div>
+
+                    <div class="sidebar-section" id="popular-posts">
+                        <h3> Popular </h3><!- (Most viewed within a month)->
+                        <ul id="popular-list"></ul>
+                    </div>
+        </aside>
+    </div>
+</main>
+
+<footer>
+    <div class="footer-container">
+        <!-- Column 1: Logo + Social Icons -->
+        <div class="footer-column footer-logo-social">
+            <img src="your-logo.png" alt="Site Logo" class="footer-logo" />
+            <div class="social-icons">
+                <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter" title="Twitter"><i class="fab fa-x-twitter"></i></a>
+                <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" aria-label="TikTok" title="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div class="footer-column footer-quick-links">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="html/news.html">News</a></li>
+                <li><a href="html/business.html">Business</a></li>
+                <li><a href="html/foreign.html">Foreign</a></li>
+                <li><a href="html/sports.html">Sports</a></li>
+                <li><a href="html/technology.html">Technology</a></li>
+                <li><a href="html/lifestyle.html">Lifestyle</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 3: Newsletter -->
+        <div class="footer-column footer-newsletter">
+            <h3>Newsletter</h3>
+            <p>Subscribe to get the latest updates right in your inbox.</p>
+            <form action="#" method="POST" class="newsletter-form">
+                <input type="email" name="email" placeholder="Your email address" required />
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="copyright">
+        © 2025 Wrytix. All rights reserved.
+    </p>
+</footer>
+
+<div id="backToTop">
+    <span ><i class="fa-solid fa-angle-up"></i></span> </div>
+
+
+<script src="js/frontend.js"></script>
+</body>
+</html>

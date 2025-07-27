@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Posts - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css" />
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="posts-list.html">Posts List</a></li>
+            <li><a href="add-post.html">Add Post</a></li>
+            <li><a href="delete-post.html" class="active">Delete Posts</a></li>
+            <li><a href="post-approval-requests.html">Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
+            <li><a href="../user-management/add-user.html">Add User</a></li>
+            <li><a href="../user-management/users-list.html">Users List</a></li>
+            <li><a href="../user-management/delete-user.html">Delete User</a></li>
+            <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="../user-management/logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Delete Posts</h1>
+
+    <div class="filter-section">
+      <label>Category:</label>
+      <select id="filterCategory"></select>
+
+      <label>Author:</label>
+      <select id="filterAuthor"></select>
+
+      <input type="text" id="searchInput" placeholder="Search by title...">
+      <button onclick="resetFilters()" id="resetBtn">Reset</button>
+    </div>
+
+    <table class="posts-table">
+      <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll"></th>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Author</th>
+        <th>Schedule</th>
+        <th>Views</th>
+      </tr>
+      </thead>
+      <tbody id="postsTableBody">
+      <tr><td colspan="6">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <button class="delete-btn" onclick="deleteSelectedPosts()">Delete Selected</button>
+    <div id="pagination" class="pagination-controls"></div>
+  </main>
+</div>
+
+<script>
+  let allPosts = [], filteredPosts = [], currentPage = 1;
+  const postsPerPage = 10;
+
+  async function loadPosts() {
+    try {
+      const res = await fetch('http://localhost:3000/posts/all');
+      allPosts = await res.json();
+      populateFilters();
+      currentPage = 1;
+      filterAndRender();
+    } catch (err) {
+      document.getElementById('postsTableBody').innerHTML = '<tr><td colspan="6">Error loading posts</td></tr>';
+    }
+  }
+
+  function populateFilters() {
+    const categorySet = new Set();
+    const authorSet = new Set();
+    allPosts.forEach(post => {
+      if (post.category) categorySet.add(post.category);
+      if (post.author) authorSet.add(post.author);
+    });
+
+    const catSelect = document.getElementById('filterCategory');
+    const authSelect = document.getElementById('filterAuthor');
+    catSelect.innerHTML = '<option value="">-- All Categories --</option>';
+    authSelect.innerHTML = '<option value="">-- All Authors --</option>';
+
+    [...categorySet].sort().forEach(cat => {
+      catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+    });
+    [...authorSet].sort().forEach(auth => {
+      authSelect.innerHTML += `<option value="${auth}">${auth}</option>`;
+    });
+  }
+
+  function filterAndRender() {
+    const cat = document.getElementById('filterCategory').value;
+    const auth = document.getElementById('filterAuthor').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+
+    filteredPosts = allPosts.filter(p => {
+      const catMatch = cat ? p.category === cat : true;
+      const authMatch = auth ? p.author === auth : true;
+      const titleMatch = p.title?.toLowerCase().includes(search);
+      return catMatch && authMatch && titleMatch;
+    });
+
+    renderPostsTable();
+    renderPagination(filteredPosts);
+  }
+
+  function renderPostsTable() {
+    const tbody = document.getElementById('postsTableBody');
+    tbody.innerHTML = '';
+
+    const start = (currentPage - 1) * postsPerPage;
+    const pagePosts = filteredPosts.slice(start, start + postsPerPage);
+
+    if (pagePosts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">No posts found.</td></tr>';
+      return;
+    }
+
+    const now = new Date();
+
+    pagePosts.forEach(post => {
+      const dateStr = post.schedule ? new Date(post.schedule).toLocaleString() : 'N/A';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" data-id="${post.slug}"></td>
+        <td>${post.title}</td>
+        <td>${post.category || '—'}</td>
+        <td>${post.author || '—'}</td>
+        <td>${dateStr}</td>
+        <td>${post.views || 0}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderPagination(posts) {
+    const paginationContainer = document.getElementById('pagination');
+    paginationContainer.innerHTML = '';
+
+    const pageCount = Math.ceil(posts.length / postsPerPage);
+    if (pageCount <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = 'Previous';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+      currentPage--;
+      renderPostsTable();
+      renderPagination(posts);
+    };
+    paginationContainer.appendChild(prevBtn);
+
+    for (let i = 1; i <= pageCount; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = i === currentPage ? 'active-page' : '';
+      btn.onclick = () => {
+        currentPage = i;
+        renderPostsTable();
+        renderPagination(posts);
+      };
+      paginationContainer.appendChild(btn);
+    }
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next';
+    nextBtn.disabled = currentPage === pageCount;
+    nextBtn.onclick = () => {
+      currentPage++;
+      renderPostsTable();
+      renderPagination(posts);
+    };
+    paginationContainer.appendChild(nextBtn);
+  }
+
+  function resetFilters() {
+    document.getElementById('filterCategory').value = '';
+    document.getElementById('filterAuthor').value = '';
+    document.getElementById('searchInput').value = '';
+    currentPage = 1;
+    filterAndRender();
+  }
+
+  async function deleteSelectedPosts() {
+    const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+      alert('Please select at least one post to delete.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete selected posts?')) return;
+
+    try {
+      for (const box of checkboxes) {
+        const slug = box.dataset.id;
+        await fetch(`http://localhost:3000/posts/${slug}`, { method: 'DELETE' });
+      }
+      alert('✅ Selected posts deleted.');
+      await loadPosts();
+    } catch (err) {
+      console.error(err);
+      alert('❌ Error deleting posts.');
+    }
+  }
+
+  document.getElementById('filterCategory').addEventListener('change', () => {
+    currentPage = 1;
+    filterAndRender();
+  });
+
+  document.getElementById('filterAuthor').addEventListener('change', () => {
+    currentPage = 1;
+    filterAndRender();
+  });
+
+  document.getElementById('searchInput').addEventListener('input', () => {
+    currentPage = 1;
+    filterAndRender();
+  });
+
+  document.getElementById('selectAll').addEventListener('change', e => {
+    document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = e.target.checked);
+  });
+
+  loadPosts();
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

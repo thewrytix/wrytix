@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Dashboard - Wrytix</title>
+    <link rel="stylesheet" href="../../backend-panel.css" />
+    </head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix Admin</h2>
+        <nav>
+            <ul>
+                <!--Admin Management-->
+                <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+                <!--Post Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Post Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="post-dashboard.html" class="active">Post Dashboard</a></li>
+                        <li><a href="posts-list.html">Posts List</a></li>
+                        <li><a href="add-post.html" >Add Post</a></li>
+                        <li><a href="delete-post.html">Delete Posts</a></li>
+                        <li><a href="post-approval-requests.html" >Post Approval Requests</a></li>
+                    </ul>
+                </li>
+                <!--Ad Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Ad Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../ad-management/ads-dashboard.html">Dashboard</a></li>
+                        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+                        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+                        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+                    </ul>
+                </li>
+                <!--User Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">User Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../user-management/user-dashboard.html">Dashboard</a></li>
+                        <li><a href="../user-management/add-user.html">Add User</a></li>
+                        <li><a href="../user-management/users-list.html">Users List</a></li>
+                        <li><a href="../user-management/delete-user.html">Delete User</a></li>
+                        <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+                        <li><a href="../user-management/logs.html">Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1>Welcome to Wrytix Dashboard</h1>
+
+        <section class="admin-headline">
+            <button class="toggle-headline">✏️ Edit Homepage Headline</button>
+            <div class="headline-editor-content" style="display: none">
+                <h3>Homepage Headline</h3>
+                <textarea id="headlineInput" rows="3" placeholder="Enter headline text..."></textarea>
+                <br />
+                <button id="saveHeadlineBtn">Save Headline</button>
+                <p id="headlineSavedMessage">Headline updated!</p>
+            </div>
+        </section>
+
+        <div class="stats-container">
+            <div class="stat-box"><h2 id="totalPosts">0</h2><p>Total Posts</p></div>
+            <div class="stat-box"><h2 id="livePosts">0</h2><p>Live Posts</p></div>
+            <div class="stat-box"><h2 id="scheduledPosts">0</h2><p>Scheduled Posts</p></div>
+            <div class="stat-box"><h2 id="trendingCount">0</h2><p>Trending Posts</p></div>
+            <div class="stat-box"><h2 id="popularCount">0</h2><p>Popular Posts</p></div>
+            <div class="stat-box views"><h2 id="totalViews">0</h2><p>Total Views</p></div>
+        </div>
+
+        <div class="quick-links">
+            <a href="add-post.html">➕ Add New Post</a>
+            <a href="posts-list.html">📋 View All Posts</a>
+            <a href="delete-post.html">🗑️ Delete Posts</a>
+        </div>
+
+        <section id="recentActivity">
+            <h2>🕒 Recent Activity</h2>
+            <ul id="activityList"></ul>
+        </section>
+
+
+
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+    const role = sessionStorage.getItem('role');
+    if (role !== 'admin') {
+        alert("Access denied. You are not an Admin.");
+        window.location.href = 'login.html';
+    }
+
+    const headlineInput = document.getElementById("headlineInput");
+    const saveBtn = document.getElementById("saveHeadlineBtn");
+    const message = document.getElementById("headlineSavedMessage");
+
+    // Fetch and show current headline
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const res = await fetch("http://localhost:3000/headline");
+            const data = await res.json();
+            headlineInput.value = data.text || "";
+        } catch (err) {
+            console.error("Error loading headline:", err);
+        }
+    });
+
+    // Save new headline
+    saveBtn.addEventListener("click", async () => {
+        const newHeadline = headlineInput.value.trim();
+        if (!newHeadline) return;
+
+        try {
+            await fetch("http://localhost:3000/headline", {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({text: newHeadline})
+            });
+            message.style.display = "block";
+            setTimeout(() => (message.style.display = "none"), 2000);
+        } catch (err) {
+            console.error("Error saving headline:", err);
+            alert("Failed to update headline.");
+        }
+    });
+
+
+    async function loadDashboardStats() {
+        try {
+            // Fetch posts from backend (replace with your actual endpoint)
+            const response = await fetch('http://localhost:3000/posts/all');
+            const posts = await response.json();
+
+            const now = new Date();
+
+            const total = posts.length;
+            const live = posts.filter(p => {
+                const d = new Date(p.schedule);
+                return !isNaN(d.getTime()) && d <= now;
+            }).length;
+            const scheduled = total - live;
+
+            const trendingThreshold = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);//2weeks
+            const trendingPosts = posts.filter(p => {
+                const lastViewed = p.lastViewed ? new Date(p.lastViewed) : null;
+                return p.views && lastViewed && lastViewed >= trendingThreshold;
+            });
+
+            // Popular: Viewed within last 30 days, sorted by views
+            const popularThreshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            const popularPosts = posts.filter(p => {
+                const lastViewed = p.lastViewed ? new Date(p.lastViewed) : null;
+                return p.views && lastViewed && lastViewed >= popularThreshold;
+            }).sort((a, b) => (b.views || 0) - (a.views || 0));
+
+            const totalViews = posts.reduce((sum, post) => sum + (post.views || 0), 0);
+
+            // Update stats UI
+            document.getElementById('totalPosts').textContent = total;
+            document.getElementById('livePosts').textContent = live;
+            document.getElementById('scheduledPosts').textContent = scheduled;
+            document.getElementById('trendingCount').textContent = trendingPosts.length;
+            document.getElementById('popularCount').textContent = popularPosts.length;
+            document.getElementById('totalViews').textContent = totalViews;
+
+
+            return {
+                liveCount: live,
+                scheduledCount: scheduled,
+                trendingCount: trendingPosts.length,
+                popularCount: popularPosts.length,
+                totalViews,
+                posts
+            };
+
+        } catch (error) {
+            console.error('Failed to load dashboard stats:', error);
+            alert('Failed to load data from backend. Check console for details.');
+            return {
+                liveCount: 0,
+                scheduledCount: 0,
+                trendingCount: 0,
+                popularCount: 0,
+                totalViews: 0,
+                posts: []
+            };
+        }
+    }
+
+    function renderRecentActivity(posts) {
+        const activityList = document.getElementById('activityList');
+        activityList.innerHTML = '';
+
+        const sorted = [...posts].sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
+        const recent = sorted.slice(0, 5);
+
+        if (recent.length === 0) {
+            activityList.innerHTML = '<li>No recent activity</li>';
+            return;
+        }
+
+        recent.forEach(post => {
+            const li = document.createElement('li');
+            const titleLink = document.createElement('a');
+            titleLink.href = `edit-post.html?slug=${encodeURIComponent(post.slug)}`;
+            titleLink.textContent = post.title;
+            titleLink.className = 'activity-title';
+
+            const dateSpan = document.createElement('span');
+            const d = new Date(post.schedule);
+            dateSpan.textContent = isNaN(d.getTime()) ? 'No Schedule' : d.toLocaleDateString();
+            dateSpan.className = 'activity-date';
+
+            li.appendChild(titleLink);
+            li.appendChild(dateSpan);
+            activityList.appendChild(li);
+        });
+    }
+
+
+
+
+    window.onload = async () => {
+        if (sessionStorage.getItem('loggedIn') !== 'true') {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const stats = await loadDashboardStats();
+
+        renderRecentActivity(stats.posts);
+
+
+    };
+
+
+    document.querySelector('.toggle-headline').addEventListener('click', function () {
+        const content = document.querySelector('.headline-editor-content');
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    });
+
+
+
+
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

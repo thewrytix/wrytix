@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Delete Ads - Wrytix Admin</title>
+    <link rel="stylesheet" href="../../backend-panel.css" />
+    <style>
+
+
+
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix Admin</h2>
+        <nav>
+            <ul>
+                <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Post Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+                        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+                        <li><a href="../post-management/add-post.html">Add Post</a></li>
+                        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+                        <li><a href="../post-management/post-approval-requests.html">Post Approval Requests</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Ad Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="ads-dashboard.html">Ad Dashboard</a></li>
+                        <li><a href="add-ad.html">Add Ad</a></li>
+                        <li><a href="ads-list.html">Ads List</a></li>
+                        <li><a href="delete-ad.html">Delete Ad</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">User Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
+                        <li><a href="../user-management/add-user.html">Add User</a></li>
+                        <li><a href="../user-management/users-list.html">Users List</a></li>
+                        <li><a href="../user-management/delete-user.html">Delete User</a></li>
+                        <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+                        <li><a href="../user-management/logs.html">Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <label>Category:</label>
+            <select id="filterCategory">
+                <option value="">-- All Categories --</option>
+                <option value="news">News</option>
+                <option value="business">Business</option>
+                <option value="sports">Sports</option>
+                <option value="technology">Technology</option>
+            </select>
+
+            <label>Type:</label>
+            <select id="filterType">
+                <option value="">-- All Types --</option>
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="html">HTML</option>
+                <option value="text">Text</option>
+            </select>
+
+            <input type="text" id="searchInput" placeholder="Search by company...">
+            <button onclick="resetFilters()" id="resetBtn">Reset</button>
+        </div>
+
+        <table class="ads-table">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Company</th>
+            </tr>
+            </thead>
+            <tbody id="adsTableBody">
+            <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+        </table>
+
+        <button class="delete-btn" onclick="deleteSelectedAds()">Delete Selected</button>
+        <p id="noAdsMsg" style="display:none;">No ads found.</p>
+        <div id="pagination" class="pagination-controls"></div>
+    </main>
+</div>
+
+<script>
+    let allAds = [];
+    let filteredAds = [];
+    let currentPage = 1;
+    const adsPerPage = 10;
+
+    async function loadAds() {
+        try {
+            const res = await fetch('http://localhost:3000/ads');
+            allAds = await res.json();
+            currentPage = 1;
+            filterAndRender();
+        } catch (err) {
+            document.getElementById('adsTableBody').innerHTML = '<tr><td colspan="4">Error loading ads</td></tr>';
+        }
+    }
+
+    function filterAndRender() {
+        const cat = document.getElementById('filterCategory').value;
+        const type = document.getElementById('filterType').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+
+        filteredAds = allAds.filter(ad => {
+            const categoryMatch = cat ? ad.category === cat : true;
+            const typeMatch = type ? ad.type === type : true;
+            const companyMatch = search ? ad.company?.toLowerCase().includes(search) : true;
+            return categoryMatch && typeMatch && companyMatch;
+        });
+
+        document.getElementById('noAdsMsg').style.display = filteredAds.length ? 'none' : 'block';
+        renderAdsTable();
+        renderPagination();
+    }
+
+    function renderAdsTable() {
+        const tbody = document.getElementById('adsTableBody');
+        tbody.innerHTML = '';
+
+        const start = (currentPage - 1) * adsPerPage;
+        const end = start + adsPerPage;
+        const pageAds = filteredAds.slice(start, end);
+
+        if (!pageAds.length) {
+            tbody.innerHTML = '<tr><td colspan="4">No ads found.</td></tr>';
+            return;
+        }
+
+        pageAds.forEach(ad => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+        <td><input type="checkbox" data-id="${ad.id}"></td>
+        <td>${ad.category}</td>
+        <td>${ad.type}</td>
+        <td>${ad.company || '—'}</td>
+      `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        const totalPages = Math.ceil(filteredAds.length / adsPerPage);
+        if (totalPages <= 1) return;
+
+        const createBtn = (text, disabled, handler, active = false) => {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            btn.disabled = disabled;
+            if (active) btn.classList.add('active-page');
+            btn.onclick = handler;
+            return btn;
+        };
+
+        pagination.appendChild(createBtn('Previous', currentPage === 1, () => {
+            currentPage--;
+            renderAdsTable();
+            renderPagination();
+        }));
+
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.appendChild(createBtn(i, false, () => {
+                currentPage = i;
+                renderAdsTable();
+                renderPagination();
+            }, i === currentPage));
+        }
+
+        pagination.appendChild(createBtn('Next', currentPage === totalPages, () => {
+            currentPage++;
+            renderAdsTable();
+            renderPagination();
+        }));
+    }
+
+    function resetFilters() {
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterType').value = '';
+        document.getElementById('searchInput').value = '';
+        currentPage = 1;
+        filterAndRender();
+    }
+
+    async function deleteSelectedAds() {
+        const selected = [...document.querySelectorAll('tbody input[type="checkbox"]:checked')];
+        if (!selected.length) return alert('Please select at least one ad to delete.');
+        if (!confirm('Are you sure you want to delete selected ads?')) return;
+
+        try {
+            for (const checkbox of selected) {
+                await fetch(`http://localhost:3000/ads/${checkbox.dataset.id}`, { method: 'DELETE' });
+            }
+            alert('Selected ads deleted successfully.');
+            await loadAds();
+        } catch (err) {
+            console.error(err);
+            alert('Error deleting selected ads.');
+        }
+    }
+
+    document.getElementById('filterCategory').addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+    document.getElementById('filterType').addEventListener('change', () => { currentPage = 1; filterAndRender(); });
+    document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; filterAndRender(); });
+    document.getElementById('selectAll').addEventListener('change', e => {
+        document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = e.target.checked);
+    });
+
+    loadAds();
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

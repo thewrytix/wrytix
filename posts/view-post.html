@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Loading...</title>
+    <link rel="stylesheet" href="../css/frontend.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="view-post.css"/>
+</head>
+<body>
+
+<header>
+    <section class="top-header">
+        <div class="top-left">
+
+            <a href="../html/about.html">About</a>
+            <a href="../html/contact.html">Contact</a>
+            <div id="date-time">
+                <!-- Date will be injected with JavaScript -->
+            </div>
+
+        </div>
+
+        <!-- Center section for exchange rate -->
+        <div id="forex-rates" class="top-center">
+            <span id="usd-rate">USD: --</span> |
+            <span id="eur-rate">EUR: --</span> |
+            <span id="gbp-rate">GBP: --</span>
+        </div>
+
+        <div class="top-right">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-x-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://tiktok.com" target="_blank" aria-label="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+        </div>
+    </section>
+    <nav class="main-nav">
+        <a href="../index.html" class="logo">Logo</a>
+
+        <div class="hamburger">&#9776;</div>
+
+        <div class="nav-links">
+            <a href="../index.html" >Home</a>
+            <a href="../html/news.html">News</a>
+            <a href="../html/business.html">Business</a>
+            <a href="../html/foreign.html">Foreign</a>
+            <a href="../html/sports.html">Sports</a>
+            <a href="../html/technology.html">Technology</a>
+            <a href="../html/lifestyle.html">Lifestyle</a>
+        </div>
+    </nav>
+</header>
+<main class="main-container">
+    <div class="main-content">
+        <section class="blog-posts">
+            <article data-category="news">
+                <nav class="breadcrumbs" id="breadcrumbs"></nav>
+                <h1 id="post-title">Loading...</h1>
+                <img id="post-thumbnail" src="" alt="Post Thumbnail" style="width:100%; max-height:400px; object-fit:cover; margin: 16px 0; border-radius: 8px;" loading="lazy">
+                <p><strong>By <span id="post-author"></span> | <span id="post-date"></span></strong></p>
+                <div id="post-content">Loading post content...</div>
+                <div class="source">Source: <span id="post-source">Loading source...</span></div>
+            </article>
+
+            <div class="share-post">
+                <div class="share-wrapper">
+                    <button class="share-toggle" title="Share this post">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+
+                    <div class="share-hidden hidden">
+                        <a href="mailto:?subject=Check this out&body=Have a look at this post: [URL]" title="Share via Email">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="#" onclick="window.print();" title="Print this page">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        <button class="copy-url" title="Copy link">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="share-icons">
+                    <a href="#" class="share-facebook" title="Share on Facebook" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="share-twitter" title="Share on Twitter" target="_blank"><i class="fab fa-x-twitter"></i></a>
+                    <a href="#" class="share-linkedin" title="Share on LinkedIn" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="share-whatsapp" title="Share on WhatsApp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="share-telegram" title="Share on Telegram" target="_blank"><i class="fab fa-telegram-plane"></i></a>
+                    <a href="#" class="share-reddit" title="Share on Reddit" target="_blank"><i class="fab fa-reddit-alien"></i></a>
+                    <a href="#" class="share-pinterest" title="Share on Pinterest" target="_blank"><i class="fab fa-pinterest-p"></i></a>
+                </div>
+            </div>
+
+
+
+            <div class="comment-box">
+                <h3>Leave a Comment</h3>
+                <input type="text" id="username" placeholder="Your name" />
+                <textarea id="commentText" placeholder="Comment"></textarea><br />
+                <button class="comment-button">Post Comment</button>
+                <div class="comments-list"></div>
+            </div>
+
+
+        </section>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section" id="related-posts">
+                <h3>Related Posts </h3>
+                <ul id="related-list"></ul>
+            </div>
+
+
+        </aside>
+    </div>
+</main>
+
+<footer>
+    <div class="footer-container">
+        <!-- Column 1: Logo + Social Icons -->
+        <div class="footer-column footer-logo-social">
+            <img src="your-logo.png" alt="Site Logo" class="footer-logo" />
+            <div class="social-icons">
+                <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter" title="Twitter"> <i class="fab fa-x-twitter"></i></a>
+                <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" aria-label="TikTok" title="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div class="footer-column footer-quick-links">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="/html/news.html">News</a></li>
+                <li><a href="/html/business.html">Business</a></li>
+                <li><a href="/html/foreign.html">Foreign</a></li>
+                <li><a href="/html/sports.html">Sports</a></li>
+                <li><a href="/html/technology.html">Technology</a></li>
+                <li><a href="/html/lifestyle.html">Lifestyle</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 3: Newsletter -->
+        <div class="footer-column footer-newsletter">
+            <h3>Newsletter</h3>
+            <p>Subscribe to get the latest updates right in your inbox.</p>
+            <form action="#" method="POST" class="newsletter-form">
+                <input type="email" name="email" placeholder="Your email address" required />
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="copyright">
+        © 2025 Your Site Name. All rights reserved.
+    </p>
+</footer>
+<div id="backToTop">
+    <span ><i class="fa-solid fa-angle-up"></i></span> </div>
+
+<script src="/js/view-post.js"></script>
+<script src="/js/post-share-icons.js"></script>
+<script src="/js/comments.js"></script>
+
+<script src="../js/frontend.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Post Preview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+    }
+
+    .category-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .blog-posts-h2 {
+      font-size: 2rem;
+      color: #222;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #ff6600;
+      padding-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .post-preview {
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex-direction: row;
+    }
+
+    .post-preview .content {
+      flex: 1;
+    }
+
+    .post-preview img {
+      width: 200px;
+      height: auto;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .post-preview h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .post-preview p {
+      margin: 0 0 15px 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .post-preview a {
+      color: #ff6600;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .post-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .post-date {
+      display: block;
+      font-size: 0.9rem;
+      color: #999;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      margin-top: 100px;
+    }
+
+    @media (max-width: 600px) {
+      .post-preview {
+        flex-direction: column-reverse;
+        align-items: center;
+        text-align: center;
+      }
+
+      .post-preview img {
+        width: 100%;
+        max-width: 300px;
+        max-height: none;
+      }
+
+      .post-preview .content {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<section class="category-section" id="preview-section">
+  <h2 class="blog-posts-h2">Preview Post</h2>
+  <div id="previewContainer" class="blog-posts"></div>
+</section>
+
+<script>
+  const previewData = JSON.parse(sessionStorage.getItem('previewPost'));
+  console.log('Preview Date:', previewData?.date);
+
+  if (previewData && previewData.title && previewData.content) {
+    const container = document.getElementById('previewContainer');
+
+    const article = document.createElement('article');
+    article.className = 'post-preview';
+    article.dataset.category = previewData.category || '';
+
+    article.innerHTML = `
+      <div class="content">
+        <h3>${previewData.title}</h3>
+        <small class="post-date">${previewData.date || 'No date provided'}</small>
+        <p>${previewData.content.length > 100 ? previewData.content.substring(0, 100) + '...' : previewData.content}</p>
+        <a href="#">Read More</a>
+      </div>
+      <img src="${previewData.thumbnail || ''}" alt="Post Thumbnail">
+    `;
+
+    container.appendChild(article);
+  } else {
+    document.body.innerHTML = '<p class="no-data">No post data found to preview.</p>';
+  }
+</script>
+</body>
+</html>

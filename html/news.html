@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Faisel's Blog</title>
+    <link rel="stylesheet" href="../css/frontend.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+<header>
+    <section class="top-header">
+        <div class="top-left">
+
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+            <div id="date-time">
+                <!-- Date will be injected with JavaScript -->
+            </div>
+
+        </div>
+
+        <!-- Center section for exchange rate -->
+        <div id="forex-rates" class="top-center">
+            <span id="usd-rate">USD: --</span> |
+            <span id="eur-rate">EUR: --</span> |
+            <span id="gbp-rate">GBP: --</span>
+        </div>
+
+        <div class="top-right">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-x-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://youtube.com" target="_blank" aria-label="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://tiktok.com" target="_blank" aria-label="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+        </div>
+    </section>
+    <nav class="main-nav">
+        <a href="../index.html" class="logo">Logo</a>
+
+        <div class="hamburger">&#9776;</div>
+
+        <div class="nav-links">
+            <a href="../index.html" >Home</a>
+            <a href="news.html" class="active">News</a>
+            <a href="business.html">Business</a>
+            <a href="foreign.html">Foreign</a>
+            <a href="sports.html">Sports</a>
+            <a href="technology.html">Technology</a>
+            <a href="lifestyle.html">Lifestyle</a>
+        </div>
+    </nav>
+</header>
+
+<main class="main-container">
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-text">
+            <h1>Breaking News & Top Headlines</h1>
+            <p>Stay informed with the latest stories from Ghana and around the world.</p>
+            <a href="#news" class="btn-primary">Explore News</a>
+        </div>
+    </section>
+
+    <div class="main-content">
+        <!-- Blog Posts -->
+        <section class="blog-posts">
+            <h2 class="blog-posts-h2">Latest News</h2>
+            <!-- Latest News -->
+            <section class="category-section" id="latest-news">
+
+
+               <!---- <article class="post-preview">
+                    <div>
+                        <h3>5 Simple Business Ideas in Ghana</h3>
+                        <small class="post-date">May 29, 2025</small>
+                        <p>Start small, think big. Here are 5 low-budget ideas to kickstart your journey.</p>
+                        <a href="posts/view-post.html">Read More</a>
+                    </div>
+                    <img src="{post.thumbnail}" alt="Post">
+                </article>
+
+                         Add more posts for Latest News ------->
+            </section>
+
+                                    <!-- Add more blog previews -->
+
+        </section>
+
+
+
+        <aside class="sidebar">
+            <div class="sidebar-section ad-sidebar">
+                <div class="ad-slider-wrapper" id="adSliderWrapper">
+                    <div class="ad-slider" id="adSlider">
+                        <p>Loading ads...</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        </div>
+
+
+    <div id="pagination-controls"></div>
+</main>
+
+<footer>
+    <div class="footer-container">
+        <!-- Column 1: Logo + Social Icons -->
+        <div class="footer-column footer-logo-social">
+            <img src="your-logo.png" alt="Site Logo" class="footer-logo" />
+            <div class="social-icons">
+                <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter" title="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube" title="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" aria-label="TikTok" title="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+
+        <!-- Column 2: Quick Links -->
+        <div class="footer-column footer-quick-links">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="news.html">News</a></li>
+                <li><a href="business.html">Business</a></li>
+                <li><a href="foreign.html">Foreign</a></li>
+                <li><a href="sports.html">Sports</a></li>
+                <li><a href="technology.html">Technology</a></li>
+                <li><a href="lifestyle.html">Lifestyle</a></li>
+            </ul>
+        </div>
+
+        <!-- Column 3: Newsletter -->
+        <div class="footer-column footer-newsletter">
+            <h3>Newsletter</h3>
+            <p>Subscribe to get the latest updates right in your inbox.</p>
+            <form action="#" method="POST" class="newsletter-form">
+                <input type="email" name="email" placeholder="Your email address" required />
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </div>
+
+    <p class="copyright">
+        © 2025 Your Site Name. All rights reserved.
+    </p>
+</footer>
+<div id="backToTop">
+    <span ><i class="fa-solid fa-angle-up"></i></span> </div>
+<script src="../js/frontend.js"></script>
+<script src="../js/news.js"></script>
+
+</body>
+</html>

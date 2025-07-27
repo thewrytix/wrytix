@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Ad - Wrytix Admin</title>
+    <link rel="stylesheet" href="../../backend-panel.css" />
+    <style>
+               .date-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .date-row div {
+            flex: 1;
+        }
+
+        .conditional {
+            display: none;
+        }
+
+        .file-preview {
+            margin-top: 1rem;
+        }
+
+        .file-preview img,
+        .file-preview video {
+            max-width: 200px;
+            max-height: 120px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix Admin</h2>
+        <nav>
+            <ul>
+                <!--Admin Management-->
+                <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+                <!--Post Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Post Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+                        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+                        <li><a href="../post-management/add-post.html" >Add Post</a></li>
+                        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+                        <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+                    </ul>
+                </li>
+                <!--Ad Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Ad Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="ads-dashboard.html">Ad Dashboard</a></li>
+                        <li><a href="add-ad.html">Add Ad</a></li>
+                        <li><a href="ads-list.html">Ads List</a></li>
+                        <li><a href="delete-ad.html">Delete Ad</a></li>
+                    </ul>
+                </li>
+                <!--User Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">User Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
+                        <li><a href="../user-management/add-user.html">Add User</a></li>
+                        <li><a href="../user-management/users-list.html">Users List</a></li>
+                        <li><a href="../user-management/delete-user.html">Delete User</a></li>
+                        <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+                        <li><a href="../user-management/logs.html">Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1>Add New Advertisement</h1>
+
+        <form id="addAdForm" class="form-section">
+            <label for="adType">Ad Type:</label>
+            <select id="adType" name="type" required>
+                <option value="">-- Select Type --</option>
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="html">HTML Embed</option>
+                <option value="text">Text</option>
+            </select>
+
+            <label for="adFile">Upload Image/Video:</label>
+            <input type="file" id="adFile" name="file" accept="image/*,video/*" />
+            <div class="file-preview" id="filePreview"></div>
+
+            <label for="adHtml" class="conditional">Embed Code (for HTML):</label>
+            <textarea id="adHtml" name="html" rows="4" placeholder="<iframe>..."></textarea>
+
+            <label for="adText" class="conditional">Text Content:</label>
+            <textarea id="adText" name="text" rows="3" placeholder="Enter text ad..."></textarea>
+
+            <label for="adLink">Link (optional):</label>
+            <input type="url" id="adLink" name="link" placeholder="https://example.com" />
+
+            <label for="adCompany">Company Name:</label>
+            <input type="text" id="adCompany" name="company" placeholder="Enter company name" required />
+
+            <label for="adCategory">Category:</label>
+            <select id="adCategory" name="category" required>
+                <option value="">-- Select Category --</option>
+                <option value="news">News</option>
+                <option value="business">Business</option>
+                <option value="foreign">Foreign</option>
+                <option value="sports">Sports</option>
+                <option value="technology">Technology</option>
+                <option value="lifestyle">Lifestyle</option>
+            </select>
+
+            <div class="date-row">
+                <div>
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" name="startDate" required />
+                </div>
+                <div>
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" name="endDate" required />
+                </div>
+            </div>
+
+            <label>
+                <input type="checkbox" id="adActive" name="active" checked />
+                Active
+            </label>
+
+            <button type="submit">Save Ad</button>
+        </form>
+    </main>
+</div>
+
+<script>
+    document.getElementById('addAdForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const type = document.getElementById('adType').value;
+        const category = document.getElementById('adCategory').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const link = document.getElementById('adLink').value;
+        const company = document.getElementById('adCompany').value;
+        const active = document.getElementById('adActive').checked;
+        const html = document.getElementById('adHtml').value;
+        const text = document.getElementById('adText').value;
+
+        const fileInput = document.getElementById('adFile');
+        let fileBase64 = null;
+
+        if ((type === 'image' || type === 'video') && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            fileBase64 = await toBase64(file);
+        }
+
+        const adData = {
+            type,
+            category,
+            company,
+            startDate,
+            endDate,
+            link,
+            html,
+            text,
+            file: fileBase64,
+            active
+        };
+
+        try {
+            const response = await fetch('http://localhost:3000/ads', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(adData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showSuccess('Ad successfully created!');
+                document.getElementById('addAdForm').reset();
+                document.getElementById('filePreview').innerHTML = '';
+                document.getElementById('adType').dispatchEvent(new Event('change'));
+            } else {
+                showError('Error: ' + (result.error || 'Something went wrong.'));
+            }
+
+        } catch (err) {
+            console.error('Submission error:', err);
+            showError('Submission failed. Please try again.');
+        }
+
+    });
+
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    document.getElementById('adFile').addEventListener('change', function () {
+        const file = this.files[0];
+        const preview = document.getElementById('filePreview');
+        preview.innerHTML = '';
+
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        if (file.type.startsWith('image')) {
+            preview.innerHTML = `<img src="${url}" alt="Image Preview">`;
+        } else if (file.type.startsWith('video')) {
+            preview.innerHTML = `<video src="${url}" controls></video>`;
+        }
+    });
+
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

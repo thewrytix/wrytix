@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Advertisement - Wrytix Admin</title>
+    <link rel="stylesheet" href="../../backend-panel.css" />
+    <style>
+        :root {
+            --primary: #ff6b00;
+            --text-light: white;
+            --text-dark: #555;
+        }
+
+        .form-section label {
+            display: block;
+            margin-top: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-section input,
+        .form-section select,
+        .form-section textarea {
+            width: 100%;
+            padding: 0.7rem;
+            margin-top: 0.3rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            background-color: #fff;
+        }
+
+        .form-section textarea {
+            resize: vertical;
+        }
+
+        .form-section button {
+            margin-top: 1.5rem;
+            padding: 0.8rem 2rem;
+            background-color: var(--primary);
+            color: var(--text-light);
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-section button:hover {
+            background-color: #e65c00;
+        }
+
+        .preview {
+            margin-top: 1rem;
+        }
+
+        .preview img,
+        .preview video,
+        .preview iframe,
+        .preview .text-preview {
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix Admin</h2>
+        <nav>
+            <ul>
+                <!--Admin Management-->
+                <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+                <!--Post Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Post Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+                        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+                        <li><a href="../post-management/add-post.html" >Add Post</a></li>
+                        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+                        <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+                    </ul>
+                </li>
+                <!--Ad Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Ad Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="ads-dashboard.html">Ad Dashboard</a></li>
+                        <li><a href="add-ad.html">Add Ad</a></li>
+                        <li><a href="ads-list.html">Ads List</a></li>
+                        <li><a href="delete-ad.html">Delete Ad</a></li>
+                    </ul>
+                </li>
+                <!--User Management-->
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">User Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
+                        <li><a href="../user-management/add-user.html">Add User</a></li>
+                        <li><a href="../user-management/users-list.html">Users List</a></li>
+                        <li><a href="../user-management/delete-user.html">Delete User</a></li>
+                        <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
+                        <li><a href="../user-management/logs.html">Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn">🚪 Logout</button>
+                </div>
+            </div>
+        </div>
+
+
+        <h1>Edit Advertisement</h1>
+        <form id="editAdForm" class="form-section">
+            <input type="hidden" id="adId" name="id" />
+
+            <label for="adType">Ad Type:</label>
+            <select id="adType" name="type" required></select>
+
+            <label for="adFile">Replace Image/Video (optional):</label>
+            <input type="file" id="adFile" name="file" accept="image/*,video/*" />
+
+            <label>Current Media Preview:</label>
+            <div id="previewContainer"></div>
+
+            <div id="preview" class="preview"></div>
+
+            <label for="adHtml">Embed Code (HTML only):</label>
+            <textarea id="adHtml" name="html" rows="4"></textarea>
+
+            <label for="adText">Text Content (Text only):</label>
+            <textarea id="adText" name="text" rows="3"></textarea>
+
+            <label for="adLink">Link (optional):</label>
+            <input type="url" id="adLink" name="link" />
+
+            <label for="adCompany">Company Name:</label>
+            <input type="text" id="adCompany" name="company" placeholder="Enter company name" required />
+
+
+            <label for="adCategory">Category:</label>
+            <select id="adCategory" name="category" required></select>
+
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate" required />
+
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate" required />
+
+            <label><input type="checkbox" id="adActive" name="active" /> Active</label>
+
+            <button type="submit">Update Ad</button>
+        </form>
+    </main>
+</div>
+
+<script>
+    const adId = new URLSearchParams(window.location.search).get('id');
+    const previewEl = document.getElementById('preview');
+
+    function renderPreview(ad) {
+        previewEl.innerHTML = '';
+        const previewContainer = document.getElementById('previewContainer');
+
+        // Clear previous preview
+        previewContainer.innerHTML = '';
+        previewEl.innerHTML = '';
+
+        if (ad.type === 'image') {
+            if (ad.file && ad.file.startsWith('data:image')) {
+                previewEl.innerHTML = `<img src="${ad.file}" alt="Ad Preview" style="max-width:100%; max-height:200px;">`;
+                previewContainer.innerHTML = `<img src="${ad.file}" style="max-width:100%; max-height:200px;">`;
+            } else {
+                previewContainer.innerHTML = '<p>No image available</p>';
+            }
+        }
+        else if (ad.type === 'video') {
+            if (ad.file && ad.file.startsWith('data:video')) {
+                previewEl.innerHTML = `<video controls src="${ad.file}" style="max-width:100%; max-height:200px;"></video>`;
+                previewContainer.innerHTML = `<video controls src="${ad.file}" style="max-width:100%; max-height:200px;"></video>`;
+            } else {
+                previewContainer.innerHTML = '<p>No video available</p>';
+            }
+        }
+        else if (ad.type === 'html' && ad.html) {
+            previewEl.innerHTML = `<iframe srcdoc="${ad.html.replace(/"/g, '&quot;')}" style="width:100%; height:200px; border:1px solid #ccc;"></iframe>`;
+        }
+        else if (ad.type === 'text' && ad.text) {
+            previewEl.innerHTML = `<div class="text-preview" style="padding:1rem; border:1px solid #ccc;">${ad.text}</div>`;
+        }
+        else {
+            previewEl.innerHTML = '<p>No preview available</p>';
+        }
+    }
+
+
+
+    document.getElementById('editAdForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const adFileInput = document.getElementById('adFile');
+
+        // Add all form fields to FormData
+        formData.append('id', document.getElementById('adId').value);
+        formData.append('type', document.getElementById('adType').value);
+        formData.append('category', document.getElementById('adCategory').value);
+        formData.append('startDate', document.getElementById('startDate').value);
+        formData.append('endDate', document.getElementById('endDate').value);
+        formData.append('active', document.getElementById('adActive').checked);
+        formData.append('html', document.getElementById('adHtml').value);
+        formData.append('text', document.getElementById('adText').value);
+        formData.append('link', document.getElementById('adLink').value);
+        formData.append('company', document.getElementById('adCompany').value);
+
+
+        // Handle file upload if a new file was selected
+        if (adFileInput.files[0]) {
+            formData.append('file', adFileInput.files[0]);
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/ads/${adId}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                showSuccess('✅ Ad updated successfully!');
+                setTimeout(() => window.location.href = 'ads-list.html', 1500);
+            } else {
+                const error = await response.json();
+                showError(`❌ Failed to update ad: ${error.error || 'Unknown error'}`);
+            }
+
+        } catch (err) {
+            console.error('Update error:', err);
+            showError('❌ Error occurred while updating the ad.');
+        }
+    });
+
+    document.getElementById('adFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const previewContainer = document.getElementById('previewContainer');
+            if (file.type.startsWith('image/')) {
+                previewContainer.innerHTML = `<img src="${event.target.result}" style="max-width:100%; max-height:200px;">`;
+            } else if (file.type.startsWith('video/')) {
+                previewContainer.innerHTML = `<video controls src="${event.target.result}" style="max-width:100%; max-height:200px;"></video>`;
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+
+
+    async function loadAd() {
+        if (!adId) {
+            document.querySelector('main').innerHTML = '<p>No ad selected.</p>';
+            return;
+        }
+
+        try {
+            // Load ad data
+            const adRes = await fetch(`http://localhost:3000/ads/${adId}`);
+            if (!adRes.ok) throw new Error('Failed to load ad');
+            const ad = await adRes.json();
+
+            // Load categories
+            const categoriesRes = await fetch('http://localhost:3000/ads');
+            const allAds = await categoriesRes.json();
+            const categories = [...new Set(allAds.map(a => a.category))];
+
+            // Populate form
+            document.getElementById('adId').value = ad.id;
+
+            // Populate type dropdown
+            const typeSelect = document.getElementById('adType');
+            typeSelect.innerHTML = `
+            <option value="image" ${ad.type === 'image' ? 'selected' : ''}>Image</option>
+            <option value="video" ${ad.type === 'video' ? 'selected' : ''}>Video</option>
+            <option value="html" ${ad.type === 'html' ? 'selected' : ''}>HTML</option>
+            <option value="text" ${ad.type === 'text' ? 'selected' : ''}>Text</option>
+        `;
+
+            // Populate category dropdown
+            const categorySelect = document.getElementById('adCategory');
+            categorySelect.innerHTML = categories.map(cat =>
+                `<option value="${cat}" ${cat === ad.category ? 'selected' : ''}>${cat}</option>`
+            ).join('');
+
+            // Fill other fields
+            document.getElementById('adHtml').value = ad.html || '';
+            document.getElementById('adText').value = ad.text || '';
+            document.getElementById('adLink').value = ad.link || '';
+            document.getElementById('adCompany').value = ad.company || '';
+            document.getElementById('startDate').value = ad.startDate.split('T')[0];
+            document.getElementById('endDate').value = ad.endDate.split('T')[0];
+            document.getElementById('adActive').checked = ad.active;
+
+            renderPreview(ad);
+        } catch (err) {
+            console.error('Load error:', err);
+            document.querySelector('main').innerHTML = `<p>Error loading ad: ${err.message}</p>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAd);
+
+
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>

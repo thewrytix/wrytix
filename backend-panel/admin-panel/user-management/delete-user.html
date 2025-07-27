@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete User - Wrytix Admin</title>
+  <link rel="stylesheet" href="../../backend-panel.css"/>
+  <style>
+    :root {
+      --primary: #ff6b00;
+      --danger: #d9534f;
+      --text-dark: #333;
+      --text-light: #fff;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .admin-main {
+      flex-grow: 1;
+      padding: 2rem;
+      background: #fff;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f7f7f7;
+    }
+
+    .delete-btn {
+      background-color: var(--danger);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination {
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      font-weight: bold;
+    }
+
+    .pagination button {
+      padding: 0.4rem 1rem;
+      border: none;
+      background-color: #ff6b00;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <!--Admin Management-->
+        <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+
+        <!--Post Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html" >Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <!--Ad Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <!--User Management-->
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+            <li><a href="add-user.html" >Add User</a></li>
+            <li><a href="users-list.html">Users List</a></li>
+            <li><a href="delete-user.html" class="active">Delete User</a></li>
+            <li><a href="user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="logs.html">Logs</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn">🚪 Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <h1>Delete User</h1>
+
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="Search by username or email"/>
+      <select id="roleFilter">
+        <option value="">All Roles</option>
+        <option value="viewer">Viewer</option>
+        <option value="author">Author</option>
+        <option value="editor">Editor</option>
+        <option value="admin">Admin</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="pending">Pending</option>
+        <option value="deleted">Deleted</option>
+      </select>
+      <button onclick="resetFilters()">Reset Filters</button>
+    </div>
+
+    <table id="userTable">
+      <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Avatar</th>
+        <th>Action</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="pagination" id="paginationControls">
+      <button id="prevPage">Prev</button>
+      <span id="pageIndicator">Page 1</span>
+      <button id="nextPage">Next </button>
+    </div>
+  </main>
+</div>
+
+<script>
+  const roleFilter = document.getElementById('roleFilter');
+  const statusFilter = document.getElementById('statusFilter');
+  const searchInput = document.getElementById('searchInput');
+  const tableBody = document.querySelector('#userTable tbody');
+  const pageIndicator = document.getElementById('pageIndicator');
+
+  let currentUser = { role: null, username: null, id: null };
+  let users = [];
+  let pendingDeletions = [];
+  let currentPage = 1;
+  const pageSize = 10;
+
+  window.onload = async () => {
+    await loadSessionInfo();
+    await fetchUsers();
+    await fetchPendingDeletions();
+    renderUsers();
+  };
+
+  async function loadSessionInfo() {
+    try {
+      const res = await fetch('http://localhost:3000/verify-session', { credentials: 'include' });
+      if (!res.ok) throw new Error('Invalid session');
+      const { user } = await res.json();
+      currentUser = { role: user.role, username: user.username, id: user.id };
+
+      if (!['admin', 'editor'].includes(user.role)) {
+        showError('Access denied. Redirecting...');
+        sessionStorage.clear();
+        return setTimeout(() => window.location.href = 'login.html', 1500);
+      }
+    } catch (err) {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    }
+  }
+
+  async function fetchUsers() {
+    try {
+      const res = await fetch('http://localhost:3000/users', { credentials: 'include' });
+      users = await res.json();
+    } catch (err) {
+      showError('❌ Failed to load users.');
+    }
+  }
+
+  async function fetchPendingDeletions() {
+    try {
+      const res = await fetch('http://localhost:3000/pendingDeletions', { credentials: 'include' });
+      const data = await res.json();
+      pendingDeletions = Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error('Error fetching pending deletions:', err);
+      pendingDeletions = [];
+    }
+  }
+
+  function isPending(userId) {
+    return Array.isArray(pendingDeletions) && pendingDeletions.some(req => req.targetId === userId);
+  }
+
+  function getPendingRequestByMe(userId) {
+    if (!Array.isArray(pendingDeletions)) return null;
+    return pendingDeletions.find(req => req.targetId === userId && req.requestedBy === currentUser.username);
+  }
+
+  function paginate(array, page, pageSize) {
+    const start = (page - 1) * pageSize;
+    return array.slice(start, start + pageSize);
+  }
+
+  function updatePagination(filteredUsers) {
+    const totalPages = Math.ceil(filteredUsers.length / pageSize);
+    pageIndicator.textContent = `Page ${currentPage}`;
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+  }
+
+  function renderUsers() {
+    const filtered = users.filter(user => {
+      const matchRole = !roleFilter.value || user.role === roleFilter.value;
+      const matchStatus = !statusFilter.value || user.status === statusFilter.value;
+      const matchSearch = !searchInput.value || user.username.toLowerCase().includes(searchInput.value.toLowerCase()) || user.email.toLowerCase().includes(searchInput.value.toLowerCase());
+      return matchRole && matchStatus && matchSearch;
+    });
+
+    const paginated = paginate(filtered, currentPage, pageSize);
+
+    tableBody.innerHTML = paginated.map(user => {
+      const pending = isPending(user.id);
+      const pendingByMe = getPendingRequestByMe(user.id);
+      const statusDisplay = pending ? '⏳ Pending' : user.status;
+
+      return `
+        <tr>
+          <td>${user.fullName || '—'}</td>
+          <td>${user.username}</td>
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td>${statusDisplay}</td>
+          <td>
+            ${user.avatar ? `<img src="${user.avatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">` : 'No avatar'}
+          </td>
+          <td>
+            ${pending && currentUser.role === 'editor' && pendingByMe ? `
+              <button class="delete-btn" onclick="cancelDeleteRequest('${user.id}')">Cancel</button>
+            ` : `
+              <button class="delete-btn" onclick="deleteUser('${user.id}')" ${pending ? 'disabled' : ''}>Delete</button>
+            `}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    updatePagination(filtered);
+  }
+
+  async function deleteUser(id) {
+    if (!currentUser.role) return showError('❌ User role not loaded.');
+    if (id === currentUser.id) return showError("⚠️ You can't delete yourself.");
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const userToDelete = users.find(u => u.id === id);
+      if (!userToDelete) throw new Error('User not found');
+
+      if (currentUser.role === 'admin') {
+        const res = await fetch(`http://localhost:3000/users/${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        showSuccess('✅ User deleted.');
+      } else {
+        const res = await fetch('http://localhost:3000/pendingDeletions', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userToDelete.id,
+            reason: `Requested by ${currentUser.username} to delete user: ${userToDelete.username}`,
+            targetId: userToDelete.id,
+            targetUsername: userToDelete.username,
+            targetFullName: userToDelete.fullName,
+            targetAvatar: userToDelete.avatar,
+            targetEmail: userToDelete.email,
+            targetRole: userToDelete.role,
+            requestedBy: currentUser.username
+          })
+        });
+        if (!res.ok) throw new Error('Request failed');
+        showSuccess('🔒 Delete request sent for admin approval.');
+      }
+
+      await fetchUsers();
+      await fetchPendingDeletions();
+      renderUsers();
+    } catch (err) {
+      console.error(err);
+      showError('❌ Could not delete user.');
+    }
+  }
+
+  async function cancelDeleteRequest(userId) {
+    const request = getPendingRequestByMe(userId);
+    if (!request) return showError('No matching request found.');
+
+    if (!confirm('Cancel your pending delete request?')) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/pendingDeletions/${request.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Cancel failed');
+      showSuccess('✅ Request canceled.');
+      await fetchPendingDeletions();
+      renderUsers();
+    } catch (err) {
+      console.error(err);
+      showError('❌ Could not cancel request.');
+    }
+  }
+
+  function goToPage(offset) {
+    currentPage += offset;
+    renderUsers();
+  }
+
+  roleFilter.addEventListener('change', () => { currentPage = 1; renderUsers(); });
+  statusFilter.addEventListener('change', () => { currentPage = 1; renderUsers(); });
+  searchInput.addEventListener('input', () => { currentPage = 1; renderUsers(); });
+
+  document.getElementById('prevPage').addEventListener('click', () => goToPage(-1));
+  document.getElementById('nextPage').addEventListener('click', () => goToPage(1));
+
+  function resetFilters() {
+    roleFilter.value = '';
+    statusFilter.value = '';
+    searchInput.value = '';
+    currentPage = 1;
+    renderUsers();
+  }
+
+
+</script>
+<script src="../admin-panel.js"></script>
+<script src="../../backend-panel.js"></script>
+</body>
+</html>
