@@ -1,5 +1,41 @@
 [
   {
+    "id": "1754129224057",
+    "actor": "final",
+    "action": "login-success",
+    "target": "final",
+    "timestamp": "2025-08-02T10:07:04.057Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754129208011",
+    "actor": "author",
+    "action": "login-success",
+    "target": "author",
+    "timestamp": "2025-08-02T10:06:48.011Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754128731854",
+    "actor": "masteradmin",
+    "action": "login-success",
+    "target": "masteradmin",
+    "timestamp": "2025-08-02T09:58:51.854Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754128716970",
+    "actor": "admin",
+    "action": "server-started",
+    "target": "port: 3000",
+    "timestamp": "2025-08-02T09:58:36.970Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
     "id": "1753134804521",
     "actor": "final",
     "action": "login-success",
