@@ -125,7 +125,7 @@
   function createRow(user) {
     return `
       <tr>
-        <td><img src="${user.avatar?.startsWith('data:') ? user.avatar : (user.avatar || '')}" alt="avatar" /></td>
+        <td><img src="${user.avatar?.startsWith('data:') ? user.avatar : (user.avatar || '')}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"/></td>
         <td>${user.fullName}</td>
         <td>${user.username}</td>
         <td>${user.email}</td>

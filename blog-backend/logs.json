@@ -1,5 +1,185 @@
 [
   {
+    "id": "1754133188270",
+    "actor": "masteradmin",
+    "action": "user-deleted",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:13:08.270Z",
+    "ip": "",
+    "userAgent": "",
+    "role": "author"
+  },
+  {
+    "id": "1754133177979",
+    "actor": "masteradmin",
+    "action": "user-updated",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:12:57.979Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "fullName",
+      "email",
+      "role",
+      "status"
+    ]
+  },
+  {
+    "id": "1754133159284",
+    "actor": "masteradmin",
+    "action": "user-updated",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:12:39.284Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "fullName",
+      "email",
+      "role",
+      "status"
+    ]
+  },
+  {
+    "id": "1754133013150",
+    "actor": "masteradmin",
+    "action": "user-updated",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:10:13.150Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "fullName",
+      "email",
+      "role",
+      "status"
+    ]
+  },
+  {
+    "id": "1754132765590",
+    "actor": "masteradmin",
+    "action": "user-updated",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:06:05.590Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "fullName",
+      "email",
+      "role",
+      "status"
+    ]
+  },
+  {
+    "id": "1754132713162",
+    "actor": "masteradmin",
+    "action": "user-approved",
+    "target": "WVEQvgadgd",
+    "timestamp": "2025-08-02T11:05:13.162Z",
+    "ip": "",
+    "userAgent": "",
+    "method": "direct-approve"
+  },
+  {
+    "id": "1754132577941",
+    "actor": "masteradmin",
+    "action": "login-success",
+    "target": "masteradmin",
+    "timestamp": "2025-08-02T11:02:57.941Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754132566186",
+    "actor": "WVEQvgadgd",
+    "action": "pending-user-created",
+    "target": "gighighihi@wrytix.com",
+    "timestamp": "2025-08-02T11:02:46.186Z",
+    "ip": "",
+    "userAgent": "",
+    "submittedBy": "final"
+  },
+  {
+    "id": "1754132506302",
+    "actor": "final",
+    "action": "login-success",
+    "target": "final",
+    "timestamp": "2025-08-02T11:01:46.302Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754132497837",
+    "actor": "final",
+    "action": "login-success",
+    "target": "final",
+    "timestamp": "2025-08-02T11:01:37.837Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754132487158",
+    "actor": "masteradmin",
+    "action": "pending-user-deleted",
+    "target": "gighighihi@wrytix.com",
+    "timestamp": "2025-08-02T11:01:27.158Z",
+    "ip": "",
+    "userAgent": "",
+    "reason": "Admin action"
+  },
+  {
+    "id": "1754132218381",
+    "actor": "masteradmin",
+    "action": "login-success",
+    "target": "masteradmin",
+    "timestamp": "2025-08-02T10:56:58.381Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754132142101",
+    "actor": "masteradmin",
+    "action": "user-updated",
+    "target": "author",
+    "timestamp": "2025-08-02T10:55:42.101Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "fullName",
+      "email",
+      "role",
+      "status"
+    ]
+  },
+  {
+    "id": "1754132074174",
+    "actor": "masteradmin",
+    "action": "login-success",
+    "target": "masteradmin",
+    "timestamp": "2025-08-02T10:54:34.174Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
+    "id": "1754131925088",
+    "actor": "system",
+    "action": "post-viewed",
+    "target": "lihwfaipphaffff",
+    "timestamp": "2025-08-02T10:52:05.088Z",
+    "ip": "",
+    "userAgent": "",
+    "views": 4
+  },
+  {
+    "id": "1754131881487",
+    "actor": "system",
+    "action": "post-viewed",
+    "target": "ffauifuiwfuafeajgj-gjuuruiry-hkffiiuui-jgjj",
+    "timestamp": "2025-08-02T10:51:21.487Z",
+    "ip": "",
+    "userAgent": "",
+    "views": 3
+  },
+  {
     "id": "1754129224057",
     "actor": "final",
     "action": "login-success",

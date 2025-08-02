@@ -30,6 +30,7 @@
             '/user-management/view-user.html',
             '/user-management/edit-user.html',
             '/user-management/user-approval-requests.html',
+            '/user-management/approval-view-user.html',
             '/user-management/logs.html',
             '/post-management/post-dashboard.html',
             '/post-management/posts-list.html',
