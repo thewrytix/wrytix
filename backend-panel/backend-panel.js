@@ -153,7 +153,7 @@ window.addEventListener('load', async () => {
 
 async function logout() {
     try {
-        await fetch('http://localhost:3000/logout', { credentials: 'include' });
+        await fetch('https://wrytix.onrender.com/logout', { credentials: 'include' });
     } catch (err) {
         console.error("Logout error:", err);
     } finally {
