@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
         // Step 1: Fetch post quickly
-        const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
+        const res = await fetch(`https://wrytix.onrender.com/${slug}`);
         if (!res.ok) throw new Error("Post not found");
         const post = await res.json();
 
