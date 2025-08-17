@@ -91,7 +91,7 @@ body {
 
 /* Webkit browsers (Chrome, Edge, Safari, Opera) */
 ::-webkit-scrollbar {
-    width: 10px;  /* Much thicker scrollbar */
+    width: 15px;  /* Much thicker scrollbar */
     height: 15px; /* For horizontal scrollbar */
 }
 
