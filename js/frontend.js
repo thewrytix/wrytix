@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Trending and Popular Posts
 async function fetchPostsFromAPI() {
     try {
-        const response = await fetch('http://localhost:3000/posts');
+        const response = await fetch('https://wrytix.onrender.com/posts');
         const data = await response.json();
 
         // Ensure slug and schedule exist, and format thumbnail if needed
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const res = await fetch("http://localhost:3000/headline");
+        const res = await fetch("https://wrytix.onrender.com/headline");
         const data = await res.json();
         document.getElementById("headline-marquee").textContent = data.text || "Welcome to Wrytix!";
     } catch (err) {
@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         async init() {
             try {
-                const response = await fetch("http://localhost:3000/posts");
+                const response = await fetch("https://wrytix.onrender.com/posts");
                 const data = await response.json();
 
                 // Convert API fields if needed
