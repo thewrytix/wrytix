@@ -103,7 +103,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--background-dark);
+    background: var(--text-light);
     border-radius: 10px;
     border: 4px solid rgba(0, 0, 0, 0); /* Transparent border */
     background-clip: padding-box; /* Ensures color doesn't bleed */
@@ -111,9 +111,9 @@ body {
 }
 
 /* Optional: Remove if you want no hover effect at all */
-/* ::-webkit-scrollbar-thumb:hover {
-    background: #ff6b00;
-} */
+ ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-color);
+}
 
 
 
