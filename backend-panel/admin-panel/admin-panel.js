@@ -1,7 +1,7 @@
 // 🔐 Verify session globally and store in sessionStorage
 async function verifyAndSetSession(requiredRole = 'admin') {
     try {
-        const res = await fetch('http://localhost:3000/verify-session', {
+        const res = await fetch('https://wrytix.onrender.com/verify-session', {
             credentials: 'include'
         });
 
