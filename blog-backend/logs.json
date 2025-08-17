@@ -1,5 +1,14 @@
 [
   {
+    "id": "1755463681274",
+    "actor": "admin",
+    "action": "server-started",
+    "target": "port: 3000",
+    "timestamp": "2025-08-17T20:48:01.274Z",
+    "ip": "",
+    "userAgent": ""
+  },
+  {
     "id": "1755437543041",
     "actor": "masteradmin",
     "action": "user-updated",

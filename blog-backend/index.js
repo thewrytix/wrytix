@@ -24,6 +24,11 @@ app.use(cors({
     credentials: true
 }));
 
+app.get("/", (req, res) => {
+    res.send("Backend is running 🚀");
+});
+
+
 app.use(session({
     secret: 'your_secret_key',
     resave: false,
