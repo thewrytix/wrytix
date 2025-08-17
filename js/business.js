@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <h3>${post.title}</h3>
                     <small class="post-date">${date}</small>
                     <p>${post.content.slice(0, 100)}...</p>
-                    <a href="https://wrytix.onrender.com/posts/view-post.html?slug=${post.slug}">Read More</a>
+                    <a href="https://faiselali.github.io/wrytix/posts/view-post.html?slug=${post.slug}">Read More</a>
                 </div>
                 <img src="${post.thumbnail}" alt="${post.title}">
             `;
