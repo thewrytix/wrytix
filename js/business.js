@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchNewsPosts() {
         try {
-            const response = await fetch('http://localhost:3000/posts');
+            const response = await fetch('https://wrytix.onrender.com/posts');
             const data = await response.json();
 
             allNewsPosts = data
@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "business";
     try {
-        const res = await fetch("http://localhost:3000/ads");
+        const res = await fetch("https://wrytix.onrender.com/ads");
         const ads = await res.json();
         const now = new Date();
 

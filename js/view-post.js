@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
         // Step 1: Fetch post quickly
-        const res = await fetch(`http://localhost:3000/posts/${slug}`);
+        const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
         if (!res.ok) throw new Error("Post not found");
         const post = await res.json();
 
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // Step 4: Fetch related posts in background
         setTimeout(async () => {
             try {
-                const allPostsRes = await fetch("http://localhost:3000/posts");
+                const allPostsRes = await fetch("https://wrytix.onrender.com/posts");
                 const allPosts = await allPostsRes.json();
                 const relatedPosts = allPosts.filter(p => p.category === post.category && p.slug !== post.slug).slice(0, 10);
 
@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }, 0);
 
         // Step 5: Increment views in background
-        fetch(`http://localhost:3000/posts/${slug}/view`, { method: 'POST' })
+        fetch(`https://wrytix.onrender.com/posts/${slug}/view`, { method: 'POST' })
             .catch(err => console.warn("Failed to update views:", err));
 
     } catch (error) {

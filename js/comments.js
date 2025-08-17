@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`http://localhost:3000/comments?slug=${slug}`);
+            const res = await fetch(`https://wrytix.onrender.com/comments?slug=${slug}`);
             const data = await res.json();
             allComments = data.reverse();
             visibleCount = Math.min(COMMENTS_PER_LOAD, allComments.length);
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!comment) return;
 
         try {
-            const res = await fetch("http://localhost:3000/comments", {
+            const res = await fetch("https://wrytix.onrender.com/comments", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
