@@ -15,7 +15,7 @@ const marketDataRoutes = require('./routes/marketData');
 
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const upload = multer({ dest: 'uploads/' });
 
 // ========= Middleware ========= //
