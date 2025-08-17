@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const featuredSection = document.querySelector(".featured-section");
 
     try {
-        const res = await fetch("http://localhost:3000/posts"); // Replace with your actual API URL
+        const res = await fetch("https://wrytix.onrender.com/posts"); // Replace with your actual API URL
         const posts = await res.json();
 
         // Filter only featured posts
