@@ -116,7 +116,7 @@
     // Fetch and show current headline
     document.addEventListener("DOMContentLoaded", async () => {
         try {
-            const res = await fetch("http://localhost:3000/headline");
+            const res = await fetch("https://wrytix.onrender.com/headline");
             const data = await res.json();
             headlineInput.value = data.text || "";
         } catch (err) {
@@ -130,7 +130,7 @@
         if (!newHeadline) return;
 
         try {
-            await fetch("http://localhost:3000/headline", {
+            await fetch("https://wrytix.onrender.com/headline", {
                 method: "PUT",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({text: newHeadline})
@@ -147,7 +147,7 @@
     async function loadDashboardStats() {
         try {
             // Fetch posts from backend (replace with your actual endpoint)
-            const response = await fetch('http://localhost:3000/posts/all');
+            const response = await fetch('https://wrytix.onrender.com/posts/all');
             const posts = await response.json();
 
             const now = new Date();

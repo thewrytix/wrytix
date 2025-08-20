@@ -199,7 +199,7 @@
 <script>
   async function loadDashboardData() {
     try {
-      const res = await fetch('http://localhost:3000/ads');
+      const res = await fetch('https://wrytix.onrender.com/ads');
       const ads = await res.json();
 
       const now = new Date();

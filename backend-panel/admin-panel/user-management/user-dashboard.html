@@ -112,8 +112,8 @@
 </div>
 <script>
   async function loadDashboardStats() {
-    const usersRes = await fetch('http://localhost:3000/users');
-    const pendingRes = await fetch('http://localhost:3000/pendingUsers');
+    const usersRes = await fetch('https://wrytix.onrender.com/users');
+    const pendingRes = await fetch('https://wrytix.onrender.com/pendingUsers');
     const users = await usersRes.json();
     const pending = await pendingRes.json();
 
