@@ -179,23 +179,36 @@ function updateSidebarPosts(posts) {
 
     if (!trendingUl || !popularUl) return;
 
-    const now = new Date();
+    function getDynamicThreshold(posts, percentage = 0.1) {
+        if (posts.length === 0) return 0;
 
-// Base time limits
+        // Sort posts by views (descending)
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+
+        // Index for top X% cutoff
+        const index = Math.floor(sorted.length * percentage);
+
+        // If percentage too small, ensure at least 1 element
+        const cutoffIndex = Math.max(index, 0);
+
+        return sorted[cutoffIndex]?.views || 0;
+    }
+
+    const now = new Date();
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-// Define thresholds (you can adjust numbers)
-    const trendingViewsThreshold = 50;   // if older, needs at least 50 views
-    const popularViewsThreshold = 100;   // if older, needs at least 100 views
+// Get thresholds dynamically
+    const trendingViewsThreshold = getDynamicThreshold(posts, 0.1); // top 10%
+    const popularViewsThreshold = getDynamicThreshold(posts, 0.05); // top 5%
 
     const trendingPosts = posts
         .filter(post => {
             const postDate = new Date(post.schedule);
             return (
-                // Case 1: within 2 weeks
+                // Within 2 weeks
                 postDate >= twoWeeksAgo ||
-                // Case 2: older, but lots of views
+                // Or older but in top 10% of views
                 post.views >= trendingViewsThreshold
             );
         })
@@ -206,14 +219,15 @@ function updateSidebarPosts(posts) {
         .filter(post => {
             const postDate = new Date(post.schedule);
             return (
-                // Case 1: within 1 month
+                // Within 1 month
                 postDate >= oneMonthAgo ||
-                // Case 2: older, but lots of views
+                // Or older but in top 5% of views
                 post.views >= popularViewsThreshold
             );
         })
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
+
     function createListItem(post) {
         return `
         <li>
