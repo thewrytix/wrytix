@@ -180,19 +180,40 @@ function updateSidebarPosts(posts) {
     if (!trendingUl || !popularUl) return;
 
     const now = new Date();
+
+// Base time limits
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+// Define thresholds (you can adjust numbers)
+    const trendingViewsThreshold = 50;   // if older, needs at least 50 views
+    const popularViewsThreshold = 100;   // if older, needs at least 100 views
+
     const trendingPosts = posts
-        .filter(post => new Date(post.schedule) >= twoWeeksAgo)
+        .filter(post => {
+            const postDate = new Date(post.schedule);
+            return (
+                // Case 1: within 2 weeks
+                postDate >= twoWeeksAgo ||
+                // Case 2: older, but lots of views
+                post.views >= trendingViewsThreshold
+            );
+        })
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
 
     const popularPosts = posts
-        .filter(post => new Date(post.schedule) >= oneMonthAgo)
+        .filter(post => {
+            const postDate = new Date(post.schedule);
+            return (
+                // Case 1: within 1 month
+                postDate >= oneMonthAgo ||
+                // Case 2: older, but lots of views
+                post.views >= popularViewsThreshold
+            );
+        })
         .sort((a, b) => b.views - a.views)
         .slice(0, 10);
-
     function createListItem(post) {
         return `
         <li>
