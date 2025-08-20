@@ -204,7 +204,7 @@
             </form>
         </div>
     </div>
-    <p class="copyright">© 2025 Your Site Name. All rights reserved.</p>
+    <p class="copyright"> © 2025 Wrytix. All rights reserved.</p>
 </footer>
 <div id="backToTop">
     <span ><i class="fa-solid fa-angle-up"></i></span> </div>
@@ -222,7 +222,7 @@
 
             async fetchMarketData() {
                 try {
-                    const res = await fetch('http://localhost:3000/api/market-data');
+                    const res = await fetch('https://wrytix.onrender.com/api/market-data');
                     const data = await res.json();
 
                     if (data.stocks) this.paginateAndRender(data.stocks, 'stock-data', 'stock-dots');
