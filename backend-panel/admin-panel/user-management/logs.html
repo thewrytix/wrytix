@@ -217,7 +217,7 @@
 
     async function fetchLogs(limit = 500) {
       try {
-        const url = new URL('http://localhost:3000/logs');
+        const url = new URL('https://wrytix.onrender.com/logs');
         url.searchParams.append('limit', limit);
         const res = await fetch(url, { credentials: 'include' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -308,7 +308,7 @@
       if (!confirm("Are you sure you want to delete ALL logs? This action cannot be undone.")) return;
 
       try {
-        const res = await fetch('http://localhost:3000/logs', {
+        const res = await fetch('https://wrytix.onrender.com/logs', {
           method: 'DELETE',
           credentials: 'include'
         });

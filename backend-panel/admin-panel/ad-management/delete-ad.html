@@ -113,7 +113,7 @@
 
     async function loadAds() {
         try {
-            const res = await fetch('http://localhost:3000/ads');
+            const res = await fetch('https://wrytix.onrender.com/ads');
             allAds = await res.json();
             currentPage = 1;
             filterAndRender();
@@ -216,7 +216,7 @@
 
         try {
             for (const checkbox of selected) {
-                await fetch(`http://localhost:3000/ads/${checkbox.dataset.id}`, { method: 'DELETE' });
+                await fetch(`https://wrytix.onrender.com/ads/${checkbox.dataset.id}`, { method: 'DELETE' });
             }
             alert('Selected ads deleted successfully.');
             await loadAds();

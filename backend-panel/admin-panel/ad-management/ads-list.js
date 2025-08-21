@@ -34,7 +34,7 @@ async function loadAds() {
     tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     try {
-        const res = await fetch('http://localhost:3000/ads');
+        const res = await fetch('https://wrytix.onrender.com/ads');
         const ads = await res.json();
 
         allFilteredAds = ads.filter(ad => {
@@ -134,7 +134,7 @@ function editAd(id) {
 async function deleteAd(id) {
     if (!confirm('Are you sure you want to delete this ad?')) return;
     try {
-        const res = await fetch(`http://localhost:3000/ads/${id}`, { method: 'DELETE' });
+        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, { method: 'DELETE' });
         if (res.ok) {
             alert('Ad deleted');
             loadAds();
@@ -150,7 +150,7 @@ async function deleteAd(id) {
 async function toggleAdStatus(id, currentStatus) {
     if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this ad?`)) return;
     try {
-        const res = await fetch(`http://localhost:3000/ads/${id}`, {
+        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ active: !currentStatus })

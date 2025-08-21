@@ -240,7 +240,7 @@
     // Session verification
     window.onload = async () => {
         try {
-            const sessionCheck = await fetch('http://localhost:3000/verify-session', {
+            const sessionCheck = await fetch('https://wrytix.onrender.com/verify-session', {
                 credentials: 'include'
             });
 
@@ -270,7 +270,7 @@
 
     async function loadUser() {
         try {
-            const res = await fetch(`http://localhost:3000/pendingUsers/${userId}`);
+            const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`);
             if (!res.ok) throw new Error('Failed to fetch user');
             const user = await res.json();
 

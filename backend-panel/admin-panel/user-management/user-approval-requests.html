@@ -187,7 +187,7 @@
   // Session verification on load
   async function loadAuthorRequests() {
     try {
-      const res = await fetch('http://localhost:3000/pendingUsers', {
+      const res = await fetch('https://wrytix.onrender.com/pendingUsers', {
         credentials: 'include',
         headers: { 'Cache-Control': 'no-cache' }
       });
@@ -231,7 +231,7 @@
 
   async function loadDeleteRequests() {
     try {
-      const res = await fetch('http://localhost:3000/pendingDeletions', {
+      const res = await fetch('https://wrytix.onrender.com/pendingDeletions', {
         credentials: 'include'
       });
 
@@ -269,7 +269,7 @@
     if (!confirm("Approve this user?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/pendingUsers/${userId}/approve`, {
+      const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}/approve`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -288,7 +288,7 @@
     if (!confirm("Reject this user?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/pendingUsers/${userId}`, {
+      const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`, {
         method: 'DELETE',
         credentials: 'include'
       });
@@ -308,7 +308,7 @@
     if (!confirm("Approve this deletion?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/pendingDeletions/${requestId}/approve`, {
+      const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/approve`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -327,7 +327,7 @@
     if (!confirm("Reject this deletion request?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/pendingDeletions/${requestId}/reject`, {
+      const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/reject`, {
         method: 'POST',
         credentials: 'include'
       });

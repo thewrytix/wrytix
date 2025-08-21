@@ -238,7 +238,7 @@
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/ads/${adId}`, {
+            const response = await fetch(`https://wrytix.onrender.com/ads/${adId}`, {
                 method: 'PUT',
                 body: formData
             });
@@ -283,12 +283,12 @@
 
         try {
             // Load ad data
-            const adRes = await fetch(`http://localhost:3000/ads/${adId}`);
+            const adRes = await fetch(`https://wrytix.onrender.com/ads/${adId}`);
             if (!adRes.ok) throw new Error('Failed to load ad');
             const ad = await adRes.json();
 
             // Load categories
-            const categoriesRes = await fetch('http://localhost:3000/ads');
+            const categoriesRes = await fetch('https://wrytix.onrender.com/ads');
             const allAds = await categoriesRes.json();
             const categories = [...new Set(allAds.map(a => a.category))];
 

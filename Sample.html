@@ -2,659 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Add Post - Wrytix Admin</title>
-    <link rel="stylesheet" href="../../backend-panel.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skeleton Example</title>
+    <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font" type="font/woff2" crossorigin>
     <style>
-        .formatting-toolbar {
-            margin-bottom: 10px;
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
+        @font-face {
+            font-family: 'Roboto';
+            src: url('https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
         }
-
-        .formatting-toolbar button{
-            padding: var(--spacing-sm);
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            height: 30px;
-            display: flex;
-            text-align: center;
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 20px;
         }
-
-        .formatting-toolbar button i{
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-
+        #preloader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #fff;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s;
         }
-
-
-        form select{
-            padding: 5px 7px;
+        #preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
-
-
-
-        .formatting-toolbar select{
-            width: 80px;
-            height: 30px;
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-            border: 2px solid var(--border-color);
-            text-align: center;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-content: center;
-
-
-
+        .skeleton {
+            background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 37%, #e0e0e0 63%);
+            background-size: 400% 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 6px;
         }
-
-        .formatting-toolbar select option{
-            color: var(--neutral-color);
-            display: flex;
-            justify-content: center;
-            align-content: center;
-            margin-bottom: 3px;
+        @keyframes shimmer {
+            0% { background-position: -400px 0; }
+            100% { background-position: 400px 0; }
         }
-
-        .formatting-toolbar label{
-            display: flex;
+        .skeleton-text {
+            height: 16px;
+            margin: 8px 0;
         }
-        .formatting-toolbar input[type="color"] {
-            cursor: pointer;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            height: 30px;
+        .skeleton-title {
+            height: 24px;
+            width: 60%;
+            margin: 12px 0;
         }
-
-        .rich-editor {
-            border: 1px solid var(--border-color);
-            min-height: 200px;
-            padding: 1.5em;
-            border-radius: 4px;
-            background: var(--neutral-color);
-            overflow-x: auto;
-            resize: vertical;
-        }
-
-        .rich-editor table {
+        .skeleton-img {
+            height: 180px;
             width: 100%;
-            border-collapse: collapse;
+            margin: 12px 0;
         }
-        .rich-editor th, .rich-editor td {
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .resizable-container {
-            display: inline-block;
-            resize: both;
-            overflow: auto;
-            max-width: 100%;
-            border: 1px dashed #888;
-            padding: 4px;
-            margin: 6px 0;
-            cursor: nwse-resize;
-        }
-
-        .resizable-wrapper {
-            position: relative;
-            display: inline-block;
-            border: 1px dashed #888;
-            padding: 0;
-            margin: 6px 0;
-            max-width: 100%;
-            overflow: visible;
-        }
-
-        .resizer {
-            box-sizing: border-box;
-        }
-
-        .resizable-wrapper .resizer,
-        .resizable-wrapper div[style*="position: absolute"] {
+        .hidden {
             display: none;
-        }
-
-        .resizable-wrapper.active .resizer,
-        .resizable-wrapper.active div[style*="position: absolute"] {
-            display: block !important;
         }
     </style>
 </head>
 <body>
-<div class="admin-container">
-    <aside class="admin-sidebar">
-        <h2> Wrytix Admin</h2>
-        <nav>
-            <ul>
-                <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
-                <li class="dropdown open">
-                    <button class="dropdown-toggle">Post Management ▼</button>
-                    <ul class="dropdown-menu">
-                        <li><a href="post-dashboard.html">Post Dashboard</a></li>
-                        <li><a href="posts-list.html">Posts List</a></li>
-                        <li><a href="add-post.html" class="active">Add Post</a></li>
-                        <li><a href="delete-post.html">Delete Posts</a></li>
-                        <li><a href="post-approval-requests.html">Post Approval Requests</a></li>
-                    </ul>
-                </li>
-                <li class="dropdown open">
-                    <button class="dropdown-toggle">Ad Management ▼</button>
-                    <ul class="dropdown-menu">
-                        <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
-                        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
-                        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
-                        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
-                    </ul>
-                </li>
-                <li class="dropdown open">
-                    <button class="dropdown-toggle">User Management ▼</button>
-                    <ul class="dropdown-menu">
-                        <li><a href="../user-management/user-dashboard.html">User Dashboard</a></li>
-                        <li><a href="../user-management/add-user.html">Add User</a></li>
-                        <li><a href="../user-management/users-list.html">Users List</a></li>
-                        <li><a href="../user-management/delete-user.html">Delete User</a></li>
-                        <li><a href="../user-management/user-approval-requests.html">Approval Requests</a></li>
-                        <li><a href="../user-management/logs.html">Logs</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-    </aside>
-    <main class="admin-main">
-        <div class="top-bar">
-            <div class="profile-dropdown">
-                <button class="profile-btn" id="profileBtn">Loading...</button>
-                <div class="profile-menu" id="profileMenu">
-                    <button id="logoutBtn">🚪 Logout</button>
-                </div>
-            </div>
-        </div>
-
-        <h1>Add New Post</h1>
-        <form id="addPostForm">
-            <label for="postTitle">Title</label>
-            <input type="text" id="postTitle" name="postTitle" required />
-
-            <label for="postSlug">Slug</label>
-            <input type="text" id="postSlug" name="postSlug" required />
-
-            <label for="postAuthor">Author</label>
-            <input type="text" id="postAuthor" name="postAuthor" required />
-
-            <label for="postCategory">Category</label>
-            <select id="postCategory" name="postCategory" required>
-                <option value="" disabled selected>Select a category</option>
-                <option value="news">News</option>
-                <option value="business">Business</option>
-                <option value="foreign">Foreign</option>
-                <option value="sports">Sports</option>
-                <option value="technology">Technology</option>
-                <option value="lifestyle">Lifestyle</option>
-            </select>
-
-            <label for="postThumbnail">Thumbnail Image</label>
-            <input type="file" id="postThumbnail" accept="image/*" />
-            <div id="thumbnailPreviewContainer" style="display:none;">
-                <p>Thumbnail Preview:</p>
-                <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc;" />
-            </div>
-
-            <label>Content</label>
-            <div class="formatting-toolbar">
-                <button type="button" title="Bold" onclick="formatText('bold')"><i class="fa-solid fa-bold"></i></button>
-                <button type="button" title="Italic" onclick="formatText('italic')"><i class="fa-solid fa-italic"></i></button>
-                <button type="button" title="Underline" onclick="formatText('underline')"><i class="fa-solid fa-underline"></i></button>
-                <label>
-                    <input type="color" id="fontColorPicker" title="Font Color" style="height: 30px; width: 25px; border:none; background: transparent; padding: 0;" />
-                </label>
-                <button type="button" title="Bullets" onclick="formatText('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
-                <button type="button" title="Numbers" onclick="formatText('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
-                <select onchange="applyHeading(this)" title="Header">
-                    <option value="" >Head</option>
-                    <option value="h2">H2</option>
-                    <option value="h3">H3</option>
-                    <option value="h4">H4</option>
-                </select>
-                <button type="button" title="Link" onclick="formatText('createLink')"><i class="fa-solid fa-link"></i></button>
-                <button type="button" title="Image" onclick="insertImage()"><i class="fa-solid fa-image"></i></button>
-                <button type="button" title="Align left" onclick="formatText('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
-                <button type="button" title="Align center" onclick="formatText('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
-                <button type="button" title="Align right" onclick="formatText('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
-                <button type="button" title="Align justify" onclick="formatText('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
-                <input type="file" id="imageUploader" accept="image/*" style="display:none" />
-            </div>
-            <div id="postContent" contenteditable="true" class="rich-editor" required></div>
-
-            <input type="hidden" name="postContentHidden" id="postContentHidden" />
-
-            <label for="postSource">Source</label>
-            <input type="text" id="postSource" name="postSource" />
-
-            <label><input type="checkbox" id="postFeatured" /> Mark as Featured</label>
-
-            <label for="postSchedule">Schedule Publish</label>
-            <input type="datetime-local" id="postSchedule" name="postSchedule" />
-
-            <button type="button" id="previewBtn">Preview Post</button>
-            <button type="submit">Add Post</button>
-        </form>
-    </main>
+<div id="preloader" aria-hidden="true"></div>
+<div id="skeleton" aria-hidden="true">
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton skeleton-text"></div>
+    <div class="skeleton skeleton-text"></div>
+    <div class="skeleton skeleton-img"></div>
+    <div class="skeleton skeleton-text"></div>
 </div>
-
+<div id="content" class="hidden">
+    <h1>Loaded Title</h1>
+    <p>This is the actual content.</p>
+    <img src="https://via.placeholder.com/600x180" alt="Demo" />
+    <p>More text after the image.</p>
+</div>
 <script>
-    const slugify = text =>
-        text.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-');
-
-    const readFileAsDataURL = file =>
-        new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-
-    const resetFormUI = () => {
-        document.getElementById('addPostForm').reset();
-        document.getElementById('thumbnailPreviewContainer').style.display = 'none';
-        document.getElementById('postContent').innerHTML = '';
-    };
-
-    document.getElementById('postTitle').addEventListener('input', e => {
-        const slug = slugify(e.target.value);
-        document.getElementById('postSlug').value = slug;
-        document.getElementById('postSource').value = `${slug}-post.html`;
+    window.addEventListener("load", () => {
+        document.getElementById("preloader").classList.add("hidden");
     });
-
-    document.getElementById('postThumbnail').addEventListener('change', async e => {
-        const file = e.target.files[0];
-        if (file) {
-            const imageUrl = await readFileAsDataURL(file);
-            document.getElementById('thumbnailPreview').src = imageUrl;
-            document.getElementById('thumbnailPreviewContainer').style.display = 'block';
-        }
-    });
-    document.getElementById('postContent').addEventListener('paste', function (e) {
-        e.preventDefault();
-
-        const clipboardData = e.clipboardData || window.clipboardData;
-        const htmlData = clipboardData.getData('text/html');
-        const textData = clipboardData.getData('text/plain');
-        const items = clipboardData.items;
-
-        for (const item of items) {
-            if (item.type.indexOf("image") === 0) {
-                const blob = item.getAsFile();
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                    const imgTag = `<img src="${event.target.result}" style="max-width:100%;border-radius:4px;" />`;
-                    document.execCommand('insertHTML', false, imgTag);
-                    makeImagesResizable(); // ✅ Added
-                };
-                reader.readAsDataURL(blob);
-                return;
-            }
-        }
-
-        if (htmlData) {
-            document.execCommand('insertHTML', false, htmlData);
-            makeImagesResizable(); // ✅ Optional
-        } else {
-            document.execCommand('insertText', false, textData);
-        }
-    });
-
-    document.getElementById('postContent').addEventListener('dragover', e => {
-        e.preventDefault();
-        e.currentTarget.style.border = '2px dashed #aaa';
-    });
-
-    document.getElementById('postContent').addEventListener('dragleave', e => {
-        e.preventDefault();
-        e.currentTarget.style.border = '1px solid var(--border-color)';
-    });
-
-    document.getElementById('postContent').addEventListener('drop', async e => {
-        e.preventDefault();
-        e.currentTarget.style.border = '1px solid var(--border-color)';
-        const files = e.dataTransfer.files;
-        for (const file of files) {
-            if (file.type.startsWith('image/')) {
-                const imageUrl = await readFileAsDataURL(file);
-                const imgTag = `<img src="${imageUrl}" style="max-width:100%;border-radius:4px;" />`;
-                document.execCommand('insertHTML', false, imgTag);
-                makeImagesResizable(); // ✅ Added
-            }
-        }
-    });
-
-    function applyHeading(select) {
-        const level = select.value;
-        if (level) {
-            formatText('formatBlock', `<${level}>`);
-            select.value = '';
-        }
-    }
-
-    function formatText(command, value = null) {
-        if (command === 'createLink') {
-            const url = prompt("Enter the link URL:");
-            if (url) document.execCommand(command, false, url);
-        } else {
-            document.execCommand(command, false, value);
-        }
-    }
-
-    function insertImage() {
-        document.getElementById('imageUploader').click();
-    }
-
-    document.getElementById('imageUploader').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const imageUrl = await readFileAsDataURL(file);
-            const imgTag = `<img src="${imageUrl}" style="max-width:100%;border-radius:4px;" />`;
-
-            const editor = document.getElementById('postContent');
-            editor.focus(); // 👈 Ensure contenteditable is in focus
-            document.execCommand('insertHTML', false, imgTag);
-
-            makeImagesResizable(); // ✅ Resize feature
-            e.target.value = ""; // Reset so selecting same image again will still trigger
-        }
-    });
-
-
-    document.getElementById('fontColorPicker').addEventListener('input', function () {
-        document.getElementById('postContent').focus();
-        const color = this.value;
-        document.execCommand('styleWithCSS', false, true);
-        document.execCommand('foreColor', false, color);
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.ctrlKey || e.metaKey) {
-            switch (e.key.toLowerCase()) {
-                case 'b':
-                    e.preventDefault(); formatText('bold'); break;
-                case 'i':
-                    e.preventDefault(); formatText('italic'); break;
-                case 'u':
-                    e.preventDefault(); formatText('underline'); break;
-                case 'l':
-                    if (e.shiftKey) { e.preventDefault(); formatText('justifyLeft'); }
-                    break;
-                case 'e':
-                    if (e.shiftKey) { e.preventDefault(); formatText('justifyCenter'); }
-                    break;
-                case 'r':
-                    if (e.shiftKey) { e.preventDefault(); formatText('justifyRight'); }
-                    break;
-            }
-        }
-    });
-
-    async function collectFormData() {
-        const title = document.getElementById('postTitle').value.trim();
-        const slug = document.getElementById('postSlug').value.trim();
-        const content = document.getElementById('postContent').innerHTML.trim();
-        const category = document.getElementById('postCategory').value;
-        const author = document.getElementById('postAuthor').value.trim();
-        const scheduleInput = document.getElementById('postSchedule').value;
-        const schedule = scheduleInput ? new Date(scheduleInput).toISOString() : new Date().toISOString();
-        const file = document.getElementById('postThumbnail').files[0];
-        const thumbnail = file ? await readFileAsDataURL(file) : '';
-        const isFeatured = document.getElementById('postFeatured').checked;
-        const source = document.getElementById('postSource').value.trim();
-
-        return { title, slug, content, category, author, schedule, thumbnail, isFeatured, source };
-    }
-
-    document.getElementById('previewBtn').addEventListener('click', async () => {
-        document.getElementById('postContentHidden').value = document.getElementById('postContent').innerHTML;
-        const data = await collectFormData();
-        if (!data.title || !data.slug || !data.content || !data.category) {
-            alert('Please fill all required fields.');
-            return;
-        }
-        sessionStorage.setItem('previewPost', JSON.stringify(data));
-        window.open('preview.html', '_blank');
-    });
-
-    document.getElementById('addPostForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        document.getElementById('postContentHidden').value = document.getElementById('postContent').innerHTML;
-        const data = await collectFormData();
-
-        if (!data.title || !data.slug || !data.content || !data.category || !data.author) {
-            alert('Please complete all required fields.');
-            return;
-        }
-
-        data.views = 0;
-        data.lastViewed = new Date().toISOString();
-
-        try {
-            const response = await fetch('http://localhost:3000/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Failed to add post.');
-            }
-
-            alert('Post added successfully!');
-            resetFormUI();
-        } catch (err) {
-            alert(`Error: ${err.message}`);
-        }
-    });
-
-    function makeImagesResizable() {
-        const editor = document.getElementById('postContent');
-        const images = editor.querySelectorAll('img');
-
-        images.forEach(img => {
-            if (img.closest('.resizable-wrapper')) return;
-
-            const wrapper = document.createElement('div');
-            wrapper.className = 'resizable-wrapper';
-            wrapper.contentEditable = false;
-            wrapper.style.position = 'relative';
-            wrapper.style.display = 'inline-block';
-            wrapper.style.margin = '6px 0';
-
-            img.style.display = 'block';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.maxWidth = '100%';
-            img.style.pointerEvents = 'none';
-
-            const imgClone = img.cloneNode(true);
-            wrapper.appendChild(imgClone);
-
-            // Create toolbar
-            const toolbar = document.createElement('div');
-            toolbar.style.position = 'absolute';
-            toolbar.style.top = '4px';
-            toolbar.style.right = '4px';
-            toolbar.style.zIndex = '10';
-            toolbar.style.display = 'none';
-            toolbar.style.gap = '4px';
-            toolbar.style.background = 'rgba(0,0,0,0.6)';
-            toolbar.style.padding = '2px 5px';
-            toolbar.style.borderRadius = '4px';
-
-            const replaceBtn = document.createElement('button');
-            replaceBtn.innerHTML = '🔄';
-            replaceBtn.style.cssText = 'background:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:12px;';
-            replaceBtn.onclick = () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = async () => {
-                    const file = input.files[0];
-                    if (file) {
-                        const url = await readFileAsDataURL(file);
-                        imgClone.src = url;
-                    }
-                };
-                input.click();
-            };
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '🗑';
-            deleteBtn.style.cssText = 'background:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:12px;';
-            deleteBtn.onclick = () => wrapper.remove();
-
-            toolbar.appendChild(replaceBtn);
-            toolbar.appendChild(deleteBtn);
-            wrapper.appendChild(toolbar);
-
-            // Add resizers
-            const resizers = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
-            resizers.forEach(dir => {
-                const handle = document.createElement('div');
-                handle.className = `resizer ${dir}`;
-                handle.dataset.dir = dir;
-                Object.assign(handle.style, {
-                    position: 'absolute',
-                    width: '10px',
-                    height: '10px',
-                    background: '#fff',
-                    border: '1px solid #555',
-                    zIndex: 11,
-                    cursor: `${dir}-resize`,
-                    display: 'none'
-                });
-
-                const positions = {
-                    nw: ['top', 'left'],
-                    n: ['top', 'left: 50%', 'transform: translateX(-50%)'],
-                    ne: ['top', 'right'],
-                    w: ['top: 50%', 'left', 'transform: translateY(-50%)'],
-                    e: ['top: 50%', 'right', 'transform: translateY(-50%)'],
-                    sw: ['bottom', 'left'],
-                    s: ['bottom', 'left: 50%', 'transform: translateX(-50%)'],
-                    se: ['bottom', 'right'],
-                };
-
-                positions[dir].forEach(p => {
-                    const [prop, val] = p.includes(':') ? p.split(':').map(x => x.trim()) : [p, '0'];
-                    handle.style[prop] = val;
-                });
-
-                handle.addEventListener('mousedown', function (e) {
-                    e.preventDefault();
-                    const startX = e.clientX;
-                    const startY = e.clientY;
-                    const startWidth = imgClone.offsetWidth;
-                    const startHeight = imgClone.offsetHeight;
-
-                    function onMouseMove(e) {
-                        const dx = e.clientX - startX;
-                        const dy = e.clientY - startY;
-
-                        switch (dir) {
-                            case 'nw':
-                                imgClone.style.width = `${startWidth - dx}px`;
-                                imgClone.style.height = `${startHeight - dy}px`;
-                                break;
-                            case 'n':
-                                imgClone.style.height = `${startHeight - dy}px`;
-                                break;
-                            case 'ne':
-                                imgClone.style.width = `${startWidth + dx}px`;
-                                imgClone.style.height = `${startHeight - dy}px`;
-                                break;
-                            case 'w':
-                                imgClone.style.width = `${startWidth - dx}px`;
-                                break;
-                            case 'e':
-                                imgClone.style.width = `${startWidth + dx}px`;
-                                break;
-                            case 'sw':
-                                imgClone.style.width = `${startWidth - dx}px`;
-                                imgClone.style.height = `${startHeight + dy}px`;
-                                break;
-                            case 's':
-                                imgClone.style.height = `${startHeight + dy}px`;
-                                break;
-                            case 'se':
-                                imgClone.style.width = `${startWidth + dx}px`;
-                                imgClone.style.height = `${startHeight + dy}px`;
-                                break;
-                        }
-                    }
-
-                    function onMouseUp() {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                    }
-
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                });
-
-                wrapper.appendChild(handle);
-            });
-
-            wrapper.addEventListener('click', function (e) {
-                e.stopPropagation();
-                document.querySelectorAll('.resizable-wrapper').forEach(w => {
-                    w.classList.remove('active');
-                    w.querySelectorAll('.resizer').forEach(r => r.style.display = 'none');
-                    const tb = w.querySelector('div[style*="position: absolute"]');
-                    if (tb) tb.style.display = 'none';
-                });
-                wrapper.classList.add('active');
-                wrapper.querySelectorAll('.resizer').forEach(r => r.style.display = 'block');
-                toolbar.style.display = 'flex';
-            });
-
-            img.parentNode.insertBefore(wrapper, img);
-            img.remove();
-        });
-
-        // Hide resizers on outside click
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.resizable-wrapper').forEach(w => {
-                w.classList.remove('active');
-                w.querySelectorAll('.resizer').forEach(r => r.style.display = 'none');
-                const tb = w.querySelector('div[style*="position: absolute"]');
-                if (tb) tb.style.display = 'none';
-            });
-        });
-    }
-
-
-
+    setTimeout(() => {
+        document.getElementById("skeleton").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+    }, 2000);
 </script>
-
-<script src="../admin-panel.js"></script>
-<script src="../../backend-panel.js"></script>
 </body>
 </html>
-
-
-
-
-
-

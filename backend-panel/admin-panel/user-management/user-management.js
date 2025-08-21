@@ -11,7 +11,7 @@ const message = document.getElementById('message');
 
 async function loadUsers() {
     try {
-        const res = await fetch('http://localhost:3000/users');
+        const res = await fetch('https://wrytix.onrender.com/users');
         allUsers = await res.json();
         currentPage = 1;
         filterAndRenderUsers();
@@ -89,7 +89,7 @@ async function deleteSelectedUsers() {
     try {
         for (const box of checkboxes) {
             const id = box.dataset.id;
-            await fetch(`http://localhost:3000/users/${id}`, { method: 'DELETE' });
+            await fetch(`https://wrytix.onrender.com/users/${id}`, { method: 'DELETE' });
         }
         message.textContent = '✅ Selected users deleted.';
         await loadUsers();

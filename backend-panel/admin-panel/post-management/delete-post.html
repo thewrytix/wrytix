@@ -97,7 +97,7 @@
 
   async function loadPosts() {
     try {
-      const res = await fetch('http://localhost:3000/posts/all');
+      const res = await fetch('https://wrytix.onrender.com/posts/all');
       allPosts = await res.json();
       populateFilters();
       currentPage = 1;
@@ -233,7 +233,7 @@
     try {
       for (const box of checkboxes) {
         const slug = box.dataset.id;
-        await fetch(`http://localhost:3000/posts/${slug}`, { method: 'DELETE' });
+        await fetch(`https://wrytix.onrender.com/posts/${slug}`, { method: 'DELETE' });
       }
       alert('✅ Selected posts deleted.');
       await loadPosts();

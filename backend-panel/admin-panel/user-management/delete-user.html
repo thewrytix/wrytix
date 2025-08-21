@@ -216,7 +216,7 @@
 
   async function loadSessionInfo() {
     try {
-      const res = await fetch('http://localhost:3000/verify-session', { credentials: 'include' });
+      const res = await fetch('https://wrytix.onrender.com/verify-session', { credentials: 'include' });
       if (!res.ok) throw new Error('Invalid session');
       const { user } = await res.json();
       currentUser = { role: user.role, username: user.username, id: user.id };
@@ -234,7 +234,7 @@
 
   async function fetchUsers() {
     try {
-      const res = await fetch('http://localhost:3000/users', { credentials: 'include' });
+      const res = await fetch('https://wrytix.onrender.com/users', { credentials: 'include' });
       users = await res.json();
     } catch (err) {
       showError('❌ Failed to load users.');
@@ -243,7 +243,7 @@
 
   async function fetchPendingDeletions() {
     try {
-      const res = await fetch('http://localhost:3000/pendingDeletions', { credentials: 'include' });
+      const res = await fetch('https://wrytix.onrender.com/pendingDeletions', { credentials: 'include' });
       const data = await res.json();
       pendingDeletions = Array.isArray(data) ? data : [];
     } catch (err) {
@@ -322,14 +322,14 @@
       if (!userToDelete) throw new Error('User not found');
 
       if (currentUser.role === 'admin') {
-        const res = await fetch(`http://localhost:3000/users/${id}`, {
+        const res = await fetch(`https://wrytix.onrender.com/users/${id}`, {
           method: 'DELETE',
           credentials: 'include'
         });
         if (!res.ok) throw new Error('Delete failed');
         showSuccess('✅ User deleted.');
       } else {
-        const res = await fetch('http://localhost:3000/pendingDeletions', {
+        const res = await fetch('https://wrytix.onrender.com/pendingDeletions', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -365,7 +365,7 @@
     if (!confirm('Cancel your pending delete request?')) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/pendingDeletions/${request.id}`, {
+      const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${request.id}`, {
         method: 'DELETE',
         credentials: 'include'
       });

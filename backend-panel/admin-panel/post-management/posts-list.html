@@ -208,7 +208,7 @@
     async function loadPosts() {
 
         try {
-            const res = await fetch('http://localhost:3000/posts/all');
+            const res = await fetch('https://wrytix.onrender.com/posts/all');
             if (!res.ok) throw new Error('Failed to load');
             allPosts = await res.json();
             renderPosts(allPosts);

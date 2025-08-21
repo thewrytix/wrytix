@@ -167,7 +167,7 @@
 
     async function loadSubmissions() {
         try {
-            const res = await fetch('http://localhost:3000/postSubmissions', {
+            const res = await fetch('https://wrytix.onrender.com/postSubmissions', {
                 credentials: 'include'
             });
             if (!res.ok) throw new Error(await res.text());
@@ -291,7 +291,7 @@
 
     async function approvePost(id) {
         try {
-            const res = await fetch(`http://localhost:3000/postSubmissions/${id}`, {
+            const res = await fetch(`https://wrytix.onrender.com/postSubmissions/${id}`, {
                 credentials: 'include'
             });
             const post = await res.json();
@@ -304,14 +304,14 @@
                 lastViewed: new Date().toISOString()
             };
 
-            await fetch('http://localhost:3000/posts', {
+            await fetch('https://wrytix.onrender.com/posts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify(approved)
             });
 
-            await fetch(`http://localhost:3000/postSubmissions/${id}`, {
+            await fetch(`https://wrytix.onrender.com/postSubmissions/${id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
@@ -340,14 +340,14 @@
         if (!reason) return alert("Rejection reason is required.");
 
         try {
-            const res = await fetch(`http://localhost:3000/postSubmissions/${selectedRejectId}`, {
+            const res = await fetch(`https://wrytix.onrender.com/postSubmissions/${selectedRejectId}`, {
                 credentials: 'include'
             });
             const post = await res.json();
 
             const updated = { ...post, status: 'rejected', editorComments: reason };
 
-            await fetch(`http://localhost:3000/postSubmissions/${selectedRejectId}`, {
+            await fetch(`https://wrytix.onrender.com/postSubmissions/${selectedRejectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
