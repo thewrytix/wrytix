@@ -20,8 +20,8 @@ const upload = multer({ dest: 'uploads/' });
 
 // ========= Middleware ========= //
 app.use(cors({
-    origin: ["https://wrytix.netlify.app"],  // exact domain, no trailing slash
-    credentials: true
+    origin: ["http://localhost:5500", "https://wrytix.netlify.app"], // ✅ allow dev + production
+    credentials: true, // ✅ allow cookies/sessions
 }));
 
 app.get("/", (req, res) => {
@@ -34,9 +34,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,         // ✅ must be true since frontend is HTTPS
+        secure: process.env.NODE_ENV === "production", // true only in prod
         httpOnly: true,
-        sameSite: 'none',     // ✅ must be 'none' for cross-site cookies
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 24 * 60 * 60 * 1000
     }
 }));
