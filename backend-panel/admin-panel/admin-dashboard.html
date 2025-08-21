@@ -105,7 +105,8 @@
         fetch('https://wrytix.onrender.com/users'),
         fetch('https://wrytix.onrender.com/ads'),
         fetch('https://wrytix.onrender.com/pendingUsers'),
-        {credentials: "include"}
+        {credentials: "include", method: "GET",
+        }
       ]);
 
       const posts = await postsRes.json();
