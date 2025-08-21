@@ -20,7 +20,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // ========= Middleware ========= //
 app.use(cors({
-    origin: ["http://localhost:5500", "https://wrytix.netlify.app"], // ✅ allow dev + production
+   origin: ["http://localhost:5500", "https://wrytix.netlify.app"], // ✅ allow dev + production
     credentials: true, // ✅ allow cookies/sessions
 }));
 
