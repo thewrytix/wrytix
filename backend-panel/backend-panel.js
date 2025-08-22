@@ -1,5 +1,5 @@
 (function () {
-    const loginRedirect = window.location.origin + '/index.html/backend-panel/login.html';
+    const loginRedirect = window.location.origin + '/backend-panel/login.html';
 
     const userData = sessionStorage.getItem("user");
     const loggedIn = sessionStorage.getItem("loggedIn");
