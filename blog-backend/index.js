@@ -32,14 +32,15 @@ app.get("/", (req, res) => {
 
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key', // Use env variable
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000}
+        secure: process.env.NODE_ENV === 'production', // true only in production
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 24 * 60 * 60 * 1000
+    }
 }));
 
 app.use(helmet());
