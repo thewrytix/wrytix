@@ -101,12 +101,10 @@
   async function fetchDashboardData() {
     try {
       const [postsRes, usersRes, adsRes, pendingRes] = await Promise.all([
-        fetch('https://wrytix.onrender.com/posts'),
-        fetch('https://wrytix.onrender.com/users'),
-        fetch('https://wrytix.onrender.com/ads'),
-        fetch('https://wrytix.onrender.com/pendingUsers'),
-        {credentials: "include", method: "GET",
-        }
+        fetch('https://wrytix.onrender.com/posts', { credentials: "include" }),
+        fetch('https://wrytix.onrender.com/users', { credentials: "include" }),
+        fetch('https://wrytix.onrender.com/ads', { credentials: "include" }),
+        fetch('https://wrytix.onrender.com/pendingUsers', { credentials: "include" })
       ]);
 
       const posts = await postsRes.json();
