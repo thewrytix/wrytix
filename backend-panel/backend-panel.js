@@ -145,7 +145,7 @@ toastStyle.textContent = `
 document.head.appendChild(toastStyle);
 
 const loginRedirect = window.location.origin + '/index.html/backend-panel/login.html';
-
+m
 window.addEventListener('load', async () => {
     const user = await verifyAndSetSession(); // will auto-redirect if not valid
     startSessionTimers(10, 20); // 10 min idle, 20 min absolute
