@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
 
         // Remaining featured posts in grid
-        const gridPosts = featuredPosts.slice(1, 6).map(post => `
+        const gridPosts = featuredPosts.slice(1, 7).map(post => `
             <div class="small-post">
                 <img src="${post.thumbnail}" alt="${post.title}">
                 <div>
