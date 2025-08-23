@@ -65,13 +65,21 @@
         ],
         editor: [
             '/backend-panel/editor/editor-dashboard.html',
+            '/backend-panel/editor/editor-dashboard',
             '/backend-panel/editor/editor-add-post.html',
+            '/backend-panel/editor/editor-add-post',
             '/backend-panel/editor/editor-preview.html',
+            '/backend-panel/editor/editor-preview',
             '/backend-panel/editor/editor-posts.html',
+            '/backend-panel/editor/editor-posts',
             '/backend-panel/editor/editor-edit-post.html',
+            '/backend-panel/editor/editor-edit-post',
             '/backend-panel/editor/editor-posts-approval.html',
+            '/backend-panel/editor/editor-posts-approval',
             '/backend-panel/editor/editor-edit-submission.html',
+            '/backend-panel/editor/editor-edit-submission',
             '/backend-panel/editor/editor-add-user.html',
+            '/backend-panel/editor/editor-add-user'
         ],
         author: [
             '/backend-panel/author/author-add-post.html',
