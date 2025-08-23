@@ -1335,11 +1335,8 @@ app.get('/check-email', (req, res) => {
 
 app.get('/verify-session', (req, res) => {
     if (!req.session.user) {
-
         return res.status(401).json({ error: 'Session expired' });
     }
-
-
     res.json({
         user: {
             id: req.session.user.id,

@@ -1,32 +1,39 @@
 async function verifyAndSetSession(requiredRole = 'admin') {
     try {
+        console.log('Making request to verify-session...');
+        console.log('Current cookies:', document.cookie);
+
         const res = await fetch('https://wrytix.onrender.com/verify-session', {
             credentials: 'include'
         });
+
+        console.log('Response status:', res.status);
+        console.log('Response headers:', [...res.headers.entries()]);
+
         if (!res.ok) {
-            console.error('Fetch response:', res.status, res.statusText);
-            throw new Error('Invalid session');
+            if (res.status === 401) {
+                console.log('No valid session - redirecting to login');
+                window.location.href = '../login.html';
+                return;
+            }
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }
+
         const { user } = await res.json();
-        if (!user || user.role !== requiredRole) {
-            alert("Access denied.");
-            window.location.href = '../login.html';
-            return;
-        }
-        sessionStorage.setItem('loggedIn', 'true');
-        sessionStorage.setItem('currentUser', user.username);
-        sessionStorage.setItem('role', user.role);
-        const profileBtn = document.getElementById('profileBtn');
-        if (profileBtn) {
-            profileBtn.textContent = `👤 ${user.username}`;
-        }
-        return user;
+        // ... rest of your code
+
     } catch (err) {
         console.error("Session error details:", {
             message: err.message,
             name: err.name,
             stack: err.stack
         });
+
+        // Check if it's a genuine network error vs HTTP error
+        if (err.message.includes('NetworkError') || err.message.includes('fetch')) {
+            console.error('This appears to be a network/CORS issue, not an auth issue');
+        }
+
         sessionStorage.clear();
         window.location.href = '../login.html';
     }
