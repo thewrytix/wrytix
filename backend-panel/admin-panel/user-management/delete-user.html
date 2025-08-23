@@ -224,11 +224,11 @@
       if (!['admin', 'editor'].includes(user.role)) {
         showError('Access denied. Redirecting...');
         sessionStorage.clear();
-        return setTimeout(() => window.location.href = 'login.html', 1500);
+        return setTimeout(() => window.location.href = '../../login.html', 1500);
       }
     } catch (err) {
       sessionStorage.clear();
-      window.location.href = 'login.html';
+      window.location.href = '../../login.html';
     }
   }
 
