@@ -44,7 +44,7 @@ app.use(session({
 }));
 
 app.options('/verify-session', cors({
-    origin: allowedOrigins,
+    origin: origin,
     credentials: true,
     methods: ['GET', 'OPTIONS'],
     allowedHeaders: ['Content-Type']
