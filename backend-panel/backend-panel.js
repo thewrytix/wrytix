@@ -67,6 +67,11 @@
         return allowedPaths.some(allowed => currentPath.endsWith(allowed));
     }
 
+    // Debug: Log the exact path being checked
+    console.log("Checking access for path:", currentPath);
+    console.log("User role:", role);
+    console.log("Available paths for role:", roleAccess[role]);
+
     if (!hasAccess(role, currentPath)) {
         console.warn("Access denied:", currentPath, "for role:", role);
         showError("Access denied: You're not allowed to view this page.");
