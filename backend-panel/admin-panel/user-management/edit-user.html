@@ -225,7 +225,7 @@
     <button type="submit">Update User</button>
 
     <div class="back-button">
-      <button onclick="window.location.origin='/backend-panel/admin-panel/user-management/users-list.html'">
+      <button onclick="window.location.href='users-list.html'">
         ← Back to Users List
       </button>
     </div>
@@ -257,12 +257,12 @@
       if (user.role !== 'admin') {
         showError('You do not have permission to access this page.');
         sessionStorage.clear();
-        return window.location.origin = '/backend-panel/login.html';
+        return window.location.href = '../../login.html';
       }
     } catch (err) {
       console.error('Initialization error:', err);
       sessionStorage.clear();
-      window.location.origin = '/backend-panel/login.html';
+      window.location.href = '../../login.html';
     }
   };
 
@@ -296,7 +296,7 @@
       }
     } catch (err) {
       showError('❌ Could not load user data');
-      setTimeout(() => window.location.href = 'users-list.html', 1500);
+      setTimeout(() => window.location.href = './users-list.html', 1500);
     }
   }
 
