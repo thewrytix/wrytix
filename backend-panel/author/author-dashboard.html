@@ -130,13 +130,13 @@
   const userData = sessionStorage.getItem('user');
   if (!userData) {
     alert("Please log in.");
-    window.location.href = 'login.html';
+    window.location.href = '../login.html';
   }
 
   const user = JSON.parse(userData);
   if (user.role !== 'author') {
     alert("Access denied. You are not an Author.");
-    window.location.href = 'login.html';
+    window.location.href = '../login.html';
   }
 
 
