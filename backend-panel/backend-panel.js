@@ -4,9 +4,7 @@
     const userData = sessionStorage.getItem("user");
     const loggedIn = sessionStorage.getItem("loggedIn");
 
-    // Debug logs (optional – remove in production)
-    console.log("Session LoggedIn:", loggedIn);
-    console.log("Session User:", userData);
+    // Debug logs removed for cleaner console
 
     if (loggedIn !== "true" || !userData) {
         showError("Please log in first.");
@@ -71,7 +69,7 @@
 
     if (!hasAccess(role, currentPath)) {
         console.warn("Access denied:", currentPath, "for role:", role);
-        showError("Access denied: You’re not allowed to view this page.");
+        showError("Access denied: You're not allowed to view this page.");
         setTimeout(() => {
             window.location.href = loginRedirect;
         }, 2000);
