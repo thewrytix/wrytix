@@ -127,12 +127,6 @@
       margin-top: 0.3rem;
       display: inline-block;
     }
-
-    .loading {
-      text-align: center;
-      padding: 2rem;
-      color: #666;
-    }
   </style>
 </head>
 <body>
@@ -140,45 +134,45 @@
 <aside class="admin-sidebar">
   <h2>Wrytix Admin</h2>
   <nav>
-    <ul>
-      <!--Admin Management-->
-      <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+  <ul>
+    <!--Admin Management-->
+    <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
 
-      <!--Post Management-->
-      <li class="dropdown open">
-        <button class="dropdown-toggle">Post Management ▼</button>
-        <ul class="dropdown-menu">
-          <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
-          <li><a href="../post-management/posts-list.html">Posts List</a></li>
-          <li><a href="../post-management/add-post.html" >Add Post</a></li>
-          <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
-          <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
-        </ul>
-      </li>
-      <!--Ad Management-->
-      <li class="dropdown open">
-        <button class="dropdown-toggle">Ad Management ▼</button>
-        <ul class="dropdown-menu">
-          <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
-          <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
-          <li><a href="../ad-management/ads-list.html">Ads List</a></li>
-          <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
-        </ul>
-      </li>
-      <!--User Management-->
-      <li class="dropdown open">
-        <button class="dropdown-toggle">User Management ▼</button>
-        <ul class="dropdown-menu">
-          <li><a href="user-dashboard.html">User Dashboard</a></li>
-          <li><a href="add-user.html" >Add User</a></li>
-          <li><a href="users-list.html">Users List</a></li>
-          <li><a href="delete-user.html">Delete User</a></li>
-          <li><a href="user-approval-requests.html">Approval Requests</a></li>
-          <li><a href="logs.html">Logs</a></li>
-        </ul>
-      </li>
-    </ul>
-  </nav>
+    <!--Post Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">Post Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+        <li><a href="../post-management/add-post.html" >Add Post</a></li>
+        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+        <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+      </ul>
+    </li>
+    <!--Ad Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">Ad Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+      </ul>
+    </li>
+    <!--User Management-->
+    <li class="dropdown open">
+      <button class="dropdown-toggle">User Management ▼</button>
+      <ul class="dropdown-menu">
+        <li><a href="user-dashboard.html">User Dashboard</a></li>
+        <li><a href="add-user.html" >Add User</a></li>
+        <li><a href="users-list.html">Users List</a></li>
+        <li><a href="delete-user.html">Delete User</a></li>
+        <li><a href="user-approval-requests.html">Approval Requests</a></li>
+        <li><a href="logs.html">Logs</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
 </aside>
 
 <div class="admin-main">
@@ -191,57 +185,51 @@
     </div>
   </div>
 
-  <div id="loadingMessage" class="loading">
-    <p>Loading user data...</p>
-  </div>
+  <h1>Edit User</h1>
+  <form id="editUserForm">
+    <label>Avatar:</label>
+    <img id="avatarPreview" src="" alt="Avatar" />
+    <input type="file" id="avatarInput" accept="image/*" />
 
-  <div id="editUserContent" style="display: none;">
-    <h1>Edit User</h1>
-    <form id="editUserForm">
-      <label>Avatar:</label>
-      <img id="avatarPreview" src="" alt="Avatar" />
-      <input type="file" id="avatarInput" accept="image/*" />
+    <label>Full Name:</label>
+    <input type="text" id="fullName" required />
 
-      <label>Full Name:</label>
-      <input type="text" id="fullName" required />
+    <label>Username:</label>
+    <input type="text" id="username" disabled />
 
-      <label>Username:</label>
-      <input type="text" id="username" disabled />
+    <label>Email:</label>
+    <input type="email" id="email" required />
 
-      <label>Email:</label>
-      <input type="email" id="email" required />
+    <label>New Password (optional):</label>
+    <input type="password" id="password" placeholder="Leave blank to keep old password" />
 
-      <label>New Password (optional):</label>
-      <input type="password" id="password" placeholder="Leave blank to keep old password" />
+    <label>Document Upload (optional):</label>
+    <input type="file" id="document" accept=".pdf,.doc,.docx,.jpg,.png" />
+    <div id="existingDocument"></div>
 
-      <label>Document Upload (optional):</label>
-      <input type="file" id="document" accept=".pdf,.doc,.docx,.jpg,.png" />
-      <div id="existingDocument"></div>
+    <label>Role:</label>
+    <select id="role">
+      <option value="viewer">Viewer</option>
+      <option value="author">Author</option>
+      <option value="editor">Editor</option>
+      <option value="admin">Admin</option>
+    </select>
 
-      <label>Role:</label>
-      <select id="role">
-        <option value="viewer">Viewer</option>
-        <option value="author">Author</option>
-        <option value="editor">Editor</option>
-        <option value="admin">Admin</option>
-      </select>
+    <label>Status:</label>
+    <select id="status">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="suspended">Suspended</option>
+    </select>
 
-      <label>Status:</label>
-      <select id="status">
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-        <option value="suspended">Suspended</option>
-      </select>
+    <button type="submit">Update User</button>
 
-      <button type="submit">Update User</button>
-
-      <div class="back-button">
-        <button type="button" onclick="window.location.href='users-list.html'">
-          ← Back to Users List
-        </button>
-      </div>
-    </form>
-  </div>
+    <div class="back-button">
+      <button onclick="window.location.href='users-list.html'">
+        ← Back to Users List
+      </button>
+    </div>
+  </form>
 </div>
 
 <script>
@@ -249,83 +237,38 @@
   const params = new URLSearchParams(window.location.search);
   const userId = params.get('id');
 
-  // Session verification and initialization
+  // Session verification on load
   window.onload = async () => {
     try {
-      // Check if userId exists in URL
-      if (!userId) {
-        showError('No user ID provided');
-        setTimeout(() => window.location.href = 'users-list.html', 1500);
-        return;
-      }
-
-      console.log('Starting session verification...');
-
       const sessionCheck = await fetch('https://wrytix.onrender.com/verify-session', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        credentials: 'include'
       });
 
-      console.log('Session check response:', sessionCheck.status);
+      if (!sessionCheck.ok) throw new Error('Session verification failed');
 
-      if (!sessionCheck.ok) {
-        throw new Error(`Session verification failed: ${sessionCheck.status}`);
-      }
+      const { user } = await sessionCheck.json();
 
-      const sessionData = await sessionCheck.json();
-      console.log('Session data:', sessionData);
-
-      const { user } = sessionData;
-
-      if (!user || !user.username) {
-        throw new Error('Invalid user data in session');
-      }
-
-      // Store session data
       sessionStorage.setItem('currentUser', user.username);
       sessionStorage.setItem('role', user.role);
-      sessionStorage.setItem('userRole', user.role);
+      sessionStorage.setItem('userRole', user.role); // ✅ Fix for endpoint check
       sessionStorage.setItem('loggedIn', 'true');
 
-      // Check admin permission
+      // ✅ Allow only admin
       if (user.role !== 'admin') {
         showError('You do not have permission to access this page.');
-        setTimeout(() => {
-          sessionStorage.clear();
-          window.location.href = '../../login.html';
-        }, 2000);
-        return;
+        sessionStorage.clear();
+        return window.location.href = '../../login.html';
       }
-
-      console.log('Session verified successfully, loading user data...');
-
-      // Only load user data if session is valid
-      await loadUser();
-
     } catch (err) {
       console.error('Initialization error:', err);
-      showError('Session expired or invalid. Redirecting to login...');
-      setTimeout(() => {
-        sessionStorage.clear();
-        window.location.href = '../../login.html';
-      }, 2000);
+      sessionStorage.clear();
+      window.location.href = '../../login.html';
     }
   };
 
-  // Avatar input handler
   document.getElementById('avatarInput').addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showError('Avatar file too large. Please choose a file under 5MB.');
-      this.value = '';
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       newAvatarBase64 = reader.result;
@@ -336,109 +279,75 @@
 
   async function loadUser() {
     try {
-      console.log('Fetching user data for ID:', userId);
-
-      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('User fetch response:', res.status);
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
-      }
-
+      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`);
       const user = await res.json();
-      console.log('User data loaded:', user);
 
-      // Populate form fields
       document.getElementById('fullName').value = user.fullName || '';
       document.getElementById('username').value = user.username || '';
       document.getElementById('email').value = user.email || '';
       document.getElementById('role').value = user.role || 'viewer';
       document.getElementById('status').value = user.status || 'active';
-      document.getElementById('avatarPreview').src = user.avatar || 'https://via.placeholder.com/100x100?text=Avatar';
+      document.getElementById('avatarPreview').src = user.avatar || 'default-avatar.png';
 
-      // Show existing document if available
       if (user.document) {
         document.getElementById('existingDocument').innerHTML = `
-          <a class="document-link" href="${user.document}" target="_blank">📄 View Current Document</a>
+          <a class="document-link" href="${user.document}" target="_blank">View Current Document</a>
         `;
       }
-
-      // Hide loading message and show content
-      document.getElementById('loadingMessage').style.display = 'none';
-      document.getElementById('editUserContent').style.display = 'block';
-
     } catch (err) {
-      console.error('Load user error:', err);
-      showError('❌ Could not load user data: ' + err.message);
-      setTimeout(() => window.location.href = 'users-list.html', 2000);
+      showError('❌ Could not load user data');
+      setTimeout(() => window.location.href = './users-list.html', 1500);
     }
   }
 
-  // Form submission handler
   document.getElementById('editUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('fullName', document.getElementById('fullName').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('role', document.getElementById('role').value);
+    formData.append('status', document.getElementById('status').value);
+
+    const password = document.getElementById('password').value.trim();
+    const docFile = document.getElementById('document').files[0];
+    if (password) formData.append('password', password);
+    if (docFile) formData.append('document', docFile);
+    if (newAvatarBase64) formData.append('avatar', newAvatarBase64);
 
     try {
-      const formData = new FormData();
-      formData.append('fullName', document.getElementById('fullName').value);
-      formData.append('email', document.getElementById('email').value);
-      formData.append('role', document.getElementById('role').value);
-      formData.append('status', document.getElementById('status').value);
-
-      const password = document.getElementById('password').value.trim();
-      const docFile = document.getElementById('document').files[0];
-
-      if (password) formData.append('password', password);
-      if (docFile) formData.append('document', docFile);
-      if (newAvatarBase64) formData.append('avatar', newAvatarBase64);
-
-      console.log('Submitting user update...');
-
       const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
         method: 'PUT',
         body: formData,
-        credentials: 'include'
+        credentials: 'include' // ✅ Required for session!
+
       });
 
-      console.log('Update response:', res.status);
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || 'Update failed');
-      }
-
+      if (!res.ok) throw new Error(await res.text());
       showSuccess('✅ User updated successfully');
       setTimeout(() => window.location.href = 'users-list.html', 1000);
-
     } catch (err) {
-      console.error('Update error:', err);
-      showError('❌ Update failed: ' + err.message);
+      console.error(err);
+      showError('❌ Update failed');
     }
   });
 
   function showError(msg) {
-    console.log('Showing error:', msg);
     const div = document.createElement('div');
     div.className = 'alert error';
     div.textContent = msg;
     document.body.appendChild(div);
-    setTimeout(() => div && div.remove(), 5000);
+    setTimeout(() => div.remove(), 5000);
   }
 
   function showSuccess(msg) {
-    console.log('Showing success:', msg);
     const div = document.createElement('div');
     div.className = 'alert success';
     div.textContent = msg;
     document.body.appendChild(div);
-    setTimeout(() => div && div.remove(), 3000);
+    setTimeout(() => div.remove(), 3000);
   }
+
+  loadUser();
 </script>
 <script src="../admin-panel.js"></script>
 <script src="../../backend-panel.js"></script>
