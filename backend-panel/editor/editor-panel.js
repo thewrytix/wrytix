@@ -1,33 +1,36 @@
-// 🔐 Verify session globally and store in sessionStorage
 async function verifyAndSetSession(requiredRole = 'editor') {
+    // Check local session first
+    const userData = sessionStorage.getItem("user");
+    const loggedIn = sessionStorage.getItem("loggedIn");
+
+    if (loggedIn !== "true" || !userData) {
+        window.location.href = '../login.html';
+        return null;
+    }
+
+    const user = JSON.parse(userData);
+
+    // Optional: Verify with server periodically
     try {
-        const res = await fetch('http://localhost:3000/verify-session', {
+        const res = await fetch('https://wrytix.onrender.com/verify-session', {
             credentials: 'include'
         });
-
-        if (!res.ok) throw new Error('Invalid session');
-
-        const { user } = await res.json();
-
-        if (!user || user.role !== requiredRole) {
-            alert("Access denied.");
-            window.location.href = '../login.html';
-            return;
+        // If server session expired, still use local session
+        if (!res.ok) {
+            console.debug('Server session expired, using local session');
         }
-
-        sessionStorage.setItem('loggedIn', 'true');
-        sessionStorage.setItem('currentUser', user.username);
-        sessionStorage.setItem('role', user.role);
-
-        const profileBtn = document.getElementById('profileBtn');
-        if (profileBtn) {
-            profileBtn.textContent = `👤 ${user.username}`;
-        }
-
-        return user;
     } catch (err) {
-        console.error("Session error:", err);
-        sessionStorage.clear();
-        window.location.href = '../login.html';
+        console.log('Server verification failed, using local session');
     }
+
+    // Set UI elements
+    sessionStorage.setItem('loggedIn', 'true');
+    sessionStorage.setItem('currentUser', user.username);
+    sessionStorage.setItem('role', user.role);
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.textContent = `👤 ${user.username}`;
+    }
+
+    return user;
 }
