@@ -4,8 +4,6 @@
     const userData = sessionStorage.getItem("user");
     const loggedIn = sessionStorage.getItem("loggedIn");
 
-    // Debug logs removed for cleaner console
-
     if (loggedIn !== "true" || !userData) {
         showError("Please log in first.");
         setTimeout(() => {
@@ -74,7 +72,6 @@
             '/backend-panel/editor/editor-posts-approval.html',
             '/backend-panel/editor/editor-edit-submission.html',
             '/backend-panel/editor/editor-add-user.html',
-
         ],
         author: [
             '/backend-panel/author/author-add-post.html',
@@ -89,13 +86,8 @@
         return allowedPaths.some(allowed => currentPath.endsWith(allowed));
     }
 
-    // Debug: Log the exact path being checked
-    console.log("Checking access for path:", currentPath);
-    console.log("User role:", role);
-    console.log("Available paths for role:", roleAccess[role]);
-
+    // 🔒 SECURE: No console logging of sensitive information
     if (!hasAccess(role, currentPath)) {
-        console.warn("Access denied:", currentPath, "for role:", role);
         showError("Access denied: You're not allowed to view this page.");
         setTimeout(() => {
             window.location.href = loginRedirect;
@@ -180,7 +172,7 @@ async function logout() {
     try {
         await fetch('https://wrytix.onrender.com/logout', { credentials: 'include' });
     } catch (err) {
-        console.error("Logout error:", err);
+        // Silent error handling in production
     } finally {
         sessionStorage.clear();
         window.location.href = loginRedirect;
@@ -194,7 +186,6 @@ function startSessionTimers(idleLimit = 10, absoluteLimit = 20) {
     function resetIdleTimer() {
         clearTimeout(idleTimer);
         idleTimer = setTimeout(() => {
-            console.log("Idle limit reached. Logging out...");
             logout();
         }, idleLimit * 60 * 1000);
     }
@@ -206,7 +197,6 @@ function startSessionTimers(idleLimit = 10, absoluteLimit = 20) {
     resetIdleTimer(); // Initial call
 
     absoluteTimer = setTimeout(() => {
-        console.log("Absolute time limit reached. Logging out...");
         logout();
     }, absoluteLimit * 60 * 1000);
 }
