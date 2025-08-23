@@ -30,6 +30,13 @@ app.get("/", (req, res) => {
     res.send("Backend is running 🚀");
 });
 
+// Add this after your existing CORS middleware
+app.options('*', cors({
+    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
