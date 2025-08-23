@@ -17,7 +17,7 @@ async function verifyAndSetSession(requiredRole = 'admin') {
         });
         // If server session expired, still use local session
         if (!res.ok) {
-            console.log('Server session expired, using local session');
+            console.debug('Server session expired, using local session');
         }
     } catch (err) {
         console.log('Server verification failed, using local session');
