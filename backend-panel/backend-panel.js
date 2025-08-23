@@ -75,9 +75,13 @@
         ],
         author: [
             '/backend-panel/author/author-add-post.html',
+            '/backend-panel/author/author-add-post',
             '/backend-panel/author/author-dashboard.html',
+            '/backend-panel/author/author-dashboard',
             '/backend-panel/author/author-posts.html',
+            '/backend-panel/author/author-posts',
             '/backend-panel/author/edit-rejected-submission.html',
+            '/backend-panel/author/edit-rejected-submission'
         ]
     };
 
