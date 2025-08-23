@@ -43,6 +43,13 @@ app.use(session({
     }
 }));
 
+app.options('/verify-session', cors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
