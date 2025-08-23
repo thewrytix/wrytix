@@ -207,34 +207,64 @@
   let currentPage = 1;
   const pageSize = 10;
 
-  window.onload = async () => {
-    await loadSessionInfo();
+  // 🎯 Let admin-panel.js handle session verification completely
+  // Just wait for it to complete and then initialize our page
+  window.addEventListener('load', async () => {
+    // Small delay to ensure admin-panel.js has completed its session verification
+    setTimeout(async () => {
+      await initializePage();
+    }, 100);
+  });
+
+  async function initializePage() {
+    // Get session data that admin-panel.js has already verified and set
+    const userData = sessionStorage.getItem('user');
+    const loggedIn = sessionStorage.getItem('loggedIn');
+
+    if (loggedIn !== 'true' || !userData) {
+      // admin-panel.js will handle the redirect, just return
+      return;
+    }
+
+    const user = JSON.parse(userData);
+    currentUser = { role: user.role, username: user.username, id: user.id };
+
+    // Check permissions for this specific page
+    if (!['admin', 'editor'].includes(user.role)) {
+      showError('Access denied to delete users.');
+      return;
+    }
+
+    // Load data after session is verified by admin-panel.js
     await fetchUsers();
     await fetchPendingDeletions();
     renderUsers();
-  };
-
-  async function loadSessionInfo() {
-    try {
-      const res = await fetch('https://wrytix.onrender.com/verify-session', { credentials: 'include' });
-      if (!res.ok) throw new Error('Invalid session');
-      const { user } = await res.json();
-      currentUser = { role: user.role, username: user.username, id: user.id };
-
-      if (!['admin', 'editor'].includes(user.role)) {
-        showError('Access denied. Redirecting...');
-        sessionStorage.clear();
-        return setTimeout(() => window.location.href = '../../login.html', 1500);
-      }
-    } catch (err) {
-      sessionStorage.clear();
-      window.location.href = '../../login.html';
-    }
   }
+
+  // Logout handler - admin-panel.js will also handle this, but keep for redundancy
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await fetch('https://wrytix.onrender.com/logout', {
+            method: 'POST',
+            credentials: 'include'
+          });
+        } catch (err) {
+          // Silent error
+        } finally {
+          sessionStorage.clear();
+          window.location.href = '../../login.html';
+        }
+      });
+    }
+  });
 
   async function fetchUsers() {
     try {
       const res = await fetch('https://wrytix.onrender.com/users', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch users');
       users = await res.json();
     } catch (err) {
       showError('❌ Failed to load users.');
@@ -244,10 +274,10 @@
   async function fetchPendingDeletions() {
     try {
       const res = await fetch('https://wrytix.onrender.com/pendingDeletions', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch pending deletions');
       const data = await res.json();
       pendingDeletions = Array.isArray(data) ? data : [];
     } catch (err) {
-      console.error('Error fetching pending deletions:', err);
       pendingDeletions = [];
     }
   }
@@ -277,7 +307,9 @@
     const filtered = users.filter(user => {
       const matchRole = !roleFilter.value || user.role === roleFilter.value;
       const matchStatus = !statusFilter.value || user.status === statusFilter.value;
-      const matchSearch = !searchInput.value || user.username.toLowerCase().includes(searchInput.value.toLowerCase()) || user.email.toLowerCase().includes(searchInput.value.toLowerCase());
+      const matchSearch = !searchInput.value ||
+              user.username.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+              user.email.toLowerCase().includes(searchInput.value.toLowerCase());
       return matchRole && matchStatus && matchSearch;
     });
 
@@ -353,7 +385,6 @@
       await fetchPendingDeletions();
       renderUsers();
     } catch (err) {
-      console.error(err);
       showError('❌ Could not delete user.');
     }
   }
@@ -375,7 +406,6 @@
       await fetchPendingDeletions();
       renderUsers();
     } catch (err) {
-      console.error(err);
       showError('❌ Could not cancel request.');
     }
   }
@@ -400,7 +430,21 @@
     renderUsers();
   }
 
+  function showError(msg) {
+    const div = document.createElement('div');
+    div.className = 'alert error';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  }
 
+  function showSuccess(msg) {
+    const div = document.createElement('div');
+    div.className = 'alert success';
+    div.textContent = msg;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+  }
 </script>
 <script src="../admin-panel.js"></script>
 <script src="../../backend-panel.js"></script>
