@@ -257,12 +257,12 @@
       if (user.role !== 'admin') {
         showError('You do not have permission to access this page.');
         sessionStorage.clear();
-        return window.location.href = '../../login.html';
+        return window.location.origin = '/backend-panel/login.html';
       }
     } catch (err) {
       console.error('Initialization error:', err);
       sessionStorage.clear();
-      window.location.href = '../../login.html';
+      window.location.origin = '/backend-panel/login.html';
     }
   };
 
