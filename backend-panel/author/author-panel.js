@@ -10,6 +10,14 @@ async function verifyAndSetSession(requiredRole = 'author') {
 
     const user = JSON.parse(userData);
 
+    // Handle role checking - support both string and array
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!allowedRoles.includes(user.role)) {
+        console.error('User role not authorized:', user.role, 'Required:', allowedRoles);
+        window.location.href = '../login.html';
+        return null;
+    }
+
     // Optional: Verify with server periodically
     try {
         const res = await fetch('https://wrytix.onrender.com/verify-session', {
@@ -25,7 +33,7 @@ async function verifyAndSetSession(requiredRole = 'author') {
 
     // Set UI elements
     sessionStorage.setItem('loggedIn', 'true');
-    sessionStorage.setItem('currentUser', user.username);
+    sessionStorage.setItem('currentUser', user.username); // Add this line
     sessionStorage.setItem('role', user.role);
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) {
