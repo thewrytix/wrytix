@@ -1,36 +1,33 @@
+// 🔐 Verify session globally and store in sessionStorage
 async function verifyAndSetSession(requiredRole = 'author') {
-    // Check local session first
-    const userData = sessionStorage.getItem("user");
-    const loggedIn = sessionStorage.getItem("loggedIn");
-
-    if (loggedIn !== "true" || !userData) {
-        window.location.href = '../login.html';
-        return null;
-    }
-
-    const user = JSON.parse(userData);
-
-    // Optional: Verify with server periodically
     try {
         const res = await fetch('https://wrytix.onrender.com/verify-session', {
             credentials: 'include'
         });
-        // If server session expired, still use local session
-        if (!res.ok) {
-            console.debug('Server session expired, using local session');
+
+        if (!res.ok) throw new Error('Invalid session');
+
+        const { user } = await res.json();
+
+        if (!user || user.role !== requiredRole) {
+            alert("Access denied.");
+            window.location.href = '../login.html';
+            return;
         }
+
+        sessionStorage.setItem('loggedIn', 'true');
+        sessionStorage.setItem('currentUser', user.username);
+        sessionStorage.setItem('role', user.role);
+
+        const profileBtn = document.getElementById('profileBtn');
+        if (profileBtn) {
+            profileBtn.textContent = `👤 ${user.username}`;
+        }
+
+        return user;
     } catch (err) {
-        console.log('Server verification failed, using local session');
+        console.error("Session error:", err);
+        sessionStorage.clear();
+        window.location.href = '../login.html';
     }
-
-    // Set UI elements
-    sessionStorage.setItem('loggedIn', 'true');
-    sessionStorage.setItem('currentUser', user.username);
-    sessionStorage.setItem('role', user.role);
-    const profileBtn = document.getElementById('profileBtn');
-    if (profileBtn) {
-        profileBtn.textContent = `👤 ${user.username}`;
-    }
-
-    return user;
 }
