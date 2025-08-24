@@ -75,7 +75,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
 
 // Close menu when clicking outside
 document.addEventListener('click', (e) => {
-    if (!navLinks.contains(e.target) && !hamburger.contains(e.target) && navLinks.classList.contains('active')) {
+    if (!navLinks.contains(e.target) && !hamburger.contains(e.target) && navLinks.classList.contains('show')) {
         hamburger.classList.remove('active');
         navLinks.classList.remove('show');
     }
