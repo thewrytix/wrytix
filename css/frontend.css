@@ -306,13 +306,34 @@ img {
     border-bottom: 2px solid var(--secondary-color);
 }
 
-.hamburger{
+.main-nav .hamburger{
     display: none;
+    flex-direction: column;
+    cursor: pointer;
+    gap: 5px;
+    z-index: 1001;
 }
 
+.main-nav .hamburger span {
+    background-color: var(--neutral-color);
+    height: 3px;
+    width: 28px;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
 
+/* Hamburger animation (X shape) */
+.main-nav .hamburger.active span:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
 
+.main-nav .hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
 
+.main-nav .hamburger.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
 
 /* Hero section  Quick links pages/*/
 .hero-section {
@@ -1048,7 +1069,7 @@ footer p.copyright {
 
     .main-nav .nav-links {
         position: fixed;
-        top: 9.6em;
+        top: 0;
         left: 0;
         right: 0;
         background: var(--background-dark);
@@ -1063,13 +1084,13 @@ footer p.copyright {
 
     .main-nav .nav-links.show {
         display: flex;
+        transform: translateX(0);
     }
 
-    .hamburger {
-        display: block;
-        font-size: 24px;
-        color: var(--neutral-color);
-        cursor: pointer;
+
+    .main-nav .hamburger {
+        display: flex;
+
     }
 
 
