@@ -1165,7 +1165,7 @@ footer p.copyright {
     }
 
     .main-nav .nav-links {
-        height: calc(30vh - 60px);
+        height: calc(50vh - 60px);
         background: var(--background-dark);
         flex-direction: column;
         padding: 10px;
