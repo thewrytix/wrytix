@@ -1177,7 +1177,7 @@ footer p.copyright {
 
     .main-nav .nav-links {
         height: calc(50vh - 60px);
-        background: var(--background-dark);
+        background: var(--primary-color);
         flex-direction: column;
         padding: 10px;
         gap: 0;
