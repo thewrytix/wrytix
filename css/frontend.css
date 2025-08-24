@@ -961,6 +961,7 @@ footer p.copyright {
         display: flex;
         justify-content: flex-end;
         align-items:flex-end;
+        margin: auto;
     }
 
     .main-content {
