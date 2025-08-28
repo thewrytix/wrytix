@@ -1,0 +1,51 @@
+[
+  {
+    "id": "1756069632862",
+    "actor": "test-user",
+    "action": "post-deleted",
+    "target": "test-post-1756069626662",
+    "timestamp": "2025-08-24T21:07:12.862Z",
+    "ip": "",
+    "userAgent": "",
+    "title": "Updated Test Post"
+  },
+  {
+    "id": "1756069630868",
+    "actor": "test-user",
+    "action": "post-updated",
+    "target": "test-post-1756069626662",
+    "timestamp": "2025-08-24T21:07:10.868Z",
+    "ip": "",
+    "userAgent": "",
+    "changes": [
+      "title"
+    ],
+    "title": "Updated Test Post"
+  },
+  {
+    "id": "1756069628854",
+    "actor": "test-user",
+    "action": "post-created",
+    "target": "test-post-1756069626662",
+    "timestamp": "2025-08-24T21:07:08.854Z",
+    "ip": "",
+    "userAgent": "",
+    "title": "Test Post",
+    "scheduled": "2025-08-24T21:07:06.662Z",
+    "isPublished": true
+  },
+  {
+    "id": "1756069611162",
+    "actor": "test-user",
+    "action": "setup-test",
+    "target": "system",
+    "timestamp": "2025-08-24T21:06:51.162Z",
+    "ip": "",
+    "userAgent": "",
+    "phase": 1
+  },
+  {
+    "test": "data",
+    "timestamp": "2025-08-24T21:06:51.157Z"
+  }
+]

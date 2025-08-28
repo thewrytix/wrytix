@@ -15,7 +15,9 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "mongodb": "^6.19.0",
+    "mongoose": "^8.18.0"
   },
   "engines": {
     "node": "18.x"

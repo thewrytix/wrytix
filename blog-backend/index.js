@@ -55,14 +55,14 @@ app.use((req, res, next) => {
 app.use(marketDataRoutes);
 
 // 📁 JSON File Paths
-const usersPath = path.join(__dirname, 'users.json');
-const pendingUsersPath = path.join(__dirname, 'pendingUsers.json');
-const pendingDeletionsPath = path.join(__dirname, 'pendingDeletions.json');
-const logsPath = path.join(__dirname, 'logs.json');
-const dataPath = path.join(__dirname, 'posts.json');
-const COMMENTS_FILE = path.join(__dirname, 'comments.json');
-const ADS_FILE = path.join(__dirname, 'ads.json');
-const postSubmissionsPath = path.join(__dirname, 'postSubmissions.json');
+const usersPath = path.join(__dirname, './data/users.json');
+const pendingUsersPath = path.join(__dirname, './data/pendingUsers.json');
+const pendingDeletionsPath = path.join(__dirname, './data/pendingDeletions.json');
+const logsPath = path.join(__dirname, './data/logs.json');
+const dataPath = path.join(__dirname, './data/posts.json');
+const COMMENTS_FILE = path.join(__dirname, './data/comments.json');
+const ADS_FILE = path.join(__dirname, './data/ads.json');
+const postSubmissionsPath = path.join(__dirname, './data/postSubmissions.json');
 
 // ======================
 // 🛠️ UTILITY FUNCTIONS

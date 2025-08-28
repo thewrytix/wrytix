@@ -1,0 +1,132 @@
+Backend Refactoring Structure
+Recommended File Structure
+/
+├── server.js (main entry point)
+├── config/
+│   ├── database.js
+│   ├── session.js
+│   └── middleware.js
+├── controllers/
+│   ├── authController.js
+│   ├── postController.js
+│   ├── userController.js
+│   ├── adController.js
+│   ├── commentController.js
+│   └── adminController.js
+├── middleware/
+│   ├── auth.js
+│   ├── validation.js
+│   └── logging.js
+├── routes/
+│   ├── index.js
+│   ├── auth.js
+│   ├── posts.js
+│   ├── users.js
+│   ├── ads.js
+│   ├── comments.js
+│   ├── admin.js
+│   └── marketData.js (existing)
+├── utils/
+│   ├── fileHelpers.js
+│   ├── jsonHelpers.js
+│   ├── dateHelpers.js
+│   └── logger.js
+├── models/
+│   ├── User.js
+│   ├── Post.js
+│   ├── Ad.js
+│   └── Comment.js
+└── data/ (JSON files)
+    ├── users.json
+    ├── posts.json
+    ├── ads.json
+    ├── comments.json
+    ├── logs.json
+    ├── pendingUsers.json
+    ├── pendingDeletions.json
+    └── postSubmissions.json
+Key Benefits of This Structure
+1. Separation of Concerns
+
+Routes: Handle HTTP routing and request/response
+Controllers: Contain business logic
+Middleware: Handle authentication, validation, logging
+Models: Define data structures and operations
+Utils: Reusable helper functions
+
+2. Maintainability
+
+Each file has a single responsibility
+Easy to locate and fix bugs
+Simple to add new features
+Clear code organization
+
+3. Scalability
+
+Easy to add new routes and controllers
+Middleware can be reused across routes
+Database operations are centralized
+Configuration is externalized
+
+4. Testing
+
+Individual components can be unit tested
+Controllers can be tested independently
+Middleware can be tested in isolation
+
+Implementation Steps
+Step 1: Create Configuration Files
+
+Extract session configuration
+Create middleware setup
+Centralize constants and paths
+
+Step 2: Create Middleware
+
+Authentication middleware
+Role-based access control
+Request logging
+Input validation
+
+Step 3: Create Models
+
+User model with CRUD operations
+Post model with scheduling logic
+Ad model with auto-toggle functionality
+Comment model
+
+Step 4: Create Controllers
+
+Move business logic from routes to controllers
+Handle error cases consistently
+Implement logging in controllers
+
+Step 5: Create Route Files
+
+Split routes by functionality
+Import appropriate controllers
+Apply middleware to routes
+
+Step 6: Update Main Server File
+
+Import route modules
+Apply global middleware
+Keep server.js minimal and clean
+
+Migration Strategy
+
+Gradual Migration: Migrate one feature at a time
+Maintain Compatibility: Keep existing endpoints working
+Test Each Step: Ensure functionality after each migration
+Documentation: Update API documentation as you go
+
+Example Benefits
+Before: 800+ lines in one file
+After:
+
+server.js: ~50 lines
+Each controller: ~100-150 lines
+Each route file: ~50-100 lines
+Utilities: ~30-50 lines each
+
+This structure makes the codebase much more maintainable and follows Node.js best practices.
