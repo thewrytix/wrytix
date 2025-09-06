@@ -17,10 +17,15 @@ const UserSchema = new Schema({
 });
 
 const PostSchema = new Schema({
-    id: { type: String },
+    id: { type: String, unique: true }, // Optional, remove if not used
     slug: { type: String, required: true, unique: true },
     title: { type: String, required: true },
-    content: { type: String },
+    author: { type: String, required: true }, // Add author
+    category: { type: String, required: true }, // Add category
+    thumbnail: { type: String }, // Add for base64 thumbnail
+    content: { type: String, required: true }, // Make content required
+    source: { type: String }, // Add source
+    featured: { type: Boolean, default: false }, // Add featured
     schedule: { type: Date },
     createdAt: { type: Date, default: Date.now },
     isPublished: { type: Boolean, default: false },
