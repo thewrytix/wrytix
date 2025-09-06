@@ -452,7 +452,7 @@ app.post('/posts/:slug/view', async (req, res) => {
 
 app.post('/posts', async (req, res) => {
     try {
-        console.log('Received Post Data:', req.body);
+        console.log('Received Post Slug:', req.body.slug); // Log only the slug
         const now = new Date();
         let scheduleDate;
         if (req.body.schedule) {
