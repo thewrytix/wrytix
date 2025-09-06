@@ -7,7 +7,7 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const marketDataRoutes = require('./routes/marketData');
-const { v4: uuid } = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 const connectDB = require('./config/db');
 const {
     User,
