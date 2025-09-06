@@ -467,6 +467,7 @@ app.post('/posts', async (req, res) => {
         }
 
         const newPost = {
+            id: uuidv4(), // Generate unique ID
             ...req.body,
             createdAt: now,
             schedule: scheduleDate,
@@ -490,11 +491,20 @@ app.post('/posts', async (req, res) => {
         res.status(201).json(newPost);
     } catch (err) {
         await logAction(req.session.user?.username, 'post-create-error', 'system', {
-            error: err.message
+            error: err.message,
+            stack: err.stack,
+            code: err.code
         });
-        res.status(500).json({ error: "Server error" });
+        if (err.name === 'MongoServerError' && err.code === 11000) {
+            return res.status(400).json({ error: `Duplicate key error: ${err.message}` });
+        }
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ error: `Validation failed: ${err.message}` });
+        }
+        res.status(500).json({ error: `Server error: ${err.message}` });
     }
 });
+
 
 app.put('/posts/:slug', async (req, res) => {
     try {

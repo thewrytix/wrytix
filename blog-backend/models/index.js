@@ -17,7 +17,7 @@ const UserSchema = new Schema({
 });
 
 const PostSchema = new Schema({
-    id: { type: String, unique: true }, // Optional, remove if not used
+    id: { type: String, required: true, unique: true },
     slug: { type: String, required: true, unique: true },
     title: { type: String, required: true },
     author: { type: String, required: true }, // Add author
