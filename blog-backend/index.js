@@ -452,6 +452,7 @@ app.post('/posts/:slug/view', async (req, res) => {
 
 app.post('/posts', async (req, res) => {
     try {
+        console.log('Received Post Data:', req.body);
         const now = new Date();
         let scheduleDate;
         if (req.body.schedule) {
@@ -467,7 +468,7 @@ app.post('/posts', async (req, res) => {
         }
 
         const newPost = {
-            id: uuidv4(), // Generate unique ID
+            id: uuidv4(),
             ...req.body,
             createdAt: now,
             schedule: scheduleDate,
@@ -504,7 +505,6 @@ app.post('/posts', async (req, res) => {
         res.status(500).json({ error: `Server error: ${err.message}` });
     }
 });
-
 
 app.put('/posts/:slug', async (req, res) => {
     try {
