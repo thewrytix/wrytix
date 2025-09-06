@@ -1,7 +1,3 @@
-// ============================
-// 📦 Server Setup - Wrytix CMS
-// ============================
-
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -11,8 +7,18 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const marketDataRoutes = require('./routes/marketData');
-
-
+const { v4: uuid } = require('uuid');
+const connectDB = require('./config/db');
+const {
+    User,
+    Post,
+    Ad,
+    Comment,
+    PendingUser,
+    PendingDeletion,
+    PostSubmission,
+    Log,
+} = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,16 +36,14 @@ app.get("/", (req, res) => {
     res.send("Backend is running 🚀");
 });
 
-
-
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: true,              // force HTTPS cookies
-        sameSite: 'none',          // allow cross-site
+        secure: true,
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000
     }
 }));
@@ -54,105 +58,69 @@ app.use((req, res, next) => {
 });
 app.use(marketDataRoutes);
 
-// 📁 JSON File Paths
-const usersPath = path.join(__dirname, './data/users.json');
-const pendingUsersPath = path.join(__dirname, './data/pendingUsers.json');
-const pendingDeletionsPath = path.join(__dirname, './data/pendingDeletions.json');
-const logsPath = path.join(__dirname, './data/logs.json');
-const dataPath = path.join(__dirname, './data/posts.json');
-const COMMENTS_FILE = path.join(__dirname, './data/comments.json');
-const ADS_FILE = path.join(__dirname, './data/ads.json');
-const postSubmissionsPath = path.join(__dirname, './data/postSubmissions.json');
-
 // ======================
 // 🛠️ UTILITY FUNCTIONS
 // ======================
 
-function readJson(file) {
+async function readCollection(Model) {
     try {
-        if (!fs.existsSync(file)) {
-            const dir = path.dirname(file);
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-            }
-            fs.writeFileSync(file, '[]');
-        }
-        return JSON.parse(fs.readFileSync(file, 'utf8'));
+        return await Model.find().lean();
     } catch (err) {
-        console.error(`Error reading ${file}:`, err);
+        console.error(`Error reading ${Model.modelName}:`, err);
         return [];
     }
 }
 
-function writeJson(file, data) {
-    const dir = path.dirname(file);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-function readPosts() {
-    if (!fs.existsSync(dataPath)) return [];
+async function writeDocument(Model, document) {
     try {
-        const data = fs.readFileSync(dataPath, 'utf-8');
-        return JSON.parse(data);
-    } catch (e) {
-        console.error("Error reading posts:", e);
-        return [];
+        await new Model(document).save();
+    } catch (err) {
+        console.error(`Error writing to ${Model.modelName}:`, err);
+        throw err;
     }
 }
 
-function writePosts(posts) {
+async function updateDocument(Model, filter, update) {
     try {
-        fs.writeFileSync(dataPath, JSON.stringify(posts, null, 2), 'utf-8');
-    } catch (e) {
-        console.error("Error writing posts:", e);
+        await Model.updateOne(filter, { $set: update });
+    } catch (err) {
+        console.error(`Error updating ${Model.modelName}:`, err);
+        throw err;
     }
 }
 
-function getPublishedPosts() {
+async function deleteDocument(Model, filter) {
+    try {
+        await Model.deleteOne(filter);
+    } catch (err) {
+        console.error(`Error deleting from ${Model.modelName}:`, err);
+        throw err;
+    }
+}
+
+async function getPublishedPosts() {
     const now = new Date();
-    return readPosts().filter(post => {
-        try {
-            const postDate = new Date(post.schedule || post.createdAt);
-            return postDate <= now;
-        } catch (e) {
-            console.error("Invalid date for post:", post.slug, e);
-            return false;
+    return await Post.find({ schedule: { $lte: now } }).lean();
+}
+
+async function readAds() {
+    const now = new Date();
+    const ads = await Ad.find().lean();
+    let updated = false;
+    for (let ad of ads) {
+        if (ad.endDate && new Date(ad.endDate) < now && ad.active) {
+            ad.active = false;
+            updated = true;
+            await updateDocument(Ad, { _id: ad._id }, { active: false });
         }
-    });
-}
-
-function readAds() {
-    try {
-        const data = fs.readFileSync(ADS_FILE, 'utf-8');
-        const ads = JSON.parse(data || '[]');
-        const now = new Date();
-
-        let updated = false;
-        for (let ad of ads) {
-            if (ad.endDate && new Date(ad.endDate) < now && ad.active) {
-                ad.active = false;
-                updated = true;
-            }
-        }
-
-        if (updated) writeAds(ads);
-        return ads;
-    } catch (e) {
-        console.error("Error reading ads:", e);
-        return [];
     }
+    return ads;
 }
 
-function writeAds(data) {
-    try {
-        fs.writeFileSync(ADS_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error("Error writing ads:", e);
-    }
+async function writeAds(ad) {
+    await writeDocument(Ad, ad);
 }
+
 function verifySession(req, res, next) {
     if (req.session && req.session.user) {
         return next();
@@ -169,53 +137,55 @@ function autoToggleAds(ads) {
         return { ...ad, active: shouldBeActive };
     });
 }
+
 function requireRole(allowedRoles) {
     return function (req, res, next) {
         const user = req.session?.user;
         if (!user) {
             return res.status(401).json({ message: 'Unauthorized: No session found' });
         }
-
         if (!allowedRoles.includes(user.role)) {
             return res.status(403).json({ message: 'Forbidden: Insufficient role' });
         }
-
         next();
     };
 }
 
-function readComments() {
+async function readComments(slug) {
     try {
-        const data = fs.readFileSync(COMMENTS_FILE, 'utf8');
-        return JSON.parse(data || '{}');
+        const commentDoc = await Comment.findOne({ slug }).lean();
+        return commentDoc ? commentDoc.comments : [];
     } catch (err) {
         console.error("Error reading comments:", err);
-        return {};
+        return [];
     }
 }
 
-function writeComments(data) {
-    fs.writeFileSync(COMMENTS_FILE, JSON.stringify(data, null, 2));
+async function writeComments(slug, comment) {
+    try {
+        await Comment.updateOne(
+            { slug },
+            { $push: { comments: comment } },
+            { upsert: true }
+        );
+    } catch (err) {
+        console.error("Error writing comments:", err);
+        throw err;
+    }
 }
 
-function getPostSubmissions() {
-    return JSON.parse(fs.readFileSync(postSubmissionsPath, 'utf-8'));
-}
-
-function logAction(actor, action, target, additionalData = {}) {
-    const logs = readJson(logsPath);
+async function logAction(actor, action, target, additionalData = {}) {
     const newLog = {
         id: Date.now().toString(),
         actor: actor || 'system',
         action,
         target: target || '',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
         ip: additionalData.ip || '',
         userAgent: additionalData.userAgent || '',
         ...additionalData
     };
-    logs.unshift(newLog);
-    writeJson(logsPath, logs);
+    await writeDocument(Log, newLog);
     return newLog;
 }
 
@@ -241,8 +211,6 @@ function requireLogin(req, res, next) {
     next();
 }
 
-
-
 function requireEditorOrAdmin(req, res, next) {
     if (req.session.user?.role === 'editor' || req.session.user?.role === 'admin') {
         return next();
@@ -251,23 +219,20 @@ function requireEditorOrAdmin(req, res, next) {
 }
 
 // ⏱️ Auto-refresh ad status every 10 minutes
-setInterval(() => {
-    const ads = readAds();
-    writeAds(ads);
+setInterval(async () => {
+    await readAds();
 }, 10 * 60 * 1000);
 
 // ======================
 // 🚀 ROUTES
 // ======================
 
-
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = readJson(usersPath);
+    const user = await User.findOne({ username, status: 'active' }).lean();
 
-    const user = users.find(u => u.username === username && u.status === 'active');
     if (!user) {
-        logAction(username, 'login-failed', username, { reason: 'User not found' });
+        await logAction(username, 'login-failed', username, { reason: 'User not found' });
         return res.status(401).json({ error: 'Invalid username or password' });
     }
 
@@ -298,7 +263,7 @@ app.post('/logout', (req, res) => {
 let headline = "Welcome to Wrytix – Tips, Stories, Tech & Lifestyle! 🚀 | Check out our latest post on boosting productivity | Don't miss our trending business hacks!";
 
 app.get("/headline", (req, res) => {
-   res.json({ text: headline });
+    res.json({ text: headline });
 });
 
 app.put("/headline", (req, res) => {
@@ -312,11 +277,9 @@ app.put("/headline", (req, res) => {
     res.status(400).json({ error: "Invalid headline text" });
 });
 
-app.post('/ads', (req, res) => {
+app.post('/ads', async (req, res) => {
     try {
-        const ads = readAds();
-        const now = new Date().toISOString();
-
+        const now = new Date();
         const ad = {
             id: Date.now().toString(),
             type: req.body.type,
@@ -332,190 +295,169 @@ app.post('/ads', (req, res) => {
             createdAt: now
         };
 
-        ads.push(ad);
-        writeAds(ads);
-
-        logAction(req.session.user?.username, 'ad-created', ad.id, {
+        await writeDocument(Ad, ad);
+        await logAction(req.session.user?.username, 'ad-created', ad.id, {
             type: ad.type,
             company: ad.company
         });
 
         res.status(201).json({ message: 'Ad created successfully', ad });
     } catch (error) {
-        logAction(req.session.user?.username, 'ad-create-failed', 'system', {
+        await logAction(req.session.user?.username, 'ad-create-failed', 'system', {
             error: error.message
         });
         res.status(500).json({ error: 'Failed to save ad' });
     }
 });
 
-app.get('/ads', (req, res) => {
+app.get('/ads', async (req, res) => {
     try {
-        const ads = readAds();
+        const ads = await readAds();
         res.json(ads);
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch ads' });
     }
 });
 
-app.get('/ads/:id', (req, res) => {
+app.get('/ads/:id', async (req, res) => {
     try {
-        const ads = readAds();
-        const ad = ads.find(a => a.id === req.params.id);
+        const ad = await Ad.findOne({ id: req.params.id }).lean();
         if (!ad) {
-
             return res.status(404).json({ error: 'Ad not found' });
         }
-
         res.json(ad);
     } catch (e) {
-       res.status(500).json({ error: 'Failed to load ad' });
+        res.status(500).json({ error: 'Failed to load ad' });
     }
 });
 
-app.put('/ads/:id', upload.single('file'), (req, res) => {
+app.put('/ads/:id', upload.single('file'), async (req, res) => {
     try {
-        const ads = readAds();
-        const index = ads.findIndex(ad => ad.id === req.params.id);
-        if (index === -1) {
-            logAction(req.session.user?.username, 'ad-update-failed', req.params.id, {
+        const ad = await Ad.findOne({ id: req.params.id }).lean();
+        if (!ad) {
+            await logAction(req.session.user?.username, 'ad-update-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'Ad not found' });
         }
 
         const updatedAd = {
-            ...ads[index],
+            ...ad,
             ...req.body,
             active: req.body.active === 'true' || req.body.active === true,
-            id: ads[index].id,
-            updatedAt: new Date().toISOString()
+            id: ad.id,
+            updatedAt: new Date()
         };
 
         if (req.file) {
             updatedAd.file = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
         }
 
-        ads[index] = updatedAd;
-        writeAds(ads);
-
-        logAction(req.session.user?.username, 'ad-updated', updatedAd.id, {
+        await updateDocument(Ad, { id: req.params.id }, updatedAd);
+        await logAction(req.session.user?.username, 'ad-updated', updatedAd.id, {
             changes: Object.keys(req.body)
         });
 
         res.json({ message: 'Ad updated', ad: updatedAd });
     } catch (err) {
-        logAction(req.session.user?.username, 'ad-update-error', req.params.id, {
+        await logAction(req.session.user?.username, 'ad-update-error', req.params.id, {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.delete('/ads/:id', (req, res) => {
+app.delete('/ads/:id', async (req, res) => {
     try {
-        const ads = readAds();
-        const index = ads.findIndex(ad => ad.id === req.params.id);
-        if (index === -1) {
-            logAction(req.session.user?.username, 'ad-delete-failed', req.params.id, {
+        const ad = await Ad.findOne({ id: req.params.id }).lean();
+        if (!ad) {
+            await logAction(req.session.user?.username, 'ad-delete-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: "Ad not found" });
         }
 
-        const deleted = ads.splice(index, 1)[0];
-        writeAds(ads);
-
-        logAction(req.session.user?.username, 'ad-deleted', deleted.id, {
-            type: deleted.type,
-            company: deleted.company
+        await deleteDocument(Ad, { id: req.params.id });
+        await logAction(req.session.user?.username, 'ad-deleted', ad.id, {
+            type: ad.type,
+            company: ad.company
         });
 
-        res.json({ message: 'Ad deleted successfully', deleted });
+        res.json({ message: 'Ad deleted successfully', deleted: ad });
     } catch (err) {
-        logAction(req.session.user?.username, 'ad-delete-error', req.params.id, {
+        await logAction(req.session.user?.username, 'ad-delete-error', req.params.id, {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.get('/posts', (req, res) => {
+app.get('/posts', async (req, res) => {
     try {
-        const posts = getPublishedPosts();
-
+        const posts = await getPublishedPosts();
         res.json(posts);
     } catch (err) {
-
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.get('/posts/all', (req, res) => {
+app.get('/posts/all', async (req, res) => {
     try {
-        const posts = readPosts();
-
+        const posts = await readCollection(Post);
         res.json(posts);
     } catch (err) {
-
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.get('/posts/:slug', (req, res) => {
+app.get('/posts/:slug', async (req, res) => {
     try {
-        const posts = readPosts();
-        const post = posts.find(p => p.slug === req.params.slug);
+        const post = await Post.findOne({ slug: req.params.slug }).lean();
         if (!post) {
-
             return res.status(404).json({ message: 'Post not found' });
         }
-
         res.json(post);
     } catch (err) {
-
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.post('/posts/:slug/view', (req, res) => {
+app.post('/posts/:slug/view', async (req, res) => {
     try {
-        const posts = readPosts();
-        const index = posts.findIndex(p => p.slug === req.params.slug);
-        if (index === -1) {
-            logAction(req.session.user?.username, 'post-view-failed', req.params.slug, {
+        const post = await Post.findOne({ slug: req.params.slug }).lean();
+        if (!post) {
+            await logAction(req.session.user?.username, 'post-view-failed', req.params.slug, {
                 reason: 'Not found'
             });
             return res.status(404).json({ message: 'Post not found' });
         }
 
-        posts[index].views = (posts[index].views || 0) + 1;
-        posts[index].lastViewed = new Date().toISOString();
-        writePosts(posts);
+        await Post.updateOne(
+            { slug: req.params.slug },
+            { $inc: { views: 1 }, $set: { lastViewed: new Date() } }
+        );
 
-        logAction(req.session.user?.username, 'post-viewed', posts[index].slug, {
-            views: posts[index].views
+        await logAction(req.session.user?.username, 'post-viewed', post.slug, {
+            views: (post.views || 0) + 1
         });
 
         res.status(200).json({ message: "View incremented" });
     } catch (err) {
-        logAction(req.session.user?.username, 'post-view-error', req.params.slug, {
+        await logAction(req.session.user?.username, 'post-view-error', req.params.slug, {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.post('/posts', (req, res) => {
+app.post('/posts', async (req, res) => {
     try {
-        const posts = readPosts();
         const now = new Date();
-
         let scheduleDate;
         if (req.body.schedule) {
             scheduleDate = new Date(req.body.schedule);
             if (isNaN(scheduleDate.getTime())) {
-                logAction(req.session.user?.username, 'post-create-failed', 'invalid date', {
+                await logAction(req.session.user?.username, 'post-create-failed', 'invalid date', {
                     schedule: req.body.schedule
                 });
                 return res.status(400).json({ error: "Invalid schedule date format" });
@@ -526,41 +468,39 @@ app.post('/posts', (req, res) => {
 
         const newPost = {
             ...req.body,
-            createdAt: now.toISOString(),
-            schedule: scheduleDate.toISOString(),
+            createdAt: now,
+            schedule: scheduleDate,
             isPublished: scheduleDate <= now
         };
 
-        if (posts.some(p => p.slug === newPost.slug)) {
-            logAction(req.session.user?.username, 'post-create-failed', newPost.slug, {
+        const existingPost = await Post.findOne({ slug: newPost.slug }).lean();
+        if (existingPost) {
+            await logAction(req.session.user?.username, 'post-create-failed', newPost.slug, {
                 reason: 'Slug exists'
             });
             return res.status(400).json({ message: 'Slug already exists' });
         }
 
-        posts.push(newPost);
-        writePosts(posts);
-
-        logAction(req.session.user?.username, 'post-created', newPost.slug, {
+        await writeDocument(Post, newPost);
+        await logAction(req.session.user?.username, 'post-created', newPost.slug, {
             title: newPost.title,
             scheduled: newPost.schedule
         });
 
         res.status(201).json(newPost);
     } catch (err) {
-        logAction(req.session.user?.username, 'post-create-error', 'system', {
+        await logAction(req.session.user?.username, 'post-create-error', 'system', {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.put('/posts/:slug', (req, res) => {
+app.put('/posts/:slug', async (req, res) => {
     try {
-        const posts = readPosts();
-        const index = posts.findIndex(p => p.slug === req.params.slug);
-        if (index === -1) {
-            logAction(req.session.user?.username, 'post-update-failed', req.params.slug, {
+        const post = await Post.findOne({ slug: req.params.slug }).lean();
+        if (!post) {
+            await logAction(req.session.user?.username, 'post-update-failed', req.params.slug, {
                 reason: 'Not found'
             });
             return res.status(404).json({ message: 'Post not found' });
@@ -570,110 +510,97 @@ app.put('/posts/:slug', (req, res) => {
         if (req.body.schedule) {
             scheduleDate = new Date(req.body.schedule);
             if (isNaN(scheduleDate.getTime())) {
-                logAction(req.session.user?.username, 'post-update-failed', req.params.slug, {
+                await logAction(req.session.user?.username, 'post-update-failed', req.params.slug, {
                     reason: 'Invalid date',
                     schedule: req.body.schedule
                 });
                 return res.status(400).json({ error: "Invalid schedule date format" });
             }
         } else {
-            scheduleDate = new Date(posts[index].schedule);
+            scheduleDate = new Date(post.schedule);
         }
 
         const updatedPost = {
-            ...posts[index],
+            ...post,
             ...req.body,
-            schedule: scheduleDate.toISOString(),
+            schedule: scheduleDate,
             isPublished: scheduleDate <= new Date()
         };
 
-        posts[index] = updatedPost;
-        writePosts(posts);
-
-        logAction(req.session.user?.username, 'post-updated', updatedPost.slug, {
+        await updateDocument(Post, { slug: req.params.slug }, updatedPost);
+        await logAction(req.session.user?.username, 'post-updated', updatedPost.slug, {
             changes: Object.keys(req.body)
         });
 
         res.json(updatedPost);
     } catch (err) {
-        logAction(req.session.user?.username, 'post-update-error', req.params.slug, {
+        await logAction(req.session.user?.username, 'post-update-error', req.params.slug, {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.delete('/posts/:slug', (req, res) => {
+app.delete('/posts/:slug', async (req, res) => {
     try {
-        let posts = readPosts();
-        const index = posts.findIndex(p => p.slug === req.params.slug);
-        if (index === -1) {
-            logAction(req.session.user?.username, 'post-delete-failed', req.params.slug, {
+        const post = await Post.findOne({ slug: req.params.slug }).lean();
+        if (!post) {
+            await logAction(req.session.user?.username, 'post-delete-failed', req.params.slug, {
                 reason: 'Not found'
             });
             return res.status(404).json({ message: 'Post not found' });
         }
 
-        const deleted = posts.splice(index, 1);
-        writePosts(posts);
-
-        logAction(req.session.user?.username, 'post-deleted', req.params.slug, {
-            title: deleted[0].title
+        await deleteDocument(Post, { slug: req.params.slug });
+        await logAction(req.session.user?.username, 'post-deleted', req.params.slug, {
+            title: post.title
         });
 
-        res.json({ message: 'Deleted', post: deleted[0] });
+        res.json({ message: 'Deleted', post });
     } catch (err) {
-        logAction(req.session.user?.username, 'post-delete-error', req.params.slug, {
+        await logAction(req.session.user?.username, 'post-delete-error', req.params.slug, {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
     }
 });
 
-app.post('/postSubmissions', requireRole(['author']), (req, res) => {
+app.post('/postSubmissions', requireRole(['author']), async (req, res) => {
     try {
-        const submissions = readJson(postSubmissionsPath);
         const newPost = {
             id: Date.now().toString(),
             ...req.body,
             status: 'pending',
             submittedBy: req.session.user.username,
             editorComments: '',
-            createdAt: new Date().toISOString()
+            createdAt: new Date()
         };
-        submissions.push(newPost);
-        writeJson(postSubmissionsPath, submissions);
-        logAction(req.session.user.username, 'post-submitted', newPost.title);
+        await writeDocument(PostSubmission, newPost);
+        await logAction(req.session.user.username, 'post-submitted', newPost.title);
         res.status(201).json({ message: 'Post submitted for approval', post: newPost });
     } catch (err) {
         res.status(500).json({ error: 'Failed to submit post' });
     }
 });
 
-
-app.get('/postSubmissions', requireRole(['author', 'editor', 'admin']), (req, res) => {
-    const submissions = readJson(postSubmissionsPath);
+app.get('/postSubmissions', requireRole(['author', 'editor', 'admin']), async (req, res) => {
+    const submissions = await readCollection(PostSubmission);
     res.json(submissions);
 });
 
-
-app.get('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), (req, res) => {
-    const submissions = getPostSubmissions();
-    const post = submissions.find(p => String(p.id) === String(req.params.id));
+app.get('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), async (req, res) => {
+    const post = await PostSubmission.findOne({ id: req.params.id }).lean();
     if (!post) return res.status(404).send("Submission not found.");
     res.json(post);
 });
 
-
-app.put('/postSubmissions/:id', requireRole(['author','editor', 'admin']), (req, res) => {
+app.put('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), async (req, res) => {
     try {
-        const submissions = readJson(postSubmissionsPath);
-        const index = submissions.findIndex(p => p.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Submission not found' });
+        const submission = await PostSubmission.findOne({ id: req.params.id }).lean();
+        if (!submission) return res.status(404).json({ error: 'Submission not found' });
 
         const update = req.body;
-        submissions[index] = { ...submissions[index], ...update };
-        writeJson(postSubmissionsPath, submissions);
+        await updateDocument(PostSubmission, { id: req.params.id }, update);
 
         const logType = update.status === 'approved'
             ? 'post-approved'
@@ -681,34 +608,27 @@ app.put('/postSubmissions/:id', requireRole(['author','editor', 'admin']), (req,
                 ? 'post-rejected'
                 : 'post-updated';
 
-        logAction(req.session.user.username, logType, submissions[index].title);
+        await logAction(req.session.user.username, logType, submission.title);
 
         if (update.status === 'approved') {
-            const posts = readJson(postsPath);
-            const finalPost = { ...submissions[index] };
-            finalPost.isPublished = new Date(finalPost.schedule) <= new Date();
-            posts.push(finalPost);
-            writeJson(postsPath, posts);
-
-            submissions.splice(index, 1); // remove from submissions
-            writeJson(postSubmissionsPath, submissions);
+            const finalPost = { ...submission, ...update, isPublished: new Date(submission.schedule) <= new Date() };
+            await writeDocument(Post, finalPost);
+            await deleteDocument(PostSubmission, { id: req.params.id });
         }
 
-        res.json({ message: 'Submission updated', post: submissions[index] });
+        res.json({ message: 'Submission updated', post: { ...submission, ...update } });
     } catch (err) {
         res.status(500).json({ error: 'Failed to update submission' });
     }
 });
 
-app.delete('/postSubmissions/:id', requireRole(['author','editor', 'admin']), (req, res) => {
+app.delete('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), async (req, res) => {
     try {
-        const submissions = readJson(postSubmissionsPath);
-        const index = submissions.findIndex(p => p.id === req.params.id);
-        if (index === -1) return res.status(404).json({ error: 'Not found' });
+        const submission = await PostSubmission.findOne({ id: req.params.id }).lean();
+        if (!submission) return res.status(404).json({ error: 'Not found' });
 
-        const removed = submissions.splice(index, 1)[0];
-        writeJson(postSubmissionsPath, submissions);
-        logAction(req.session.user.username, 'post-deleted', removed.title);
+        await deleteDocument(PostSubmission, { id: req.params.id });
+        await logAction(req.session.user.username, 'post-deleted', submission.title);
 
         res.json({ message: 'Submission deleted' });
     } catch (err) {
@@ -716,13 +636,13 @@ app.delete('/postSubmissions/:id', requireRole(['author','editor', 'admin']), (r
     }
 });
 
-app.get('/debug/timecheck', (req, res) => {
+app.get('/debug/timecheck', async (req, res) => {
     try {
-        const posts = readPosts();
+        const posts = await readCollection(Post);
         const now = new Date();
         const samplePost = posts.length > 0 ? posts[0] : null;
 
-        logAction(req.session.user?.username, 'timecheck-requested', 'system');
+        await logAction(req.session.user?.username, 'timecheck-requested', 'system');
         res.json({
             serverTime: now.toISOString(),
             serverTimeLocal: now.toString(),
@@ -736,7 +656,7 @@ app.get('/debug/timecheck', (req, res) => {
             note: "Remember: /posts filters by schedule, /posts/all shows all"
         });
     } catch (err) {
-        logAction(req.session.user?.username, 'timecheck-failed', 'system', {
+        await logAction(req.session.user?.username, 'timecheck-failed', 'system', {
             error: err.message
         });
         res.status(500).json({ error: "Server error" });
@@ -744,63 +664,50 @@ app.get('/debug/timecheck', (req, res) => {
 });
 
 app.get('/posts/:slug.html', (req, res) => {
-
     res.sendFile(path.join(__dirname, 'posts/view-post.html'));
 });
 
-app.get('/comments', (req, res) => {
+app.get('/comments', async (req, res) => {
     const slug = req.query.slug;
     if (!slug) {
-
         return res.status(400).json({ error: 'Missing slug' });
     }
 
-    const allComments = readComments();
-
-    res.json(allComments[slug] || []);
+    const comments = await readComments(slug);
+    res.json(comments);
 });
 
-app.post('/comments', (req, res) => {
+app.post('/comments', async (req, res) => {
     const { slug, username, comment, timestamp } = req.body;
 
     if (!slug || !username || !comment || !timestamp) {
-        logAction(req.session.user?.username, 'comment-create-failed', 'missing fields');
+        await logAction(req.session.user?.username, 'comment-create-failed', 'missing fields');
         return res.status(400).json({ error: 'All fields are required' });
     }
 
-    const allComments = readComments();
+    const newComment = { username, comment, timestamp: new Date(timestamp) };
+    await writeComments(slug, newComment);
 
-    if (!allComments[slug]) allComments[slug] = [];
-    const newComment = { username, comment, timestamp };
-
-    allComments[slug].push(newComment);
-    writeComments(allComments);
-
-    logAction(username, 'comment-created', slug, {
+    await logAction(username, 'comment-created', slug, {
         commentLength: comment.length
     });
 
     res.status(201).json({ message: 'Comment saved', comment: newComment });
 });
 
-app.get('/users', (req, res) => {
-    const users = readJson(usersPath);
-
+app.get('/users', async (req, res) => {
+    const users = await readCollection(User);
     res.json(users);
 });
 
-app.get('/users/:id', (req, res) => {
-    const { id } = req.params;
-    const users = readJson('users.json');
-    const user = users.find(u => u.id === id);
+app.get('/users/:id', async (req, res) => {
+    const user = await User.findOne({ id: req.params.id }).lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
-
     res.json(user);
 });
 
 app.post('/users', requireAdmin, async (req, res) => {
     try {
-        const users = readJson(usersPath);
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
         const newUser = {
             ...req.body,
@@ -808,20 +715,18 @@ app.post('/users', requireAdmin, async (req, res) => {
             password: hashedPassword
         };
 
-        const duplicate = users.find(u =>
-            u.username === newUser.username || u.email === newUser.email
-        );
+        const duplicate = await User.findOne({
+            $or: [{ username: newUser.username }, { email: newUser.email }]
+        }).lean();
         if (duplicate) {
-            logAction(req.session.user.username, 'user-create-failed', newUser.username || newUser.email, {
+            await logAction(req.session.user.username, 'user-create-failed', newUser.username || newUser.email, {
                 reason: 'Duplicate user'
             });
             return res.status(409).json({ message: 'User already exists' });
         }
 
-        users.push(newUser);
-        writeJson(usersPath, users);
-
-        logAction(
+        await writeDocument(User, newUser);
+        await logAction(
             req.session.user.username,
             'user-created',
             newUser.username || newUser.email,
@@ -830,7 +735,7 @@ app.post('/users', requireAdmin, async (req, res) => {
 
         res.status(201).json({ message: 'User added', user: newUser });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user?.username,
             'user-create-error',
             'system',
@@ -840,30 +745,27 @@ app.post('/users', requireAdmin, async (req, res) => {
     }
 });
 
-app.put('/users/:id', requireAdmin, upload.none(), (req, res) => {
+app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
     try {
-        const users = readJson(usersPath);
-        const index = users.findIndex(u => u.id === req.params.id);
-        if (index === -1) {
-            logAction(req.session.user.username, 'user-update-failed', req.params.id, {
+        const user = await User.findOne({ id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-update-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'User not found' });
         }
 
-        users[index] = { ...users[index], ...req.body };
-        writeJson(usersPath, users);
-
-        logAction(
+        await updateDocument(User, { id: req.params.id }, req.body);
+        await logAction(
             req.session.user.username,
             'user-updated',
-            users[index].username || users[index].email,
+            user.username || user.email,
             { changes: Object.keys(req.body) }
         );
 
-        res.json({ message: 'User updated', user: users[index] });
+        res.json({ message: 'User updated', user: { ...user, ...req.body } });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-update-error',
             req.params.id,
@@ -873,30 +775,27 @@ app.put('/users/:id', requireAdmin, upload.none(), (req, res) => {
     }
 });
 
-app.delete('/users/:id', requireAdmin, (req, res) => {
+app.delete('/users/:id', requireAdmin, async (req, res) => {
     try {
-        const users = readJson(usersPath);
-        const index = users.findIndex(u => u.id === req.params.id);
-        if (index === -1) {
-            logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
+        const user = await User.findOne({ id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const deleted = users.splice(index, 1)[0];
-        writeJson(usersPath, users);
-
-        logAction(
+        await deleteDocument(User, { id: req.params.id });
+        await logAction(
             req.session.user.username,
             'user-deleted',
-            deleted.username || deleted.email,
-            { role: deleted.role }
+            user.username || user.email,
+            { role: user.role }
         );
 
-        res.json({ message: 'User deleted', user: deleted });
+        res.json({ message: 'User deleted', user });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-delete-error',
             req.params.id,
@@ -906,37 +805,26 @@ app.delete('/users/:id', requireAdmin, (req, res) => {
     }
 });
 
-app.get('/pendingUsers', (req, res) => {
-    const pending = readJson(pendingUsersPath);
-
+app.get('/pendingUsers', async (req, res) => {
+    const pending = await readCollection(PendingUser);
     res.json(pending);
 });
 
-app.get('/pendingUsers/:id', (req, res) => {
-    const pendingUsers = readJson(pendingUsersPath);
-    const id = req.params.id;
-
-    const user = pendingUsers.find(u => u.id.toString() === id.toString());
-
+app.get('/pendingUsers/:id', async (req, res) => {
+    const user = await PendingUser.findOne({ id: req.params.id }).lean();
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
-
     res.json(user);
 });
 
-const { v4: uuid } = require('uuid');
 app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
     try {
-        const pending = readJson(pendingUsersPath);
-
-        // Validate required fields
         const { username, email, password, submittedBy } = req.body;
         if (!username || !email || !password) {
             return res.status(400).json({ error: 'Username, email, and password are required' });
         }
 
-        // Handle PDF validation (if uploaded)
         let pdfFilename = null;
         let pdfOriginalName = null;
 
@@ -949,20 +837,17 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const newRequest = {
             ...req.body,
             id: uuid(),
-            createdAt: new Date().toISOString(),
+            createdAt: new Date(),
             password: hashedPassword,
             pdfFilename,
             pdfOriginalName
         };
 
-        pending.push(newRequest);
-        writeJson(pendingUsersPath, pending);
-
-        logAction(
+        await writeDocument(PendingUser, newRequest);
+        await logAction(
             username || 'anonymous',
             'pending-user-created',
             email || username,
@@ -971,7 +856,7 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         res.status(201).json({ message: 'Pending request submitted', request: newRequest });
     } catch (err) {
-        logAction(
+        await logAction(
             'system',
             'pending-user-create-error',
             'system',
@@ -981,31 +866,27 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
     }
 });
 
-
-app.delete('/pendingUsers/:id', requireAdmin, (req, res) => {
+app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
-        const pending = readJson(pendingUsersPath);
-        const index = pending.findIndex(u => u.id === req.params.id);
-        if (index === -1) {
-            logAction(req.session.user.username, 'pending-user-delete-failed', req.params.id, {
+        const user = await PendingUser.findOne({ id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'pending-user-delete-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'Pending user not found' });
         }
 
-        const removed = pending.splice(index, 1)[0];
-        writeJson(pendingUsersPath, pending);
-
-        logAction(
+        await deleteDocument(PendingUser, { id: req.params.id });
+        await logAction(
             req.session.user.username,
             'pending-user-deleted',
-            removed.email || removed.username,
+            user.email || user.username,
             { reason: 'Admin action' }
         );
 
-        res.json({ message: 'Pending request removed', removed });
+        res.json({ message: 'Pending request removed', removed: user });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user.username,
             'pending-user-delete-error',
             req.params.id,
@@ -1015,31 +896,29 @@ app.delete('/pendingUsers/:id', requireAdmin, (req, res) => {
     }
 });
 
-app.post('/approve-user', requireAdmin, (req, res) => {
+app.post('/approve-user', requireAdmin, async (req, res) => {
     try {
         const { pendingUserId } = req.body;
         if (!pendingUserId) {
-            logAction(req.session.user.username, 'user-approve-failed', 'no id', {
+            await logAction(req.session.user.username, 'user-approve-failed', 'no id', {
                 reason: 'Missing pendingUserId'
             });
             return res.status(400).json({ error: 'Missing pendingUserId' });
         }
 
-        const pending = readJson(pendingUsersPath);
-        const pendingUser = pending.find(u => u.id === pendingUserId);
+        const pendingUser = await PendingUser.findOne({ id: pendingUserId }).lean();
         if (!pendingUser) {
-            logAction(req.session.user.username, 'user-approve-failed', pendingUserId, {
+            await logAction(req.session.user.username, 'user-approve-failed', pendingUserId, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'Pending user not found' });
         }
 
-        const users = readJson(usersPath);
-        const duplicate = users.find(u =>
-            u.username === pendingUser.username || u.email === pendingUser.email
-        );
+        const duplicate = await User.findOne({
+            $or: [{ username: pendingUser.username }, { email: pendingUser.email }]
+        }).lean();
         if (duplicate) {
-            logAction(req.session.user.username, 'user-approve-failed', pendingUser.username || pendingUser.email, {
+            await logAction(req.session.user.username, 'user-approve-failed', pendingUser.username || pendingUser.email, {
                 reason: 'Duplicate user'
             });
             return res.status(409).json({ error: 'User already exists' });
@@ -1049,15 +928,12 @@ app.post('/approve-user', requireAdmin, (req, res) => {
             ...pendingUser,
             id: Date.now().toString(),
             status: 'active',
-            createdAt: new Date().toISOString()
+            createdAt: new Date()
         };
-        users.push(newUser);
-        writeJson(usersPath, users);
+        await writeDocument(User, newUser);
+        await deleteDocument(PendingUser, { id: pendingUserId });
 
-        const updatedPending = pending.filter(u => u.id !== pendingUserId);
-        writeJson(pendingUsersPath, updatedPending);
-
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-approved',
             newUser.username || newUser.email,
@@ -1066,7 +942,7 @@ app.post('/approve-user', requireAdmin, (req, res) => {
 
         res.json({ message: 'User approved', user: newUser });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-approve-error',
             'system',
@@ -1076,33 +952,28 @@ app.post('/approve-user', requireAdmin, (req, res) => {
     }
 });
 
-app.post('/pendingUsers/:id/approve', requireAdmin, (req, res) => {
+app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
     try {
-        const pendingUsers = readJson(pendingUsersPath);
-        const users = readJson(usersPath);
-        const userIndex = pendingUsers.findIndex(u => u.id === req.params.id);
-
-        if (userIndex === -1) {
-            logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
+        const pendingUser = await PendingUser.findOne({ id: req.params.id }).lean();
+        if (!pendingUser) {
+            await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'Pending user not found' });
         }
 
         const approvedUser = {
-            ...pendingUsers[userIndex],
+            ...pendingUser,
             id: Date.now().toString(),
             status: 'active',
             approvedBy: req.session.user.username,
-            approvedAt: new Date().toISOString()
+            approvedAt: new Date()
         };
 
-        users.push(approvedUser);
-        pendingUsers.splice(userIndex, 1);
-        writeJson(usersPath, users);
-        writeJson(pendingUsersPath, pendingUsers);
+        await writeDocument(User, approvedUser);
+        await deleteDocument(PendingUser, { id: req.params.id });
 
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-approved',
             approvedUser.username || approvedUser.email,
@@ -1114,7 +985,7 @@ app.post('/pendingUsers/:id/approve', requireAdmin, (req, res) => {
             user: approvedUser
         });
     } catch (err) {
-        logAction(
+        await logAction(
             req.session.user.username,
             'user-approve-error',
             req.params.id,
@@ -1123,7 +994,6 @@ app.post('/pendingUsers/:id/approve', requireAdmin, (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 
 app.get('/pdfs/:filename', requireAdmin, (req, res) => {
     const filepath = path.join(__dirname, 'uploads', req.params.filename);
@@ -1141,8 +1011,7 @@ app.get('/pdfs/:filename', requireAdmin, (req, res) => {
     }
 });
 
-
-app.post('/pendingDeletions', (req, res) => {
+app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;
     if (userRole !== 'editor' && userRole !== 'admin') {
         return res.status(403).json({ error: 'Forbidden' });
@@ -1156,7 +1025,7 @@ app.post('/pendingDeletions', (req, res) => {
             targetEmail,
             targetRole,
             targetFullName,
-            targetAvatar,// Add this
+            targetAvatar,
             requestedBy
         } = req.body;
 
@@ -1164,8 +1033,7 @@ app.post('/pendingDeletions', (req, res) => {
             return res.status(400).json({ error: 'Missing userId or reason' });
         }
 
-        const pending = readJson(pendingDeletionsPath);
-        pending.push({
+        const newDeletion = {
             id: Date.now().toString(),
             userId,
             reason,
@@ -1175,14 +1043,12 @@ app.post('/pendingDeletions', (req, res) => {
             targetFullName,
             targetAvatar,
             requestedBy: requestedBy || req.session.user.username,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date(),
             status: 'pending'
-        });
+        };
 
-
-        writeJson(pendingDeletionsPath, pending);
-
-        logAction(req.session.user.username, 'user-delete-requested', userId, {
+        await writeDocument(PendingDeletion, newDeletion);
+        await logAction(req.session.user.username, 'user-delete-requested', userId, {
             reason,
             targetUsername,
             targetEmail,
@@ -1197,69 +1063,46 @@ app.post('/pendingDeletions', (req, res) => {
     }
 });
 
-
-// ✅ Admin-only view of pending deletion requests
-app.get('/pendingDeletions', requireAdmin, (req, res) => {
-    try {
-        const pending = readJson(pendingDeletionsPath);
-        res.json(pending);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to load delete requests' });
-    }
-});
-
-app.get('/pendingDeletions', verifySession, (req, res) => {
+app.get('/pendingDeletions', verifySession, async (req, res) => {
     const user = req.session.user;
     if (!user || !['admin', 'editor'].includes(user.role)) {
         return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const pending = readJSON('pendingDeletions.json');
+    const pending = await readCollection(PendingDeletion);
     res.json(pending);
 });
-// ✅ Admin approval → actual deletion
-app.post('/pendingDeletions/:id/approve', requireAdmin, (req, res) => {
+
+app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
     try {
-        const { id } = req.params;
-        const pending = readJson(pendingDeletionsPath);
-        const requestIndex = pending.findIndex(r => r.id === id);
-        if (requestIndex === -1) return res.status(404).json({ error: 'Request not found' });
+        const deletion = await PendingDeletion.findOne({ id: req.params.id }).lean();
+        if (!deletion) return res.status(404).json({ error: 'Request not found' });
 
-        const { userId, requestedBy } = pending[requestIndex];
-        const users = readJson(usersPath);
-        const userIndex = users.findIndex(u => u.id === userId);
-        if (userIndex === -1) return res.status(404).json({ error: 'User not found' });
+        const user = await User.findOne({ id: deletion.userId }).lean();
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const deleted = users.splice(userIndex, 1)[0];
-        writeJson(usersPath, users);
+        await deleteDocument(User, { id: deletion.userId });
+        await deleteDocument(PendingDeletion, { id: req.params.id });
 
-        pending.splice(requestIndex, 1);
-        writeJson(pendingDeletionsPath, pending);
-
-        logAction(req.session.user.username, 'user-delete-approved', deleted.username, {
-            requestedBy,
-            deletedUserId: userId
+        await logAction(req.session.user.username, 'user-delete-approved', user.username, {
+            requestedBy: deletion.requestedBy,
+            deletedUserId: deletion.userId
         });
 
-        res.json({ message: 'User deleted', user: deleted });
+        res.json({ message: 'User deleted', user });
     } catch (err) {
         res.status(500).json({ error: 'Failed to approve deletion' });
     }
 });
 
-// ✅ Admin rejection → discard request
-app.post('/pendingDeletions/:id/reject', requireAdmin, (req, res) => {
+app.post('/pendingDeletions/:id/reject', requireAdmin, async (req, res) => {
     try {
-        const { id } = req.params;
-        const pending = readJson(pendingDeletionsPath);
-        const requestIndex = pending.findIndex(r => r.id === id);
-        if (requestIndex === -1) return res.status(404).json({ error: 'Request not found' });
+        const deletion = await PendingDeletion.findOne({ id: req.params.id }).lean();
+        if (!deletion) return res.status(404).json({ error: 'Request not found' });
 
-        const rejected = pending.splice(requestIndex, 1)[0];
-        writeJson(pendingDeletionsPath, pending);
-
-        logAction(req.session.user.username, 'user-delete-rejected', rejected.userId, {
-            requestedBy: rejected.requestedBy
+        await deleteDocument(PendingDeletion, { id: req.params.id });
+        await logAction(req.session.user.username, 'user-delete-rejected', deletion.userId, {
+            requestedBy: deletion.requestedBy
         });
 
         res.json({ message: 'Deletion request rejected' });
@@ -1268,32 +1111,22 @@ app.post('/pendingDeletions/:id/reject', requireAdmin, (req, res) => {
     }
 });
 
-// 🟡 Editor cancels their own pending deletion request
-app.delete('/pendingDeletions/:id', (req, res) => {
+app.delete('/pendingDeletions/:id', async (req, res) => {
     try {
-        const { id } = req.params;
         const username = req.session.user?.username;
-
         if (!username) return res.status(403).json({ error: 'Not logged in' });
 
-        const pending = readJson(pendingDeletionsPath);
-        const requestIndex = pending.findIndex(r => r.id === id);
+        const deletion = await PendingDeletion.findOne({ id: req.params.id }).lean();
+        if (!deletion) return res.status(404).json({ error: 'Request not found' });
 
-        if (requestIndex === -1) return res.status(404).json({ error: 'Request not found' });
-
-        const request = pending[requestIndex];
-
-        // Only requester or admin can cancel
-        const isOwner = request.requestedBy === username;
+        const isOwner = deletion.requestedBy === username;
         const isAdmin = req.session.user.role === 'admin';
         if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Not authorized' });
 
-        pending.splice(requestIndex, 1);
-        writeJson(pendingDeletionsPath, pending);
-
-        logAction(username, 'user-delete-cancelled', request.targetUsername, {
-            userId: request.targetId,
-            requestedBy: request.requestedBy
+        await deleteDocument(PendingDeletion, { id: req.params.id });
+        await logAction(username, 'user-delete-cancelled', deletion.targetUsername, {
+            userId: deletion.userId,
+            requestedBy: deletion.requestedBy
         });
 
         res.json({ message: 'Request cancelled' });
@@ -1302,32 +1135,22 @@ app.delete('/pendingDeletions/:id', (req, res) => {
     }
 });
 
-// GET /check-username?username=john
-app.get('/check-username', (req, res) => {
+app.get('/check-username', async (req, res) => {
     try {
-        const users = readJson(usersPath);
-        const pending = readJson(pendingUsersPath);
         const username = req.query.username;
-
-        const taken = users.some(u => u.username === username) || pending.some(p => p.username === username);
-
+        const taken = await User.findOne({ username }).lean() ||
+            await PendingUser.findOne({ username }).lean();
         res.json({ available: !taken });
     } catch (err) {
         res.status(500).json({ error: 'Failed to check username' });
     }
 });
 
-
-// GET /check-email?email=user@example.com
-app.get('/check-email', (req, res) => {
+app.get('/check-email', async (req, res) => {
     try {
-        const users = readJson(usersPath);
-        const pending = readJson(pendingUsersPath);
         const email = req.query.email?.toLowerCase();
-
-        const taken = users.some(u => u.email?.toLowerCase() === email) ||
-            pending.some(p => p.email?.toLowerCase() === email);
-
+        const taken = await User.findOne({ email }).lean() ||
+            await PendingUser.findOne({ email }).lean();
         res.json({ available: !taken });
     } catch (err) {
         res.status(500).json({ error: 'Failed to check email' });
@@ -1347,43 +1170,37 @@ app.get('/verify-session', (req, res) => {
     });
 });
 
-app.get('/logs', (req, res) => {
+app.get('/logs', async (req, res) => {
     try {
-        let logs = readJson(logsPath);
-
+        let query = {};
         if (req.query.action) {
-            logs = logs.filter(log =>
-                log.action?.toLowerCase().includes(req.query.action.toLowerCase())
-            );
+            query.action = { $regex: req.query.action, $options: 'i' };
         }
-
         if (req.query.actor) {
-            logs = logs.filter(log =>
-                log.actedBy?.toLowerCase().includes(req.query.actor.toLowerCase())
-            );
+            query.actor = { $regex: req.query.actor, $options: 'i' };
         }
 
+        let logs = await Log.find(query).lean();
         if (req.query.limit) {
             logs = logs.slice(0, parseInt(req.query.limit));
         }
 
-
         res.json(logs);
     } catch (err) {
-        logAction(req.session.user?.username, 'logs-fetch-failed', 'system', {
+        await logAction(req.session.user?.username, 'logs-fetch-failed', 'system', {
             error: err.message
         });
         res.status(500).json({ error: 'Failed to load logs' });
     }
 });
 
-app.delete('/logs', (req, res) => {
+app.delete('/logs', async (req, res) => {
     try {
-        writeJson(logsPath, []); // clear log file
-        logAction(req.session.user?.username, 'logs-cleared', 'admin');
+        await Log.deleteMany({});
+        await logAction(req.session.user?.username, 'logs-cleared', 'admin');
         res.json({ message: 'Logs cleared successfully' });
     } catch (err) {
-        logAction(req.session.user?.username, 'logs-clear-failed', 'admin', {
+        await logAction(req.session.user?.username, 'logs-clear-failed', 'admin', {
             error: err.message
         });
         res.status(500).json({ error: 'Failed to clear logs' });
@@ -1395,8 +1212,11 @@ app.get('/ping', (req, res) => {
     res.json({ message: 'Backend is alive!' });
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server is running at http://localhost:${PORT}`);
-    console.log(`Current server time: ${new Date().toISOString()}`);
-    logAction('admin', 'server-started', `port: ${PORT}`);
+// Start server after DB connection
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log(`✅ Server is running at http://localhost:${PORT}`);
+        console.log(`Current server time: ${new Date().toISOString()}`);
+        logAction('admin', 'server-started', `port: ${PORT}`);
+    });
 });
