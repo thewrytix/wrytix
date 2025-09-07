@@ -26,7 +26,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // ========= Middleware ========= //
 app.use(cors({
-    origin: ["https://wrytix.netlify.app", "http://localhost:5500", "https://wrytix.onrender.com"],
+    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -44,9 +44,11 @@ app.use(session({
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000,
     }
 }));
+
+app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
