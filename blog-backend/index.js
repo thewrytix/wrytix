@@ -23,7 +23,28 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const upload = multer({ dest: 'uploads/' });
+// Use Render's ephemeral filesystem
+const uploadDir = '/tmp/uploads';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+const upload = multer({
+    dest: 'uploads/',
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.fieldname === 'avatar') {
+            if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype)) {
+                return cb(new Error('Avatar must be an image (JPEG, PNG, or GIF)'));
+            }
+        } else if (file.fieldname === 'pdf') {
+            if (file.mimetype !== 'application/pdf') {
+                return cb(new Error('Document must be a PDF'));
+            }
+        }
+        cb(null, true);
+    }
+});
 
 // ========= Middleware ========= //
 app.use(cors({
@@ -67,6 +88,12 @@ app.use((req, res, next) => {
     next();
 });
 app.use(marketDataRoutes);
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+
 
 // ======================
 // 🛠️ UTILITY FUNCTIONS
@@ -727,44 +754,70 @@ app.get('/users/:id', async (req, res) => {
     res.json(user);
 });
 
-app.post('/users', requireAdmin, async (req, res) => {
+app.post('/users', requireAdmin, upload.fields([
+    { name: 'avatar', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const { fullName, username, email, password, role, submittedBy } = req.body;
+        if (!fullName || !username || !email || !password || !role) {
+            return res.status(400).json({ error: 'Full name, username, email, password, and role are required' });
+        }
+
+        if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role' });
+        }
+
+        let avatarFilename = null;
+        if (req.files && req.files.avatar) {
+            if (!['image/jpeg', 'image/png', 'image/gif'].includes(req.files.avatar[0].mimetype)) {
+                return res.status(400).json({ error: 'Avatar must be an image (JPEG, PNG, or GIF)' });
+            }
+            avatarFilename = req.files.avatar[0].filename;
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = {
-            ...req.body,
-            id: Date.now().toString(),
-            password: hashedPassword
+            fullName,
+            username,
+            email,
+            password: hashedPassword,
+            role,
+            submittedBy: submittedBy || req.session.user.username,
+            avatar: avatarFilename,
+            status: 'active',
+            createdAt: new Date()
         };
 
         const duplicate = await User.findOne({
-            $or: [{ username: newUser.username }, { email: newUser.email }]
+            $or: [{ username }, { email }, { fullName }]
         }).lean();
         if (duplicate) {
-            await logAction(req.session.user.username, 'user-create-failed', newUser.username || newUser.email, {
+            await logAction(req.session.user.username, 'user-create-failed', username || email, {
                 reason: 'Duplicate user'
             });
-            return res.status(409).json({ message: 'User already exists' });
+            return res.status(409).json({ error: 'User already exists' });
         }
 
         await writeDocument(User, newUser);
         await logAction(
             req.session.user.username,
             'user-created',
-            newUser.username || newUser.email,
-            { role: newUser.role }
+            username || email,
+            { role }
         );
 
         res.status(201).json({ message: 'User added', user: newUser });
     } catch (err) {
         await logAction(
-            req.session.user?.username,
+            req.session.user.username,
             'user-create-error',
             'system',
             { error: err.message }
         );
-        res.status(500).json({ error: 'Failed to create user' });
+        res.status(500).json({ error: 'Failed to create user', details: err.message });
     }
 });
+
 
 app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
     try {
@@ -839,34 +892,51 @@ app.get('/pendingUsers/:id', async (req, res) => {
     res.json(user);
 });
 
-app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
+app.post('/pendingUsers', requireLogin, upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'pdf', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const { fullname, username, email, password, role, submittedBy } = req.body;
-        if (!fullname ||!username || !email || !password || !role) {
-            return res.status(400).json({ error: 'full name, Username, email, password, and role are required' });
+        const { fullName, username, email, password, role, submittedBy } = req.body;
+        if (!fullName || !username || !email || !password || !role) {
+            return res.status(400).json({ error: 'Full name, username, email, password, and role are required' });
         }
 
         if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
             return res.status(400).json({ error: 'Invalid role. Must be viewer, author, editor, or admin' });
         }
 
+        // Restrict admin role creation to admins
+        const isAdmin = req.session.user?.role === 'admin';
+        if (role === 'admin' && !isAdmin) {
+            await logAction(req.session.user?.username || 'anonymous', 'admin-role-request-denied', username, {
+                reason: 'Non-admin attempted to create admin'
+            });
+            return res.status(403).json({ error: 'Only admins can request admin roles' });
+        }
+
+        let avatarFilename = null;
         let pdfFilename = null;
         let pdfOriginalName = null;
-        if (req.file) {
-            if (!req.file.mimetype.includes('pdf')) {
-                return res.status(400).json({ error: 'Only PDFs are allowed' });
+        if (req.files) {
+            if (req.files.avatar) {
+                avatarFilename = req.files.avatar[0].filename;
             }
-            pdfFilename = req.file.filename;
-            pdfOriginalName = req.file.originalname;
+            if (req.files.pdf) {
+                pdfFilename = req.files.pdf[0].filename;
+                pdfOriginalName = req.files.pdf[0].originalname;
+            }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
+            fullName,
             username,
             email,
             password: hashedPassword,
             role,
-            submittedBy,
+            submittedBy: submittedBy || req.session.user?.username || 'anonymous',
+            avatar: avatarFilename,
             pdfFilename,
             pdfOriginalName,
             requestedAt: new Date()
@@ -874,10 +944,10 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         await writeDocument(PendingUser, newRequest);
         await logAction(
-            username || 'anonymous',
+            submittedBy || req.session.user?.username || 'anonymous',
             'pending-user-created',
             email || username,
-            { submittedBy }
+            { role, submittedBy }
         );
 
         res.status(201).json({ message: 'Pending request submitted', request: newRequest });
@@ -892,6 +962,7 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
         res.status(500).json({ error: 'Failed to create pending user', details: err.message });
     }
 });
+
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
