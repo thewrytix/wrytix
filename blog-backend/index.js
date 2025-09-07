@@ -839,21 +839,16 @@ app.get('/pendingUsers/:id', async (req, res) => {
     res.json(user);
 });
 
-
 app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
     try {
-        const { username, email, password, role, submittedBy } = req.body;
-        if (!username || !email || !password || !role) {
-            return res.status(400).json({ error: 'Username, email, password, and role are required' });
-        }
-
-        // Validate role
-        if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
-            return res.status(400).json({ error: 'Invalid role. Must be viewer, author , editor or admin' });
+        const { username, email, password, submittedBy } = req.body;
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: 'Username, email, and password are required' });
         }
 
         let pdfFilename = null;
         let pdfOriginalName = null;
+
         if (req.file) {
             if (!req.file.mimetype.includes('pdf')) {
                 return res.status(400).json({ error: 'Only PDFs are allowed' });
@@ -864,14 +859,12 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
-            username,
-            email,
+            ...req.body,
+            id: uuid(),
+            createdAt: new Date(),
             password: hashedPassword,
-            role,
-            submittedBy,
             pdfFilename,
-            pdfOriginalName,
-            requestedAt: new Date()
+            pdfOriginalName
         };
 
         await writeDocument(PendingUser, newRequest);
@@ -884,17 +877,15 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         res.status(201).json({ message: 'Pending request submitted', request: newRequest });
     } catch (err) {
-        console.error('Error in /pendingUsers:', err);
         await logAction(
             'system',
             'pending-user-create-error',
             'system',
-            { error: err.message, stack: err.stack }
+            { error: err.message }
         );
-        res.status(500).json({ error: 'Failed to create pending user', details: err.message });
+        res.status(500).json({ error: 'Failed to create pending user' });
     }
 });
-
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
