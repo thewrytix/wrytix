@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const marketDataRoutes = require('./routes/marketData');
 const { v4: uuidv4 } = require('uuid');
+const MongoStore = require('connect-mongo');
 const connectDB = require('./config/db');
 const {
     User,
@@ -36,10 +37,16 @@ app.get("/", (req, res) => {
     res.send("Backend is running 🚀");
 });
 
+app.set('trust proxy', 1); // ← MOVE THIS HERE (BEFORE session)
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        clientPromise: connectDB(),   // 👈 reuse your existing connection
+        ttl: 60 * 60 * 24 * 7         // 7 days
+    }),
     cookie: {
         httpOnly: true,
         secure: true,
@@ -47,8 +54,6 @@ app.use(session({
         maxAge: 24 * 60 * 60 * 1000,
     }
 }));
-
-app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
