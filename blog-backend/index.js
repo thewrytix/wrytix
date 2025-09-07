@@ -39,14 +39,17 @@ app.get("/", (req, res) => {
 
 app.set('trust proxy', 1); // ← MOVE THIS HERE (BEFORE session)
 
+
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        clientPromise: connectDB(),   // 👈 reuse your existing connection
-        ttl: 60 * 60 * 24 * 7         // 7 days
-    }),
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI || "mongodb+srv://wrytix_admin:Kylerlee149143123.@cluster0.jorn0pz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+            ttl: 14 * 24 * 60 * 60,
+            autoRemove: 'native'
+        }),
     cookie: {
         httpOnly: true,
         secure: true,
