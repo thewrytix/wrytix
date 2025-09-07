@@ -176,7 +176,7 @@
             populateAuthorFilter(submissions);
         } catch (err) {
             console.error('Error loading submissions:', err.message);
-            alert('❌ Failed to load submissions. Please login again.');
+            showError('❌ Failed to load submissions. Please login again.');
         }
     }
 
@@ -316,11 +316,11 @@
                 credentials: 'include'
             });
 
-            alert('✅ Post approved and published!');
+            showSuccess('✅ Post approved and published!');
             loadSubmissions();
         } catch (err) {
             console.error('Error approving post:', err.message);
-            alert('❌ Failed to approve post.');
+            showError('❌ Failed to approve post.');
         }
     }
 
@@ -355,11 +355,11 @@
             });
 
             closeModal();
-            alert('🚫 Post rejected successfully.');
+            showSuccess('✅ Post rejected successfully.');
             loadSubmissions();
         } catch (err) {
             console.error('Error rejecting post:', err.message);
-            alert('❌ Failed to reject post.');
+            showError('❌ Failed to reject post.');
         }
     }
 
