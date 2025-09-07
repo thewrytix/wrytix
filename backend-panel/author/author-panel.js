@@ -1,8 +1,8 @@
 async function verifyAndSetSession(requiredRole = 'author') {
-    // Check local session first
     const userData = sessionStorage.getItem("user");
     const loggedIn = sessionStorage.getItem("loggedIn");
 
+    // 🔹 Step 1: No local session → redirect
     if (loggedIn !== "true" || !userData) {
         window.location.href = '../login.html';
         return null;
@@ -10,23 +10,38 @@ async function verifyAndSetSession(requiredRole = 'author') {
 
     const user = JSON.parse(userData);
 
-    // Optional: Verify with server periodically
     try {
+        // 🔹 Step 2: Verify with backend
         const res = await fetch('https://wrytix.onrender.com/verify-session', {
             credentials: 'include'
         });
-        // If server session expired, still use local session
+
         if (!res.ok) {
-            console.debug('Server session expired, using local session');
+            // If backend session expired, clear storage + redirect
+            console.warn("⚠️ Server session expired, forcing logout");
+            sessionStorage.clear();
+            window.location.href = '../login.html';
+            return null;
         }
+
+        // Optional: update user info from server if API returns it
+        const serverUser = await res.json();
+        if (serverUser?.role && serverUser.role !== requiredRole) {
+            alert("Access denied. Wrong role.");
+            window.location.href = '../login.html';
+            return null;
+        }
+
     } catch (err) {
-        console.log('Server verification failed, using local session');
+        console.error('❌ Server verification failed:', err);
+        // If server is unreachable, fallback to local session
     }
 
-    // Set UI elements
+    // 🔹 Step 3: Set UI elements from local session
     sessionStorage.setItem('loggedIn', 'true');
     sessionStorage.setItem('currentUser', user.username);
     sessionStorage.setItem('role', user.role);
+
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) {
         profileBtn.textContent = `👤 ${user.username}`;
