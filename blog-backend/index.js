@@ -841,14 +841,17 @@ app.get('/pendingUsers/:id', async (req, res) => {
 
 app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
     try {
-        const { username, email, password, submittedBy } = req.body;
-        if (!username || !email || !password) {
-            return res.status(400).json({ error: 'Username, email, and password are required' });
+        const { username, email, password, role, submittedBy } = req.body;
+        if (!username || !email || !password || !role) {
+            return res.status(400).json({ error: 'Username, email, password, and role are required' });
+        }
+
+        if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role. Must be viewer, author, editor, or admin' });
         }
 
         let pdfFilename = null;
         let pdfOriginalName = null;
-
         if (req.file) {
             if (!req.file.mimetype.includes('pdf')) {
                 return res.status(400).json({ error: 'Only PDFs are allowed' });
@@ -859,12 +862,14 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
-            ...req.body,
-            id: uuid(),
-            createdAt: new Date(),
+            username,
+            email,
             password: hashedPassword,
+            role,
+            submittedBy,
             pdfFilename,
-            pdfOriginalName
+            pdfOriginalName,
+            requestedAt: new Date()
         };
 
         await writeDocument(PendingUser, newRequest);
@@ -877,13 +882,14 @@ app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
 
         res.status(201).json({ message: 'Pending request submitted', request: newRequest });
     } catch (err) {
+        console.error('Error in /pendingUsers:', err);
         await logAction(
             'system',
             'pending-user-create-error',
             'system',
-            { error: err.message }
+            { error: err.message, stack: err.stack }
         );
-        res.status(500).json({ error: 'Failed to create pending user' });
+        res.status(500).json({ error: 'Failed to create pending user', details: err.message });
     }
 });
 
