@@ -404,6 +404,8 @@ form input[type="text"],
 form textarea,
 form select,
 form input[type="datetime-local"],
+form input[type="email"],
+form input[type="password"],
 form input[type="file"] {
     width: 100%;
     padding: 10px 12px;
