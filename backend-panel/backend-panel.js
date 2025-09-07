@@ -177,7 +177,7 @@ const loginRedirect = window.location.origin + '/backend-panel/login.html';
 
 window.addEventListener('load', async () => {
     const user = await verifyAndSetSession(); // will auto-redirect if not valid
-    startSessionTimers(10, 20); // 10 min idle, 20 min absolute
+    startSessionTimers(30, 60); // 10 min idle, 20 min absolute
 });
 
 async function logout() {
@@ -191,7 +191,7 @@ async function logout() {
     }
 }
 
-function startSessionTimers(idleLimit = 10, absoluteLimit = 20) {
+function startSessionTimers(idleLimit = 30, absoluteLimit = 60) {
     let idleTimer = null;
     let absoluteTimer = null;
 
