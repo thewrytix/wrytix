@@ -73,40 +73,63 @@
   </div>
 
   <h1>Add New User</h1>
-    <form id="addUserForm">
-        <label for="fullName">Full Name</label>
-        <input type="text" id="fullName" required />
+  <form id="addUserForm">
 
-        <label for="username">Username</label>
-        <input type="text" id="username" required />
-        <div id="username-status" class="tooltip"></div>
+      <label for="fullName">Full Name</label>
+      <input type="text" id="fullName" required />
 
-        <label for="email">Email</label>
-        <input type="email" id="email" required />
-        <div id="email-status" class="tooltip"></div>
 
-        <div style="position: relative;">
-            <label for="password">Password</label>
-            <input type="password" id="password" required style="padding-right: 40px;" />
-            <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
-        </div>
 
-        <label for="role">Role</label>
-        <select id="role" required>
-            <option value="">Select Role</option>
-            <option value="author">Author - Can write and submit posts</option>
-            <option value="editor">Editor - Can manage author posts</option>
-        </select>
-        <div class="tooltip">Choose role based on responsibilities.</div>
+      <label for="username">Username</label>
+      <input type="text" id="username" required />
+      <div id="username-status" class="tooltip"></div>
 
-        <label for="avatar">Profile Picture (Optional)</label>
-        <input type="file" id="avatar" accept="image/*" />
 
-        <label for="document">Attach Document (Optional)</label>
-        <input type="file" id="document" accept=".pdf" />
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+      <div id="email-status" class="tooltip"></div>
 
-        <button type="submit">Add User</button>
-    </form>
+
+      <div style="position: relative;">
+          <label for="password">Password</label>
+          <input type="password" id="password" required style="padding-right: 40px;" />
+          <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
+      </div>
+
+
+      <label for="role">Role</label>
+      <select id="role" required>
+        <option value="">Select Role</option>
+        <option value="viewer">Viewer - Can only view posts</option>
+        <option value="author">Author - Can write and submit posts</option>
+        <option value="editor">Editor - Can manage author posts</option>
+        <option value="admin">Admin - Full system control</option>
+      </select>
+      <div class="tooltip">Choose role based on responsibilities.</div>
+
+
+
+      <label for="status">Status</label>
+      <select id="status" required>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+
+
+
+      <label for="avatar">Profile Picture (Required)</label>
+      <input type="file" id="avatar" accept="image/*" required />
+
+
+      <label for="document">Attach Document (Required)</label>
+      <input type="file" id="document" accept=".pdf,.doc,.docx" required />
+
+
+      <button type="submit" >Add User</button>
+
+
+
+  </form>
 </main>
 </div>
 <script>
