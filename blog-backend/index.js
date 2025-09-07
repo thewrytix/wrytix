@@ -779,7 +779,7 @@ app.post('/users', requireAdmin, upload.fields([
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = {
-            fullName,
+            fullname: fullName, // Map fullName to fullname
             username,
             email,
             password: hashedPassword,
@@ -791,7 +791,7 @@ app.post('/users', requireAdmin, upload.fields([
         };
 
         const duplicate = await User.findOne({
-            $or: [{ username }, { email }, { fullName }]
+            $or: [{ username }, { email }, { fullname: fullName }]
         }).lean();
         if (duplicate) {
             await logAction(req.session.user.username, 'user-create-failed', username || email, {
@@ -999,8 +999,7 @@ app.post('/pendingUsers', requireLogin, upload.fields([
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
-            id: Date.now().toString(), // Add custom id
-            fullName,
+            fullname: fullName, // Map fullName to fullname
             username,
             email,
             password: hashedPassword,
@@ -1032,7 +1031,6 @@ app.post('/pendingUsers', requireLogin, upload.fields([
         res.status(500).json({ error: 'Failed to create pending user', details: err.message });
     }
 });
-
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
@@ -1074,7 +1072,7 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Missing pendingUserId' });
         }
 
-        const pendingUser = await PendingUser.findOne({ id: pendingUserId }).lean();
+        const pendingUser = await PendingUser.findOne({ _id: pendingUserId }).lean();
         if (!pendingUser) {
             await logAction(req.session.user.username, 'user-approve-failed', pendingUserId, {
                 reason: 'Not found'
@@ -1083,7 +1081,7 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
         }
 
         const duplicate = await User.findOne({
-            $or: [{ username: pendingUser.username }, { email: pendingUser.email }]
+            $or: [{ username: pendingUser.username }, { email: pendingUser.email }, { fullname: pendingUser.fullname }]
         }).lean();
         if (duplicate) {
             await logAction(req.session.user.username, 'user-approve-failed', pendingUser.username || pendingUser.email, {
@@ -1094,12 +1092,11 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
 
         const newUser = {
             ...pendingUser,
-            id: Date.now().toString(),
             status: 'active',
             createdAt: new Date()
         };
         await writeDocument(User, newUser);
-        await deleteDocument(PendingUser, { id: pendingUserId });
+        await deleteDocument(PendingUser, { _id: pendingUserId });
 
         await logAction(
             req.session.user.username,
@@ -1120,6 +1117,47 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
     }
 });
 
+app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
+    try {
+        const pendingUser = await PendingUser.findOne({ _id: req.params.id }).lean();
+        if (!pendingUser) {
+            await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
+                reason: 'Not found'
+            });
+            return res.status(404).json({ error: 'Pending user not found' });
+        }
+
+        const approvedUser = {
+            ...pendingUser,
+            status: 'active',
+            approvedBy: req.session.user.username,
+            approvedAt: new Date()
+        };
+
+        await writeDocument(User, approvedUser);
+        await deleteDocument(PendingUser, { _id: req.params.id });
+
+        await logAction(
+            req.session.user.username,
+            'user-approved',
+            approvedUser.username || approvedUser.email,
+            { method: 'direct-approve' }
+        );
+
+        res.json({
+            message: 'User approved successfully',
+            user: approvedUser
+        });
+    } catch (err) {
+        await logAction(
+            req.session.user.username,
+            'user-approve-error',
+            req.params.id,
+            { error: err.message }
+        );
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
     try {
         const pendingUser = await PendingUser.findOne({ _id: req.params.id }).lean();
@@ -1177,6 +1215,8 @@ app.get('/pdfs/:filename', requireAdmin, (req, res) => {
         res.status(404).json({ error: 'File not found' });
     }
 });
+
+
 app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;
     if (userRole !== 'editor' && userRole !== 'admin') {
