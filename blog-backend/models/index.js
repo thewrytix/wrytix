@@ -87,8 +87,13 @@ const PendingDeletionSchema = new Schema({
 const PostSubmissionSchema = new Schema({
     id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
+    thumbnail: { type: String, required: true },
+    category: { type: String, required: true },
+    author: { type: String, required: true }, // Author submitting
     content: { type: String },
     slug: { type: String, required: true, unique: true },
+    source: { type: String, required: true },
+    featured: { type: Boolean, default: false }, // Add featured
     status: { type: String, default: 'pending' },
     submittedBy: { type: String, required: true },
     editorComments: { type: String, default: '' },
