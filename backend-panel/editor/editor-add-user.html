@@ -16,6 +16,7 @@
     </style>
 </head>
 <body>
+<div class="admin-container">
 <aside class="admin-sidebar">
     <h2>Editor Panel</h2>
     <nav>
@@ -30,7 +31,7 @@
     </nav>
 </aside>
 
-<div class="admin-main">
+<main class="admin-main">
     <div class="top-bar">
         <div class="profile-dropdown">
             <button class="profile-btn" id="profileBtn">Loading...</button>
@@ -101,8 +102,8 @@
 
 
     </form>
+</main>
 </div>
-
 <script>
     document.getElementById('togglePassword').addEventListener('click', () => {
         const passwordInput = document.getElementById('password');
