@@ -5,6 +5,7 @@ const AdSchema = new mongoose.Schema({
     content: { type: String }, // optional now
     link: { type: String },
     category: { type: String, required: true },
+    company: { type: String, default: '' },
     thumbnail: { type: String },
     active: { type: Boolean, default: true },
     startDate: { type: Date, default: Date.now },
