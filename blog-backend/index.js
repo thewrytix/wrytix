@@ -841,9 +841,9 @@ app.get('/pendingUsers/:id', async (req, res) => {
 
 app.post('/pendingUsers', upload.single('pdf'), async (req, res) => {
     try {
-        const { username, email, password, role, submittedBy } = req.body;
-        if (!username || !email || !password || !role) {
-            return res.status(400).json({ error: 'Username, email, password, and role are required' });
+        const { fullname, username, email, password, role, submittedBy } = req.body;
+        if (!fullname ||!username || !email || !password || !role) {
+            return res.status(400).json({ error: 'full name, Username, email, password, and role are required' });
         }
 
         if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
