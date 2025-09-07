@@ -341,7 +341,7 @@
 
         usernameTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`http://localhost:3000/check-username?username=${encodeURIComponent(username)}`);
+                const res = await fetch(`https://wrytix.onrender.com/check-username?username=${encodeURIComponent(username)}`);
                 const { available } = await res.json();
 
                 isUsernameAvailable = available;
@@ -371,7 +371,7 @@
 
         emailTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`http://localhost:3000/check-email?email=${encodeURIComponent(email)}`);
+                const res = await fetch(`https://wrytix.onrender.com/check-email?email=${encodeURIComponent(email)}`);
                 const { available } = await res.json();
 
                 isEmailAvailable = available;
