@@ -224,7 +224,7 @@
   async function deleteSelectedPosts() {
     const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]:checked');
     if (checkboxes.length === 0) {
-      alert('Please select at least one post to delete.');
+      showError('Please select at least one post to delete.');
       return;
     }
 
@@ -235,11 +235,11 @@
         const slug = box.dataset.id;
         await fetch(`https://wrytix.onrender.com/posts/${slug}`, { method: 'DELETE' });
       }
-      alert('✅ Selected posts deleted.');
+      showSuccess('✅ Selected posts deleted.');
       await loadPosts();
     } catch (err) {
       console.error(err);
-      alert('❌ Error deleting posts.');
+      showError('❌ Error deleting posts.');
     }
   }
 
