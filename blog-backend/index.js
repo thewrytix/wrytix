@@ -1181,6 +1181,25 @@ app.get('/verify-session', (req, res) => {
     });
 });
 
+// Authentication check endpoint
+app.get('/auth/check', (req, res) => {
+    if (req.session && req.session.userId) {
+        res.json({
+            username: req.session.username,
+            fullName: req.session.fullName,
+            role: req.session.role
+        });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
+// Logout endpoint
+app.post('/auth/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ success: true });
+});
+
 app.get('/logs', async (req, res) => {
     try {
         let query = {};
