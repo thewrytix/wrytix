@@ -28,8 +28,13 @@ const uploadDir = '/tmp/uploads';
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+});
+
 const upload = multer({
-    dest: 'uploads/',
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
@@ -89,10 +94,7 @@ app.use((req, res, next) => {
 });
 app.use(marketDataRoutes);
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
+
 
 
 // ======================
@@ -818,6 +820,72 @@ app.post('/users', requireAdmin, upload.fields([
     }
 });
 
+app.get('/users/:id', async (req, res) => {
+    const user = await User.findOne({ _id: req.params.id }).lean();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+});
+
+app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-update-failed', req.params.id, {
+                reason: 'Not found'
+            });
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await updateDocument(User, { _id: req.params.id }, req.body);
+        await logAction(
+            req.session.user.username,
+            'user-updated',
+            user.username || user.email,
+            { changes: Object.keys(req.body) }
+        );
+
+        res.json({ message: 'User updated', user: { ...user, ...req.body } });
+    } catch (err) {
+        await logAction(
+            req.session.user.username,
+            'user-update-error',
+            req.params.id,
+            { error: err.message }
+        );
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+});
+
+app.delete('/users/:id', requireAdmin, async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
+                reason: 'Not found'
+            });
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await deleteDocument(User, { _id: req.params.id });
+        await logAction(
+            req.session.user.username,
+            'user-deleted',
+            user.username || user.email,
+            { role: user.role }
+        );
+
+        res.json({ message: 'User deleted', user });
+    } catch (err) {
+        await logAction(
+            req.session.user.username,
+            'user-delete-error',
+            req.params.id,
+            { error: err.message }
+        );
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
 
 app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
     try {
@@ -884,8 +952,9 @@ app.get('/pendingUsers', async (req, res) => {
     res.json(pending);
 });
 
+
 app.get('/pendingUsers/:id', async (req, res) => {
-    const user = await PendingUser.findOne({ id: req.params.id }).lean();
+    const user = await PendingUser.findOne({ _id: req.params.id }).lean();
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
@@ -930,6 +999,7 @@ app.post('/pendingUsers', requireLogin, upload.fields([
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
+            id: Date.now().toString(), // Add custom id
             fullName,
             username,
             email,
@@ -1052,7 +1122,7 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
 
 app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
     try {
-        const pendingUser = await PendingUser.findOne({ id: req.params.id }).lean();
+        const pendingUser = await PendingUser.findOne({ _id: req.params.id }).lean();
         if (!pendingUser) {
             await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
                 reason: 'Not found'
@@ -1069,7 +1139,7 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
         };
 
         await writeDocument(User, approvedUser);
-        await deleteDocument(PendingUser, { id: req.params.id });
+        await deleteDocument(PendingUser, { _id: req.params.id });
 
         await logAction(
             req.session.user.username,
@@ -1094,8 +1164,7 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
 });
 
 app.get('/pdfs/:filename', requireAdmin, (req, res) => {
-    const filepath = path.join(__dirname, 'uploads', req.params.filename);
-
+    const filepath = path.join(uploadDir, req.params.filename);
     if (fs.existsSync(filepath)) {
         res.download(filepath);
     } else {
@@ -1108,7 +1177,6 @@ app.get('/pdfs/:filename', requireAdmin, (req, res) => {
         res.status(404).json({ error: 'File not found' });
     }
 });
-
 app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;
     if (userRole !== 'editor' && userRole !== 'admin') {
