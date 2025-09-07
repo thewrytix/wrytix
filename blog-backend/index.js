@@ -710,25 +710,6 @@ app.get('/users', async (req, res) => {
     res.json(users);
 });
 
-app.get('/users/author/:username', async (req, res) => {
-    try {
-        const username = req.params.username.toLowerCase();
-        const submissions = await readCollection(PostSubmission);
-        const approved = await readCollection(Post);
-
-        const mySubmissions = submissions.filter(p => (p.submittedBy || "").toLowerCase() === username);
-        const myApproved = approved.filter(p => (p.submittedBy || "").toLowerCase() === username);
-
-        res.json({
-            pending: mySubmissions.filter(p => p.status === "pending").length,
-            rejected: mySubmissions.filter(p => p.status === "rejected").length,
-            approved: myApproved.length,
-            total: mySubmissions.length + myApproved.length
-        });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to get stats' });
-    }
-});
 
 app.get('/users/:id', async (req, res) => {
     const user = await User.findOne({ id: req.params.id }).lean();
