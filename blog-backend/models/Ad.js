@@ -1,9 +1,13 @@
 const mongoose = require('mongoose');
 
 const AdSchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
     type: { type: String, enum: ['image', 'video', 'embed', 'text'], required: true },
     content: { type: String }, // optional now
     link: { type: String },
+    html: { type: String },
+    text: { type: String},
+    file: { type: String },
     category: { type: String, required: true },
     company: { type: String, default: '' },
     thumbnail: { type: String },
