@@ -1217,6 +1217,14 @@ app.delete('/logs', async (req, res) => {
     }
 });
 
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
 app.get('/ping', (req, res) => {
     logAction(req.session.user?.username, 'ping', 'admin');
     res.json({ message: 'Backend is alive!' });
