@@ -26,7 +26,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // ========= Middleware ========= //
 app.use(cors({
-    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
+    origin: ["https://wrytix.netlify.app", "http://localhost:5500", "https://wrytix.onrender.com"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
