@@ -334,7 +334,7 @@
                 <td>${statusDisplay}</td>
                 <td>
                     ${user.avatar
-              ? `<img src="https://wrytix.onrender.com/files/${user.avatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">`
+              ? `<img src="https://wrytix.onrender.com/files/${user.avatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.src='https://wrytix.netlify.app/default-avatar.png';">`
               : 'No avatar'}
                 </td>
                 <td>
@@ -357,7 +357,7 @@
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const userToDelete = users.find(u => u._id === id); // Use _id
+      const userToDelete = users.find(u => u._id === id);
       if (!userToDelete) throw new Error('User not found');
 
       if (currentUser.role === 'admin') {
@@ -376,9 +376,9 @@
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: userToDelete.id,
+            userId: userToDelete._id, // Use _id
             reason: `Requested by ${currentUser.username} to delete user: ${userToDelete.username}`,
-            targetId: userToDelete.id,
+            targetId: userToDelete._id, // Use _id
             targetUsername: userToDelete.username,
             targetFullName: userToDelete.fullName,
             targetAvatar: userToDelete.avatar,

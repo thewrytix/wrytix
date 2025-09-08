@@ -864,7 +864,7 @@ app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
 
 app.delete('/users/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await User.findOne({ id: req.params.id }).lean();
+        const user = await User.findOne({ _id: req.params.id }).lean();
         if (!user) {
             await logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
                 reason: 'Not found'
@@ -872,7 +872,7 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        await deleteDocument(User, { id: req.params.id });
+        await deleteDocument(User, { _id: req.params.id });
         await logAction(
             req.session.user.username,
             'user-deleted',
@@ -892,6 +892,7 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete user', details: err.message });
     }
 });
+
 
 app.get('/pendingUsers', async (req, res) => {
     const pending = await readCollection(PendingUser);
@@ -1203,22 +1204,44 @@ app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     }
 });
 
-app.get('/files/:filename', requireAdmin, (req, res) => {
-    const filepath = path.join(uploadDir, req.params.filename);
-    if (fs.existsSync(filepath)) {
-        res.download(filepath);
-    } else {
+app.get('/files/:filename', requireEditorOrAdmin, (req, res) => {
+    try {
+        const filename = decodeURIComponent(req.params.filename);
+        const filepath = path.join(uploadDir, filename);
+        if (!fs.existsSync(filepath)) {
+            logAction(
+                req.session.user?.username || 'anonymous',
+                'file-download-failed',
+                filename,
+                { reason: 'File not found' }
+            );
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const fileExt = path.extname(filepath).toLowerCase();
+        const mimeTypes = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.pdf': 'application/pdf'
+        };
+        const mimeType = mimeTypes[fileExt] || 'application/octet-stream';
+
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        fs.createReadStream(filepath).pipe(res);
+    } catch (err) {
+        console.error('Error in /files/:filename:', err);
         logAction(
-            req.session.user?.username,
-            'file-download-failed',
+            req.session.user?.username || 'anonymous',
+            'file-access-error',
             req.params.filename,
-            { reason: 'File not found' }
+            { error: err.message, stack: err.stack }
         );
-        res.status(404).json({ error: 'File not found' });
+        res.status(400).json({ error: 'Invalid filename', details: err.message });
     }
 });
-
-
 app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;
     if (userRole !== 'editor' && userRole !== 'admin') {
@@ -1252,7 +1275,8 @@ app.post('/pendingDeletions', async (req, res) => {
             targetAvatar,
             requestedBy: requestedBy || req.session.user.username,
             createdAt: new Date(),
-            status: 'pending'
+            status: 'pending',
+            targetId: userId // Ensure targetId matches userId
         };
 
         await writeDocument(PendingDeletion, newDeletion);
@@ -1267,7 +1291,8 @@ app.post('/pendingDeletions', async (req, res) => {
 
         res.status(201).json({ message: 'Delete request submitted' });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to submit delete request' });
+        console.error('Error in /pendingDeletions:', err);
+        res.status(500).json({ error: 'Failed to submit delete request', details: err.message });
     }
 });
 
@@ -1286,10 +1311,10 @@ app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
         const deletion = await PendingDeletion.findOne({ id: req.params.id }).lean();
         if (!deletion) return res.status(404).json({ error: 'Request not found' });
 
-        const user = await User.findOne({ id: deletion.userId }).lean();
+        const user = await User.findOne({ _id: deletion.userId }).lean(); // Use _id
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        await deleteDocument(User, { id: deletion.userId });
+        await deleteDocument(User, { _id: deletion.userId }); // Use _id
         await deleteDocument(PendingDeletion, { id: req.params.id });
 
         await logAction(req.session.user.username, 'user-delete-approved', user.username, {
@@ -1299,10 +1324,10 @@ app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
 
         res.json({ message: 'User deleted', user });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to approve deletion' });
+        console.error('Error in /pendingDeletions/:id/approve:', err);
+        res.status(500).json({ error: 'Failed to approve deletion', details: err.message });
     }
 });
-
 
 
 app.post('/pendingDeletions/:id/reject', requireAdmin, async (req, res) => {
