@@ -1204,6 +1204,47 @@ app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Public endpoint for avatar images
+app.get('/public/files/:filename', (req, res) => {
+    try {
+        const filename = decodeURIComponent(req.params.filename);
+        const filepath = path.join(uploadDir, filename);
+        if (!fs.existsSync(filepath)) {
+            logAction(
+                req.session.user?.username || 'anonymous',
+                'file-download-failed',
+                filename,
+                { reason: 'File not found' }
+            );
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const fileExt = path.extname(filepath).toLowerCase();
+        const mimeTypes = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.pdf': 'application/pdf'
+        };
+        const mimeType = mimeTypes[fileExt] || 'application/octet-stream';
+
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        fs.createReadStream(filepath).pipe(res);
+    } catch (err) {
+        console.error('Error in /public/files/:filename:', err);
+        logAction(
+            req.session.user?.username || 'anonymous',
+            'file-access-error',
+            req.params.filename,
+            { error: err.message, stack: err.stack }
+        );
+        res.status(400).json({ error: 'Invalid filename', details: err.message });
+    }
+});
+
+// Existing endpoint for authenticated file access
 app.get('/files/:filename', requireEditorOrAdmin, (req, res) => {
     try {
         const filename = decodeURIComponent(req.params.filename);
@@ -1242,6 +1283,8 @@ app.get('/files/:filename', requireEditorOrAdmin, (req, res) => {
         res.status(400).json({ error: 'Invalid filename', details: err.message });
     }
 });
+
+
 app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;
     if (userRole !== 'editor' && userRole !== 'admin') {
