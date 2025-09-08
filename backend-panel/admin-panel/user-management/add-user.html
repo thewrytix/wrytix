@@ -149,7 +149,14 @@
         formData.append('role', role);
         formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
         if (avatar) formData.append('avatar', avatar);
-        if (documentFile) formData.append('pdf', documentFile);
+        if (documentFile && sessionStorage.getItem('userRole') !== 'admin') {
+            formData.append('pdf', documentFile); // Only append pdf for non-admin
+        }
+
+        console.log('FormData entries:');
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value instanceof File ? value.name : value}`);
+        }
 
         try {
             const isAdmin = sessionStorage.getItem('userRole') === 'admin';
@@ -161,7 +168,13 @@
                 credentials: 'include'
             });
 
-            const resData = await res.json();
+            let resData;
+            try {
+                resData = await res.json();
+            } catch (err) {
+                console.error('Failed to parse JSON:', await res.text());
+                throw new Error('Invalid server response');
+            }
 
             if (!res.ok) {
                 console.error(`❌ Add user failed. Status: ${res.status}`, resData);
@@ -180,10 +193,9 @@
             console.log("✅ User added:", resData);
         } catch (err) {
             console.error("❌ Unexpected Add User error:", err);
-            showError('Unexpected error while adding user.');
+            showError(`Unexpected error while adding user: ${err.message}`);
         }
     });
-
     const usernameInput = document.getElementById('username');
     const usernameStatus = document.getElementById('username-status');
     const emailInput = document.getElementById('email');

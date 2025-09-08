@@ -746,15 +746,14 @@ app.post('/comments', async (req, res) => {
 
 app.get('/users', async (req, res) => {
     const users = await readCollection(User);
-    res.json(users);
+    const mappedUsers = users.map(user => ({
+        ...user,
+        fullName: user.fullname
+    }));
+    res.json(mappedUsers);
 });
 
 
-app.get('/users/:id', async (req, res) => {
-    const user = await User.findOne({ id: req.params.id }).lean();
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
-});
 
 app.post('/users', requireAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }
@@ -888,69 +887,14 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
 });
 
 
-app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
-    try {
-        const user = await User.findOne({ id: req.params.id }).lean();
-        if (!user) {
-            await logAction(req.session.user.username, 'user-update-failed', req.params.id, {
-                reason: 'Not found'
-            });
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        await updateDocument(User, { id: req.params.id }, req.body);
-        await logAction(
-            req.session.user.username,
-            'user-updated',
-            user.username || user.email,
-            { changes: Object.keys(req.body) }
-        );
-
-        res.json({ message: 'User updated', user: { ...user, ...req.body } });
-    } catch (err) {
-        await logAction(
-            req.session.user.username,
-            'user-update-error',
-            req.params.id,
-            { error: err.message }
-        );
-        res.status(500).json({ error: 'Failed to update user' });
-    }
-});
-
-app.delete('/users/:id', requireAdmin, async (req, res) => {
-    try {
-        const user = await User.findOne({ id: req.params.id }).lean();
-        if (!user) {
-            await logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
-                reason: 'Not found'
-            });
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        await deleteDocument(User, { id: req.params.id });
-        await logAction(
-            req.session.user.username,
-            'user-deleted',
-            user.username || user.email,
-            { role: user.role }
-        );
-
-        res.json({ message: 'User deleted', user });
-    } catch (err) {
-        await logAction(
-            req.session.user.username,
-            'user-delete-error',
-            req.params.id,
-            { error: err.message }
-        );
-        res.status(500).json({ error: 'Failed to delete user' });
-    }
-});
-
 app.get('/pendingUsers', async (req, res) => {
     const pending = await readCollection(PendingUser);
-    res.json(pending);
+    const mappedPending = pending.map(user => ({
+        ...user,
+        fullName: user.fullname,
+        createdAt: user.requestedAt
+    }));
+    res.json(mappedPending);
 });
 
 
@@ -1078,7 +1022,7 @@ app.post('/pendingUsers/:id', requireAdmin, async (req, res) => {
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await PendingUser.findOne({ id: req.params.id }).lean();
+        const user = await PendingUser.findOne({ _id: req.params.id }).lean();
         if (!user) {
             await logAction(req.session.user.username, 'pending-user-delete-failed', req.params.id, {
                 reason: 'Not found'
@@ -1086,7 +1030,7 @@ app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'Pending user not found' });
         }
 
-        await deleteDocument(PendingUser, { id: req.params.id });
+        await deleteDocument(PendingUser, { _id: req.params.id });
         await logAction(
             req.session.user.username,
             'pending-user-deleted',
@@ -1137,7 +1081,8 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
         const newUser = {
             ...pendingUser,
             status: 'active',
-            createdAt: new Date()
+            approvedBy: req.session.user.username,
+            approvedAt: new Date()
         };
         await writeDocument(User, newUser);
         await deleteDocument(PendingUser, { _id: pendingUserId });
@@ -1161,7 +1106,6 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
     }
 });
 
-
 app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
     try {
         const pendingUser = await PendingUser.findOne({ _id: req.params.id }).lean();
@@ -1170,6 +1114,16 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
                 reason: 'Not found'
             });
             return res.status(404).json({ error: 'Pending user not found' });
+        }
+
+        const duplicate = await User.findOne({
+            $or: [{ username: pendingUser.username }, { email: pendingUser.email }, { fullname: pendingUser.fullname }]
+        }).lean();
+        if (duplicate) {
+            await logAction(req.session.user.username, 'user-approve-failed', pendingUser.username || pendingUser.email, {
+                reason: 'Duplicate user'
+            });
+            return res.status(409).json({ error: 'User already exists' });
         }
 
         const approvedUser = {
@@ -1203,48 +1157,7 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
-    try {
-        const pendingUser = await PendingUser.findOne({ _id: req.params.id }).lean();
-        if (!pendingUser) {
-            await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
-                reason: 'Not found'
-            });
-            return res.status(404).json({ error: 'Pending user not found' });
-        }
 
-        const approvedUser = {
-            ...pendingUser,
-            id: Date.now().toString(),
-            status: 'active',
-            approvedBy: req.session.user.username,
-            approvedAt: new Date()
-        };
-
-        await writeDocument(User, approvedUser);
-        await deleteDocument(PendingUser, { _id: req.params.id });
-
-        await logAction(
-            req.session.user.username,
-            'user-approved',
-            approvedUser.username || approvedUser.email,
-            { method: 'direct-approve' }
-        );
-
-        res.json({
-            message: 'User approved successfully',
-            user: approvedUser
-        });
-    } catch (err) {
-        await logAction(
-            req.session.user.username,
-            'user-approve-error',
-            req.params.id,
-            { error: err.message }
-        );
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
 
 app.get('/pdfs/:filename', requireAdmin, (req, res) => {
     const filepath = path.join(uploadDir, req.params.filename);
