@@ -779,7 +779,8 @@ app.post('/users', requireAdmin, upload.fields([
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = {
-            fullname: fullName, // Map fullName to fullname
+            id: Date.now().toString(), // Add custom id
+            fullname: fullName,
             username,
             email,
             password: hashedPassword,
@@ -975,7 +976,6 @@ app.post('/pendingUsers', requireLogin, upload.fields([
             return res.status(400).json({ error: 'Invalid role. Must be viewer, author, editor, or admin' });
         }
 
-        // Restrict admin role creation to admins
         const isAdmin = req.session.user?.role === 'admin';
         if (role === 'admin' && !isAdmin) {
             await logAction(req.session.user?.username || 'anonymous', 'admin-role-request-denied', username, {
@@ -999,7 +999,8 @@ app.post('/pendingUsers', requireLogin, upload.fields([
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newRequest = {
-            fullname: fullName, // Map fullName to fullname
+            id: Date.now().toString(), // Add custom id
+            fullname: fullName,
             username,
             email,
             password: hashedPassword,
@@ -1031,6 +1032,49 @@ app.post('/pendingUsers', requireLogin, upload.fields([
         res.status(500).json({ error: 'Failed to create pending user', details: err.message });
     }
 });
+
+app.post('/pendingUsers/:id', requireAdmin, async (req, res) => {
+    try {
+        const pendingUser = await PendingUser.findOne({ id: req.params.id }).lean();
+        if (!pendingUser) {
+            await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
+                reason: 'Not found'
+            });
+            return res.status(404).json({ error: 'Pending user not found' });
+        }
+
+        const approvedUser = {
+            ...pendingUser,
+            status: 'active',
+            approvedBy: req.session.user.username,
+            approvedAt: new Date()
+        };
+
+        await writeDocument(User, approvedUser);
+        await deleteDocument(PendingUser, { id: req.params.id });
+
+        await logAction(
+            req.session.user.username,
+            'user-approved',
+            approvedUser.username || approvedUser.email,
+            { method: 'direct-approve' }
+        );
+
+        res.json({
+            message: 'User approved successfully',
+            user: approvedUser
+        });
+    } catch (err) {
+        await logAction(
+            req.session.user.username,
+            'user-approve-error',
+            req.params.id,
+            { error: err.message }
+        );
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
@@ -1116,6 +1160,7 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to approve user' });
     }
 });
+
 
 app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
     try {
