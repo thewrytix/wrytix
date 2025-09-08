@@ -230,7 +230,13 @@ async function logAction(actor, action, target, additionalData = {}) {
 
 function requireAdmin(req, res, next) {
     if (!req.session.user || req.session.user.role !== 'admin') {
-        logAction(req.session.user?.username, 'admin-access-denied', req.path, {
+        console.log('Admin access denied:', {
+            sessionUser: req.session.user,
+            path: req.path,
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+        logAction(req.session.user?.username || 'anonymous', 'admin-access-denied', req.path, {
             ip: req.ip,
             userAgent: req.headers['user-agent']
         });
@@ -1127,10 +1133,17 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
         }
 
         const approvedUser = {
-            ...pendingUser,
+            id: Date.now().toString(),
+            fullname: pendingUser.fullname,
+            username: pendingUser.username,
+            email: pendingUser.email,
+            password: pendingUser.password,
+            role: pendingUser.role,
+            avatar: pendingUser.avatar,
             status: 'active',
             approvedBy: req.session.user.username,
-            approvedAt: new Date()
+            approvedAt: new Date(),
+            createdAt: new Date()
         };
 
         await writeDocument(User, approvedUser);
@@ -1145,28 +1158,59 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
 
         res.json({
             message: 'User approved successfully',
-            user: approvedUser
+            user: { ...approvedUser, fullName: approvedUser.fullname }
         });
     } catch (err) {
+        console.error('Error in /pendingUsers/:id/approve:', err);
         await logAction(
             req.session.user.username,
             'user-approve-error',
             req.params.id,
-            { error: err.message }
+            { error: err.message, stack: err.stack }
         );
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Failed to approve user', details: err.message });
     }
 });
 
+app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
+    try {
+        const user = await PendingUser.findOne({ _id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'pending-user-delete-failed', req.params.id, {
+                reason: 'Not found'
+            });
+            return res.status(404).json({ error: 'Pending user not found' });
+        }
 
-app.get('/pdfs/:filename', requireAdmin, (req, res) => {
+        await deleteDocument(PendingUser, { _id: req.params.id });
+        await logAction(
+            req.session.user.username,
+            'pending-user-deleted',
+            user.email || user.username,
+            { reason: 'Admin action' }
+        );
+
+        res.json({ message: 'Pending request removed', removed: user });
+    } catch (err) {
+        console.error('Error in /pendingUsers/:id:', err);
+        await logAction(
+            req.session.user.username,
+            'pending-user-delete-error',
+            req.params.id,
+            { error: err.message, stack: err.stack }
+        );
+        res.status(500).json({ error: 'Failed to remove pending user', details: err.message });
+    }
+});
+
+app.get('/files/:filename', requireAdmin, (req, res) => {
     const filepath = path.join(uploadDir, req.params.filename);
     if (fs.existsSync(filepath)) {
         res.download(filepath);
     } else {
         logAction(
             req.session.user?.username,
-            'pdf-download-failed',
+            'file-download-failed',
             req.params.filename,
             { reason: 'File not found' }
         );
@@ -1258,6 +1302,8 @@ app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to approve deletion' });
     }
 });
+
+
 
 app.post('/pendingDeletions/:id/reject', requireAdmin, async (req, res) => {
     try {

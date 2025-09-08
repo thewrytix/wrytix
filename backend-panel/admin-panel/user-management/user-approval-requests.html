@@ -175,12 +175,8 @@
 </div>
 <script>
   window.addEventListener('load', async () => {
-
-    // then run other things safely:
-    await loadAuthorRequests?.();
-    await loadDeleteRequests?.();
-
-
+    await loadAuthorRequests();
+    await loadDeleteRequests();
   });
 
 
@@ -204,25 +200,25 @@
       const container = document.getElementById('author-requests');
 
       container.innerHTML = users.map(user => `
-        <tr>
-          <td>${user.fullName || 'N/A'}</td>
-          <td>${user.username}</td>
-          <td>${user.email}</td>
-          <td>${user.role || 'N/A'}</td>
-          <td>
-            ${user.avatar
-              ? `<img src="${user.avatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
+            <tr>
+                <td>${user.fullName || 'N/A'}</td>
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${user.role || 'N/A'}</td>
+                <td>
+                    ${user.avatar
+              ? `<img src="https://wrytix.onrender.com/pdfs/${user.avatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
               : 'No avatar'}
-          </td>
-          <td>${user.submittedBy || 'Unknown'}</td>
-          <td>${new Date(user.createdAt).toLocaleString()}</td>
-          <td>
-            <button class="btn approve" onclick="approveUser('${user.id}')">Approve</button>
-            <button class="btn reject" onclick="rejectUser('${user.id}')">Reject</button>
-            <button class="btn" onclick="window.location.href='approval-view-user.html?id=${user.id}'">View</button>
-          </td>
-        </tr>
-      `).join('');
+                </td>
+                <td>${user.submittedBy || 'Unknown'}</td>
+                <td>${new Date(user.createdAt).toLocaleString()}</td>
+                <td>
+                    <button class="btn approve" onclick="approveUser('${user._id}')">Approve</button>
+                    <button class="btn reject" onclick="rejectUser('${user._id}')">Reject</button>
+                    <button class="btn" onclick="window.location.href='approval-view-user.html?id=${user._id}'">View</button>
+                </td>
+            </tr>
+        `).join('');
     } catch (err) {
       console.error("Failed to load author requests:", err);
       showError("Failed to load pending users");
@@ -271,10 +267,15 @@
     try {
       const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}/approve`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      const resData = await res.json();
+      console.log('Approve response:', resData);
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to approve user');
+      }
 
       await loadAuthorRequests();
       showSuccess("User approved successfully");
@@ -290,10 +291,15 @@
     try {
       const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      const resData = await res.json();
+      console.log('Reject response:', resData);
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to reject user');
+      }
 
       await loadAuthorRequests();
       showSuccess("User rejected");
