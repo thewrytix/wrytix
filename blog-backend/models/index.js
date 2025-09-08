@@ -6,11 +6,15 @@ const Schema = mongoose.Schema;
 // User Schema
 const UserSchema = new Schema({
     id: { type: String, required: true, unique: true },
+    fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    avatar: { type: String }, // File path or URL
     role: { type: String, required: true },
     status: { type: String, default: 'active' },
+    pdfFilename: { type: String },
+    pdfOriginalName: { type: String },
     createdAt: { type: Date, default: Date.now },
     approvedBy: { type: String },
     approvedAt: { type: Date },
