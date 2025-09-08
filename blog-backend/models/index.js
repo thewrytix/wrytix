@@ -65,7 +65,7 @@ const PendingUserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String },
-    avatar: { type: String }, // File path or URL
+
     submittedBy: { type: String },
     createdAt: { type: Date, default: Date.now },
     pdfFilename: { type: String },
