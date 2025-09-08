@@ -56,7 +56,7 @@ app.use(cors({
     origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
 }));
 
 app.get("/", (req, res) => {
