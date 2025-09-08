@@ -333,10 +333,15 @@
                 <td>${user.role}</td>
                 <td>${statusDisplay}</td>
                 <td>
-                    ${user.avatar
-              ? `<img src="https://wrytix.onrender.com/files/${user.avatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.src='https://wrytix.netlify.app/default-avatar.png';">`
+                ${user.avatar
+              ? `<img src="${user.avatar.startsWith('data:')
+                      ? user.avatar
+                      : `https://wrytix.onrender.com/public/files/${user.avatar}`}"
+                        alt="avatar"
+                        style="width:40px;height:40px;border-radius:50%;object-fit:cover;"
+                        onerror="this.src='https://wrytix.netlify.app/assets/images/default-avatar.png';"/>`
               : 'No avatar'}
-                </td>
+            </td>
                 <td>
                     ${pending && currentUser.role === 'editor' && pendingByMe ? `
                         <button class="delete-btn" onclick="cancelDeleteRequest('${user.id}')">Cancel</button>
