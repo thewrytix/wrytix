@@ -59,7 +59,7 @@
       <div class="profile-dropdown">
         <button class="profile-btn" id="profileBtn">Loading...</button>
         <div class="profile-menu" id="profileMenu">
-          <button id="logoutBtn">🚪 Logout</button>
+          <button id="logoutBtn">Logout</button>
         </div>
       </div>
     </div>
@@ -118,25 +118,37 @@
   const pageSize = 10;
 
   async function fetchUsers() {
-    const res = await fetch('https://wrytix.onrender.com/users');
+    const res = await fetch('https://wrytix.onrender.com/users', {
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('Failed to fetch users');
     return await res.json();
   }
 
   function createRow(user) {
     return `
-      <tr>
-        <td><img src="${user.avatar?.startsWith('data:') ? user.avatar : (user.avatar || '')}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"/></td>
-        <td>${user.fullName}</td>
-        <td>${user.username}</td>
-        <td>${user.email}</td>
-        <td>${user.role}</td>
-        <td>${user.status}</td>
-        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
-        <td class="action-buttons">
-          <button onclick="viewUser('${user.id}')" class="btn-view">View</button>
-          <button onclick="editUser('${user.id}')" class="btn-edit">Edit</button>
-        </td>
-      </tr>
+        <tr>
+            <td>
+                ${user.avatar
+            ? `<img src="${user.avatar.startsWith('data:')
+                    ? user.avatar
+                    : `https://wrytix.onrender.com/files/${user.avatar}`}"
+                        alt="avatar"
+                        style="width:40px;height:40px;border-radius:50%;object-fit:cover;"
+                        onerror="this.src='https://wrytix.netlify.app/default-avatar.png';"/>`
+            : 'No avatar'}
+            </td>
+            <td>${user.fullName || '—'}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td>${user.status}</td>
+            <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+            <td class="action-buttons">
+                <button onclick="viewUser('${user._id}')" class="btn-view">View</button>
+                <button onclick="editUser('${user._id}')" class="btn-edit">Edit</button>
+            </td>
+        </tr>
     `;
   }
 
