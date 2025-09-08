@@ -864,7 +864,7 @@ app.put('/users/:id', requireAdmin, upload.none(), async (req, res) => {
 
 app.delete('/users/:id', requireAdmin, async (req, res) => {
     try {
-        const user = await User.findOne({ _id: req.params.id }).lean();
+        const user = await User.findOne({ id: req.params.id }).lean();
         if (!user) {
             await logAction(req.session.user.username, 'user-delete-failed', req.params.id, {
                 reason: 'Not found'
@@ -872,7 +872,7 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        await deleteDocument(User, { _id: req.params.id });
+        await deleteDocument(User, { id: req.params.id });
         await logAction(
             req.session.user.username,
             'user-deleted',
@@ -882,16 +882,16 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
 
         res.json({ message: 'User deleted', user });
     } catch (err) {
+        console.error('Error in /users/:id:', err);
         await logAction(
             req.session.user.username,
             'user-delete-error',
             req.params.id,
-            { error: err.message }
+            { error: err.message, stack: err.stack }
         );
-        res.status(500).json({ error: 'Failed to delete user' });
+        res.status(500).json({ error: 'Failed to delete user', details: err.message });
     }
 });
-
 
 app.get('/pendingUsers', async (req, res) => {
     const pending = await readCollection(PendingUser);
