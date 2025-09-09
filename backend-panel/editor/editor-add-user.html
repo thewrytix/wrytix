@@ -43,22 +43,16 @@
 
     <h1>Add New User</h1>
     <form id="addUserForm">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" required />
 
-            <label for="fullName">Full Name</label>
-            <input type="text" id="fullName" required />
+        <label for="username">Username</label>
+        <input type="text" id="username" required />
+        <div id="username-status" class="tooltip"></div>
 
-
-            <label for="username">Username</label>
-            <input type="text" id="username" required />
-            <div id="username-status" class="tooltip"></div>
-
-
-
-
-            <label for="email">Email</label>
-            <input type="email" id="email" required />
-            <div id="email-status" class="tooltip"></div>
-
+        <label for="email">Email</label>
+        <input type="email" id="email" required />
+        <div id="email-status" class="tooltip"></div>
 
         <div style="position: relative;">
             <label for="password">Password</label>
@@ -66,41 +60,23 @@
             <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
         </div>
 
+        <label for="role">Role</label>
+        <select id="role" required>
+            <option value="">Select Role</option>
+            <option value="viewer">Viewer - Can only view posts</option>
+            <option value="author">Author - Can write and submit posts</option>
+            <option value="editor">Editor - Can manage author posts</option>
+            <option value="admin">Admin - Full system control</option>
+        </select>
+        <div class="tooltip">Choose role based on responsibilities.</div>
 
+        <label for="avatar">Profile Picture (Optional, JPEG/PNG/GIF)</label>
+        <input type="file" id="avatar" accept="image/jpeg,image/png,image/gif" />
 
+        <label for="document">Attach Document (Optional, PDF only)</label>
+        <input type="file" id="document" accept="application/pdf" />
 
-            <label for="role">Role</label>
-            <select id="role" required>
-                <option value="">Select Role</option>
-                <option value="viewer">Viewer - Can only view posts</option>
-                <option value="author">Author - Can write and submit posts</option>
-                <option value="editor">Editor - Can manage author posts</option>
-                <option value="admin">Admin - Full system control</option>
-            </select>
-            <div class="tooltip">Choose role based on responsibilities.</div>
-
-
-
-            <label for="status">Status</label>
-            <select id="status" required>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-            </select>
-
-
-            <label for="avatar">Profile Picture (Required)</label>
-            <input type="file" id="avatar" accept="image/*" required />
-
-
-
-            <label for="document">Attach Document (Required)</label>
-            <input type="file" id="document" accept=".pdf,.doc,.docx" required />
-
-
-
-            <button type="submit" class="submit-btn">Add User</button>
-
-
+        <button type="submit">Add User</button>
     </form>
 </main>
 </div>
@@ -108,10 +84,8 @@
     document.getElementById('togglePassword').addEventListener('click', () => {
         const passwordInput = document.getElementById('password');
         const icon = document.getElementById('togglePassword');
-
         const isHidden = passwordInput.type === 'password';
         passwordInput.type = isHidden ? 'text' : 'password';
-
         icon.classList.toggle('fa-eye');
         icon.classList.toggle('fa-eye-slash');
     });
@@ -120,15 +94,14 @@
         e.preventDefault();
 
         const fullName = document.getElementById('fullName').value.trim();
-        const username = usernameInput.value.trim();
-        const email = emailInput.value.trim();
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value.trim();
         const role = document.getElementById('role').value;
-        const status = document.getElementById('status').value;
         const avatar = document.getElementById('avatar').files[0];
         const documentFile = document.getElementById('document').files[0];
 
-        if (!fullName || !username || !email || !password || !role || !status) {
+        if (!fullName || !username || !email || !password || !role) {
             showError('Please fill all required fields.');
             return;
         }
@@ -143,22 +116,22 @@
             return;
         }
 
-        const reader = avatar ? await toBase64(avatar) : null;
-        const documentData = documentFile ? await toBase64(documentFile) : null;
+        const formData = new FormData();
+        formData.append('fullName', fullName);
+        formData.append('username', username);
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('role', role);
+        formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
+        if (avatar) formData.append('avatar', avatar);
+        if (documentFile && sessionStorage.getItem('userRole') !== 'admin') {
+            formData.append('pdf', documentFile); // Only append pdf for non-admin
+        }
 
-        const newUser = {
-            fullName,
-            username,
-            email,
-            password,
-            role,
-            status,
-            avatar: reader,
-            document: documentData,
-            createdAt: new Date().toISOString(),
-            submittedBy: sessionStorage.getItem('currentUser') || 'unknown',
-            createdBy: sessionStorage.getItem('currentUser') || 'unknown',
-        };
+        console.log('FormData entries:');
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value instanceof File ? value.name : value}`);
+        }
 
         try {
             const isAdmin = sessionStorage.getItem('userRole') === 'admin';
@@ -166,17 +139,16 @@
 
             const res = await fetch(`https://wrytix.onrender.com${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // ✅ ADD THIS
-                body: JSON.stringify(newUser)
+                body: formData,
+                credentials: 'include'
             });
 
-            const resText = await res.text(); // Read response safely
             let resData;
             try {
-                resData = JSON.parse(resText);
-            } catch {
-                resData = { error: resText || 'Invalid JSON response' };
+                resData = await res.json();
+            } catch (err) {
+                console.error('Failed to parse JSON:', await res.text());
+                throw new Error('Invalid server response');
             }
 
             if (!res.ok) {
@@ -188,7 +160,6 @@
 
             showSuccess(isAdmin ? 'User added successfully!' : 'Submitted for admin approval.');
             document.getElementById('addUserForm').reset();
-
             isUsernameAvailable = false;
             isEmailAvailable = false;
             usernameStatus.textContent = '';
@@ -197,19 +168,9 @@
             console.log("✅ User added:", resData);
         } catch (err) {
             console.error("❌ Unexpected Add User error:", err);
-            showError('Unexpected error while adding user.');
+            showError(`Unexpected error while adding user: ${err.message}`);
         }
     });
-
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
     const usernameInput = document.getElementById('username');
     const usernameStatus = document.getElementById('username-status');
     const emailInput = document.getElementById('email');
@@ -237,7 +198,6 @@
             try {
                 const res = await fetch(`https://wrytix.onrender.com/check-username?username=${encodeURIComponent(username)}`);
                 const { available } = await res.json();
-
                 isUsernameAvailable = available;
                 usernameStatus.textContent = available ? 'Username available ✅' : 'Username already taken ❌';
                 usernameStatus.style.color = available ? 'green' : 'red';
@@ -267,7 +227,6 @@
             try {
                 const res = await fetch(`https://wrytix.onrender.com/check-email?email=${encodeURIComponent(email)}`);
                 const { available } = await res.json();
-
                 isEmailAvailable = available;
                 emailStatus.textContent = available ? 'Email available ✅' : 'Email already used ❌';
                 emailStatus.style.color = available ? 'green' : 'red';
