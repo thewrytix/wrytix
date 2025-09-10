@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const helmet = require('helmet');
 const marketDataRoutes = require('./routes/marketData');
 const { v4: uuidv4 } = require('uuid');
+const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 const connectDB = require('./config/db');
 const {
