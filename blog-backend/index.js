@@ -25,9 +25,8 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 // Multer setup with memory storage
-const storage = multer.memoryStorage(); // Store files in memory before uploading to GridFS
+const storage = multer.memoryStorage();
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -57,19 +56,17 @@ app.get("/", (req, res) => {
     res.send("Backend is running 🚀");
 });
 
-app.set('trust proxy', 1); // ← MOVE THIS HERE (BEFORE session)
-
-
+app.set('trust proxy', 1);
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
-        store: MongoStore.create({
-            mongoUrl: process.env.MONGO_URI || "mongodb+srv://wrytix_admin:Kylerlee149143123.@cluster0.jorn0pz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-            ttl: 14 * 24 * 60 * 60,
-            autoRemove: 'native'
-        }),
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI || "mongodb+srv://wrytix_admin:Kylerlee149143123.@cluster0.jorn0pz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+        ttl: 14 * 24 * 60 * 60,
+        autoRemove: 'native'
+    }),
     cookie: {
         httpOnly: true,
         secure: true,
@@ -87,7 +84,6 @@ app.use((req, res, next) => {
     next();
 });
 app.use(marketDataRoutes);
-
 
 // GridFS Bucket Setup
 let gfs;
@@ -261,7 +257,6 @@ function requireEditorOrAdmin(req, res, next) {
     return res.status(403).json({ error: 'Forbidden' });
 }
 
-
 // File Upload to GridFS Utility
 async function uploadToGridFS(file, filename) {
     return new Promise((resolve, reject) => {
@@ -273,7 +268,6 @@ async function uploadToGridFS(file, filename) {
         uploadStream.on('error', reject);
     });
 }
-
 
 // ⏱️ Auto-refresh ad status every 10 minutes
 setInterval(async () => {
@@ -509,7 +503,7 @@ app.post('/posts/:slug/view', async (req, res) => {
 
 app.post('/posts', async (req, res) => {
     try {
-        console.log('Received Post Slug:', req.body.slug); // Log only the slug
+        console.log('Received Post Slug:', req.body.slug);
         const now = new Date();
         let scheduleDate;
         if (req.body.schedule) {
@@ -771,8 +765,6 @@ app.get('/users', async (req, res) => {
     res.json(mappedUsers);
 });
 
-
-
 app.post('/users', requireAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 },
     { name: 'pdf', maxCount: 1 }
@@ -780,7 +772,6 @@ app.post('/users', requireAdmin, upload.fields([
     try {
         const { fullName, username, email, password, role, submittedBy } = req.body;
 
-        // Validate required fields
         if (!fullName || !username || !email || !password || !role) {
             await logAction(req.session.user?.username, 'user-create-failed', username || email, {
                 reason: 'Missing required fields',
@@ -789,7 +780,6 @@ app.post('/users', requireAdmin, upload.fields([
             return res.status(400).json({ error: 'Full name, username, email, password, and role are required' });
         }
 
-        // Validate role
         if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
             await logAction(req.session.user?.username, 'user-create-failed', username || email, {
                 reason: 'Invalid role',
@@ -798,7 +788,6 @@ app.post('/users', requireAdmin, upload.fields([
             return res.status(400).json({ error: 'Invalid role' });
         }
 
-        // Check for duplicates
         const duplicate = await User.findOne({
             $or: [{ username }, { email }, { fullname: fullName }]
         }).lean();
@@ -809,7 +798,6 @@ app.post('/users', requireAdmin, upload.fields([
             return res.status(409).json({ error: 'User already exists' });
         }
 
-        // Handle file uploads
         let avatarId = null;
         let pdfId = null;
         let pdfOriginalName = null;
@@ -831,10 +819,8 @@ app.post('/users', requireAdmin, upload.fields([
             console.log('No PDF uploaded');
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create new user
         const newUser = {
             id: Date.now().toString(),
             fullname: fullName,
@@ -867,7 +853,6 @@ app.post('/users', requireAdmin, upload.fields([
         res.status(500).json({ error: 'Failed to create user', details: err.message });
     }
 });
-
 
 app.get('/users/:id', async (req, res) => {
     const user = await User.findOne({ _id: req.params.id }).lean();
@@ -936,7 +921,6 @@ app.delete('/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
-
 app.get('/pendingUsers', async (req, res) => {
     const pending = await readCollection(PendingUser);
     const mappedPending = pending.map(user => ({
@@ -946,7 +930,6 @@ app.get('/pendingUsers', async (req, res) => {
     }));
     res.json(mappedPending);
 });
-
 
 app.get('/pendingUsers/:id', async (req, res) => {
     const user = await PendingUser.findOne({ _id: req.params.id }).lean();
@@ -972,7 +955,6 @@ app.post('/pendingUsers', upload.fields([
     try {
         const { fullName, username, email, password, role } = req.body;
 
-        // Validate required fields
         if (!fullName || !username || !email || !password || !role) {
             await logAction(req.session.user?.username, 'pending-user-create-failed', username || 'unknown', {
                 reason: 'Missing required fields',
@@ -981,7 +963,6 @@ app.post('/pendingUsers', upload.fields([
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Check for existing user
         const existingUser = await User.findOne({ $or: [{ username }, { email }] }).lean();
         const existingPending = await PendingUser.findOne({ $or: [{ username }, { email }] }).lean();
         if (existingUser || existingPending) {
@@ -991,7 +972,6 @@ app.post('/pendingUsers', upload.fields([
             return res.status(400).json({ error: 'Username or email already exists' });
         }
 
-        // Handle file uploads
         let avatarId = null;
         let pdfId = null;
         let pdfOriginalName = null;
@@ -1041,48 +1021,7 @@ app.post('/pendingUsers', upload.fields([
     }
 });
 
-app.post('/pendingUsers/:id', requireAdmin, async (req, res) => {
-    try {
-        const pendingUser = await PendingUser.findOne({ id: req.params.id }).lean();
-        if (!pendingUser) {
-            await logAction(req.session.user.username, 'user-approve-failed', req.params.id, {
-                reason: 'Not found'
-            });
-            return res.status(404).json({ error: 'Pending user not found' });
-        }
-
-        const approvedUser = {
-            ...pendingUser,
-            status: 'active',
-            approvedBy: req.session.user.username,
-            approvedAt: new Date()
-        };
-
-        await writeDocument(User, approvedUser);
-        await deleteDocument(PendingUser, { id: req.params.id });
-
-        await logAction(
-            req.session.user.username,
-            'user-approved',
-            approvedUser.username || approvedUser.email,
-            { method: 'direct-approve' }
-        );
-
-        res.json({
-            message: 'User approved successfully',
-            user: approvedUser
-        });
-    } catch (err) {
-        await logAction(
-            req.session.user.username,
-            'user-approve-error',
-            req.params.id,
-            { error: err.message }
-        );
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
+// Removed redundant /pendingUsers/:id endpoint; use /approve-user instead
 
 app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
     try {
@@ -1104,13 +1043,14 @@ app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
 
         res.json({ message: 'Pending request removed', removed: user });
     } catch (err) {
+        console.error('Error in /pendingUsers/:id:', err);
         await logAction(
             req.session.user.username,
             'pending-user-delete-error',
             req.params.id,
-            { error: err.message }
+            { error: err.message, stack: err.stack }
         );
-        res.status(500).json({ error: 'Failed to remove pending user' });
+        res.status(500).json({ error: 'Failed to remove pending user', details: err.message });
     }
 });
 
@@ -1143,11 +1083,21 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
         }
 
         const newUser = {
-            ...pendingUser,
+            id: Date.now().toString(),
+            fullname: pendingUser.fullname,
+            username: pendingUser.username,
+            email: pendingUser.email,
+            password: pendingUser.password,
+            role: pendingUser.role,
+            avatarId: pendingUser.avatarId,
+            pdfId: pendingUser.pdfId,
+            pdfOriginalName: pendingUser.pdfOriginalName,
             status: 'active',
             approvedBy: req.session.user.username,
-            approvedAt: new Date()
+            approvedAt: new Date(),
+            createdAt: new Date()
         };
+
         await writeDocument(User, newUser);
         await deleteDocument(PendingUser, { _id: pendingUserId });
 
@@ -1155,7 +1105,7 @@ app.post('/approve-user', requireAdmin, async (req, res) => {
             req.session.user.username,
             'user-approved',
             newUser.username || newUser.email,
-            { role: newUser.role }
+            { role: newUser.role, hasAvatar: !!newUser.avatarId, hasPdf: !!newUser.pdfId }
         );
 
         res.json({ message: 'User approved', user: newUser });
@@ -1197,7 +1147,9 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
             email: pendingUser.email,
             password: pendingUser.password,
             role: pendingUser.role,
-            avatar: pendingUser.avatar,
+            avatarId: pendingUser.avatarId,
+            pdfId: pendingUser.pdfId,
+            pdfOriginalName: pendingUser.pdfOriginalName,
             status: 'active',
             approvedBy: req.session.user.username,
             approvedAt: new Date(),
@@ -1211,7 +1163,7 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
             req.session.user.username,
             'user-approved',
             approvedUser.username || approvedUser.email,
-            { method: 'direct-approve' }
+            { method: 'direct-approve', hasAvatar: !!approvedUser.avatarId, hasPdf: !!approvedUser.pdfId }
         );
 
         res.json({
@@ -1229,38 +1181,6 @@ app.post('/pendingUsers/:id/approve', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to approve user', details: err.message });
     }
 });
-
-app.delete('/pendingUsers/:id', requireAdmin, async (req, res) => {
-    try {
-        const user = await PendingUser.findOne({ _id: req.params.id }).lean();
-        if (!user) {
-            await logAction(req.session.user.username, 'pending-user-delete-failed', req.params.id, {
-                reason: 'Not found'
-            });
-            return res.status(404).json({ error: 'Pending user not found' });
-        }
-
-        await deleteDocument(PendingUser, { _id: req.params.id });
-        await logAction(
-            req.session.user.username,
-            'pending-user-deleted',
-            user.email || user.username,
-            { reason: 'Admin action' }
-        );
-
-        res.json({ message: 'Pending request removed', removed: user });
-    } catch (err) {
-        console.error('Error in /pendingUsers/:id:', err);
-        await logAction(
-            req.session.user.username,
-            'pending-user-delete-error',
-            req.params.id,
-            { error: err.message, stack: err.stack }
-        );
-        res.status(500).json({ error: 'Failed to remove pending user', details: err.message });
-    }
-});
-
 
 app.get('/files/:id', async (req, res) => {
     try {
@@ -1324,7 +1244,7 @@ app.post('/pendingDeletions', async (req, res) => {
             requestedBy: requestedBy || req.session.user.username,
             createdAt: new Date(),
             status: 'pending',
-            targetId: userId // Ensure targetId matches userId
+            targetId: userId
         };
 
         await writeDocument(PendingDeletion, newDeletion);
@@ -1359,10 +1279,10 @@ app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
         const deletion = await PendingDeletion.findOne({ id: req.params.id }).lean();
         if (!deletion) return res.status(404).json({ error: 'Request not found' });
 
-        const user = await User.findOne({ _id: deletion.userId }).lean(); // Use _id
+        const user = await User.findOne({ _id: deletion.userId }).lean();
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        await deleteDocument(User, { _id: deletion.userId }); // Use _id
+        await deleteDocument(User, { _id: deletion.userId });
         await deleteDocument(PendingDeletion, { id: req.params.id });
 
         await logAction(req.session.user.username, 'user-delete-approved', user.username, {
@@ -1376,7 +1296,6 @@ app.post('/pendingDeletions/:id/approve', requireAdmin, async (req, res) => {
         res.status(500).json({ error: 'Failed to approve deletion', details: err.message });
     }
 });
-
 
 app.post('/pendingDeletions/:id/reject', requireAdmin, async (req, res) => {
     try {
@@ -1453,20 +1372,18 @@ app.get('/verify-session', (req, res) => {
     });
 });
 
-// Authentication check endpoint
 app.get('/auth/check', (req, res) => {
-    if (req.session && req.session.userId) {
+    if (req.session && req.session.user) {
         res.json({
-            username: req.session.username,
-            fullName: req.session.fullName,
-            role: req.session.role
+            username: req.session.user.username,
+            fullName: req.session.user.fullName,
+            role: req.session.user.role
         });
     } else {
         res.status(401).json({ error: 'Not authenticated' });
     }
 });
 
-// Logout endpoint
 app.post('/auth/logout', (req, res) => {
     req.session.destroy();
     res.json({ success: true });
