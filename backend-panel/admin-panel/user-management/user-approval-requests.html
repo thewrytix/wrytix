@@ -179,8 +179,6 @@
     await loadDeleteRequests();
   });
 
-
-  // Session verification on load
   async function loadAuthorRequests() {
     try {
       const res = await fetch('https://wrytix.onrender.com/pendingUsers', {
@@ -200,64 +198,29 @@
       const container = document.getElementById('author-requests');
 
       container.innerHTML = users.map(user => `
-            <tr>
-                <td>${user.fullName || 'N/A'}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${user.role || 'N/A'}</td>
-                <td>
-                    ${user.avatar
-              ? `<img src="https://wrytix.onrender.com/pdfs/${user.avatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
-              : 'No avatar'}
-                </td>
-                <td>${user.submittedBy || 'Unknown'}</td>
-                <td>${new Date(user.createdAt).toLocaleString()}</td>
-                <td>
-                    <button class="btn approve" onclick="approveUser('${user._id}')">Approve</button>
-                    <button class="btn reject" onclick="rejectUser('${user._id}')">Reject</button>
-                    <button class="btn" onclick="window.location.href='approval-view-user.html?id=${user._id}'">View</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (err) {
-      console.error("Failed to load author requests:", err);
-      showError("Failed to load pending users");
-    }
-  }
-
-  async function loadDeleteRequests() {
-    try {
-      const res = await fetch('https://wrytix.onrender.com/pendingDeletions', {
-        credentials: 'include'
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-
-      const requests = await res.json();
-      const container = document.getElementById('delete-requests');
-
-      container.innerHTML = requests.map(user => `
         <tr>
-          <td>${user.targetFullName || 'N/A'}</td>
-          <td>${user.targetUsername}</td>
-          <td>${user.targetEmail}</td>
-          <td>${user.targetRole || 'N/A'}</td>
+          <td>${user.fullName || 'N/A'}</td>
+          <td>${user.username}</td>
+          <td>${user.email}</td>
+          <td>${user.role || 'N/A'}</td>
           <td>
             ${user.avatarId
               ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/images/default-avatar.png';">`
               : 'No avatar'}
           </td>
-          <td>${user.requestedBy || 'Unknown'}</td>
-          <td>${new Date(user.createdAt).toLocaleString()}</td>
+
+          <td>${user.submittedBy || 'Unknown'}</td>
+          <td>${new Date(user.createdAt || user.requestedAt).toLocaleString()}</td>
           <td>
-            <button class="btn approve" onclick="approveDelete('${user.id}')">Approve</button>
-            <button class="btn reject" onclick="rejectDelete('${user.id}')">Reject</button>
+            <button class="btn approve" onclick="approveUser('${user._id}')">Approve</button>
+            <button class="btn reject" onclick="rejectUser('${user._id}')">Reject</button>
+            <button class="btn" onclick="window.location.href='approval-view-user.html?id=${user._id}'">View</button>
           </td>
         </tr>
       `).join('');
     } catch (err) {
-      console.error("Failed to load delete requests:", err);
-      showError("Failed to load deletion requests");
+      console.error("Failed to load author requests:", err);
+      showError("Failed to load pending users");
     }
   }
 
