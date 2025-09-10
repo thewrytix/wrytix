@@ -75,7 +75,49 @@
         }
     });
 
+    // Toast functions
+    function showError(message) {
+        const alertBox = document.createElement('div');
+        alertBox.className = 'alert error';
+        alertBox.textContent = message;
+        document.body.prepend(alertBox);
+        setTimeout(() => alertBox.remove(), 5000);
+    }
+
+    function showSuccess(message) {
+        const alertBox = document.createElement('div');
+        alertBox.className = 'alert success';
+        alertBox.textContent = message;
+        document.body.prepend(alertBox);
+        setTimeout(() => alertBox.remove(), 5000);
+    }
+
+    // Toast styles
+    const toastStyle = document.createElement('style');
+    toastStyle.textContent = `
+    .alert {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #fff;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease-out;
+    }
+    .alert.error { background: #dc3545; }
+    .alert.success { background: #28a745; }
+    @keyframes slideIn {
+      from { top: -50px; opacity: 0; }
+      to { top: 20px; opacity: 1; }
+    }
+  `;
+    document.head.appendChild(toastStyle);
 </script>
-<script src="backend-panel.js"></script>
+
 </body>
 </html>
