@@ -243,8 +243,8 @@
           <td>${user.targetEmail}</td>
           <td>${user.targetRole || 'N/A'}</td>
           <td>
-            ${user.targetAvatar
-              ? `<img src="${user.targetAvatar}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;">`
+            ${user.avatarId
+              ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/path/to/default-avatar.png';">`
               : 'No avatar'}
           </td>
           <td>${user.requestedBy || 'Unknown'}</td>
