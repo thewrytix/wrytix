@@ -332,11 +332,12 @@
                 <td>${user.email}</td>
                 <td>${user.role}</td>
                 <td>${statusDisplay}</td>
-                <td>
+               <td>
           ${user.avatarId
               ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/images/default-avatar.png';">`
               : 'No avatar'}
         </td>
+                <td>
                     ${pending && currentUser.role === 'editor' && pendingByMe ? `
                         <button class="delete-btn" onclick="cancelDeleteRequest('${user.id}')">Cancel</button>
                     ` : `
