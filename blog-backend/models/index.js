@@ -10,10 +10,10 @@ const UserSchema = new Schema({
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatar: { type: String }, // File path or URL
+    avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
+    pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
     role: { type: String, required: true },
     status: { type: String, default: 'active' },
-    pdfFilename: { type: String },
     pdfOriginalName: { type: String },
     createdAt: { type: Date, default: Date.now },
     approvedBy: { type: String },
@@ -69,10 +69,10 @@ const PendingUserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String },
-    avatar: { type: String }, // File path or URL
+    avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
+    pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
     submittedBy: { type: String },
     createdAt: { type: Date, default: Date.now },
-    pdfFilename: { type: String },
     pdfOriginalName: { type: String },
 });
 

@@ -17,6 +17,7 @@
     "express": "^5.1.0",
     "fs": "^0.0.1-security",
     "helmet": "^8.1.0",
+    "mime": "^4.0.7",
     "mongodb": "^6.19.0",
     "mongoose": "^8.18.0",
     "uuid": "^7.0.3"

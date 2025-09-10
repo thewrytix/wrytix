@@ -23,17 +23,10 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-// Use Render's ephemeral filesystem
-const uploadDir = '/tmp/uploads';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-});
 
+// Multer setup with memory storage
+const storage = multer.memoryStorage(); // Store files in memory before uploading to GridFS
 const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -95,7 +88,11 @@ app.use((req, res, next) => {
 app.use(marketDataRoutes);
 
 
-
+// GridFS Bucket Setup
+let gfs;
+mongoose.connection.once('open', () => {
+    gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+});
 
 // ======================
 // 🛠️ UTILITY FUNCTIONS
@@ -262,6 +259,20 @@ function requireEditorOrAdmin(req, res, next) {
     }
     return res.status(403).json({ error: 'Forbidden' });
 }
+
+
+// File Upload to GridFS Utility
+async function uploadToGridFS(file, filename) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = gfs.openUploadStream(filename, {
+            contentType: file.mimetype
+        });
+        uploadStream.end(file.buffer);
+        uploadStream.on('finish', () => resolve(uploadStream.id));
+        uploadStream.on('error', reject);
+    });
+}
+
 
 // ⏱️ Auto-refresh ad status every 10 minutes
 setInterval(async () => {
@@ -1284,6 +1295,33 @@ app.get('/files/:filename', requireEditorOrAdmin, (req, res) => {
     }
 });
 
+app.get('/files/:id', async (req, res) => {
+    try {
+        const fileId = new mongoose.Types.ObjectId(req.params.id);
+        const file = await gfs.find({ _id: fileId }).toArray();
+        if (!file || file.length === 0) {
+            await logAction(req.session.user?.username || 'anonymous', 'file-download-failed', req.params.id, {
+                reason: 'File not found'
+            });
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const mimeTypes = {
+            'image/jpeg': 'image/jpeg',
+            'image/png': 'image/png',
+            'image/gif': 'image/gif',
+            'application/pdf': 'application/pdf'
+        };
+        res.setHeader('Content-Type', mimeTypes[file[0].contentType] || 'application/octet-stream');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        gfs.openDownloadStream(fileId).pipe(res);
+    } catch (err) {
+        await logAction(req.session.user?.username || 'anonymous', 'file-access-error', req.params.id, {
+            error: err.message
+        });
+        res.status(400).json({ error: 'Invalid file ID', details: err.message });
+    }
+});
 
 app.post('/pendingDeletions', async (req, res) => {
     const userRole = req.session.user?.role;

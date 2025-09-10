@@ -6,11 +6,11 @@ const PendingUserSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['viewer', 'author', 'editor', 'admin'], required: true },
-    avatar: { type: String }, // File path or URL
+    avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
+    pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
     status: { type: String, enum: ['pending'], default: 'pending' },
     requestedAt: { type: Date, default: Date.now },
     submittedBy: { type: String },
-    pdfFilename: { type: String },
     pdfOriginalName: { type: String }
 });
 
