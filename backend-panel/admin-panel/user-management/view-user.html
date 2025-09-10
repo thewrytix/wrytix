@@ -244,7 +244,9 @@
         credentials: 'include'
       });
 
-      if (!sessionCheck.ok) throw new Error('Session verification failed');
+      if (!sessionCheck.ok) {
+        throw new Error(`Session verification failed: ${sessionCheck.status} ${sessionCheck.statusText}`);
+      }
 
       const { user } = await sessionCheck.json();
 
@@ -258,10 +260,16 @@
         sessionStorage.clear();
         return window.location.href = 'login.html';
       }
+
+      // Update profile button
+      document.getElementById('profileBtn').textContent = user.username;
     } catch (err) {
-      console.error('Initialization error:', err);
+      console.error('Session verification error:', err);
+      showError('❌ Session verification failed. Redirecting to login...');
       sessionStorage.clear();
-      window.location.href = 'login.html';
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 2000);
     }
   };
 
@@ -270,26 +278,43 @@
 
   async function loadUser() {
     try {
-      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`);
-      if (!res.ok) throw new Error('Failed to fetch user');
+      if (!userId) {
+        throw new Error('No user ID provided in URL');
+      }
+
+      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+      }
+
       const user = await res.json();
 
       const container = document.getElementById('userDetails');
-      const avatarHTML = user.avatar
-              ? `<img src="${user.avatar}" alt="Avatar" />
-           <a href="${user.avatar}" download="avatar-${user.username}.png" class="download-avatar">Download Avatar</a>`
+      const avatarUrl = user.avatarId
+              ? `https://wrytix.onrender.com/files/${user.avatarId}`
+              : 'default-avatar.png';
+      const avatarHTML = user.avatarId
+              ? `<img src="${avatarUrl}" alt="Avatar" />
+           <a href="${avatarUrl}" download="avatar-${user.username}.png" class="download-avatar">Download Avatar</a>`
               : `<img src="default-avatar.png" alt="Default Avatar" />`;
+
+      const pdfHTML = user.pdfId
+              ? `<a href="https://wrytix.onrender.com/files/${user.pdfId}" target="_blank" download="${user.pdfOriginalName || 'document.pdf'}" class="download-pdf">View/Download PDF</a>`
+              : 'None';
 
       container.innerHTML = `
         ${avatarHTML}
-        <p><strong>Full Name:</strong> ${user.fullName}</p>
+        <p><strong>Full Name:</strong> ${user.fullname || user.fullName || 'N/A'}</p>
         <p><strong>Username:</strong> ${user.username}</p>
         <p><strong>Email:</strong> ${user.email}</p>
         <p><strong>Role:</strong> ${user.role}</p>
         <p><strong>Status:</strong> ${user.status}</p>
-        <p><strong>Document:</strong> ${user.document ? `<a href="${user.document}" target="_blank" download>View</a>` : 'None'}</p>
+        <p><strong>Document:</strong> ${pdfHTML}</p>
         <p><strong>Created At:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
-        <p><strong>Created By:</strong> ${user.createdBy || 'Unknown'}</p>
+        <p><strong>Created By:</strong> ${user.submittedBy || user.approvedBy || 'Unknown'}</p>
       `;
     } catch (err) {
       console.error(err);
