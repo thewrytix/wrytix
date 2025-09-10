@@ -307,21 +307,21 @@
 
       container.innerHTML = `
         ${avatarHTML}
-        <p><strong>Full Name:</strong> ${user.fullname || user.fullName || 'N/A'}</p>
-        <p><strong>Username:</strong> ${user.username}</p>
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Role:</strong> ${user.role}</p>
-        <p><strong>Status:</strong> ${user.status}</p>
+        <p><strong>Full Name:</strong> ${user.fullName || user.fullname || 'N/A'}</p>
+        <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+        <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+        <p><strong>Role:</strong> ${user.role || 'N/A'}</p>
+        <p><strong>Status:</strong> ${user.status || 'N/A'}</p>
         <p><strong>Document:</strong> ${pdfHTML}</p>
-        <p><strong>Created At:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
+        <p><strong>Created At:</strong> ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</p>
         <p><strong>Created By:</strong> ${user.submittedBy || user.approvedBy || 'Unknown'}</p>
       `;
     } catch (err) {
-      console.error(err);
-      showError('❌ Could not load user info');
+      console.error('Load user error:', err);
+      showError(`❌ Could not load user info: ${err.message}`);
       setTimeout(() => {
         window.location.href = 'users-list.html';
-      }, 1500);
+      }, 2000);
     }
   }
 
