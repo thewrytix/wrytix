@@ -129,15 +129,10 @@
     return `
         <tr>
             <td>
-                ${user.avatar
-            ? `<img src="${user.avatar.startsWith('data:')
-                    ? user.avatar
-                    : `https://wrytix.onrender.com/public/files/${user.avatar}`}"
-                        alt="avatar"
-                        style="width:40px;height:40px;border-radius:50%;object-fit:cover;"
-                        onerror="this.src='https://wrytix.netlify.app/assets/images/default-avatar.png';"/>`
+                    ${user.avatarId
+            ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/images/default-avatar.png';">`
             : 'No avatar'}
-            </td>
+                </td>
             <td>${user.fullName || '—'}</td>
             <td>${user.username}</td>
             <td>${user.email}</td>
