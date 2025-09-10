@@ -13,6 +13,8 @@
             --success: #28a745;
             --text-dark: #333;
             --text-light: #fff;
+            --primary-color: #ff6b00;
+            --text-color: #333;
         }
 
         body {
@@ -20,6 +22,11 @@
             margin: 0;
             background-color: #f4f4f4;
             display: flex;
+        }
+
+        .admin-container {
+            display: flex;
+            width: 100%;
         }
 
         .admin-sidebar {
@@ -72,18 +79,20 @@
             text-align: center;
         }
 
-        #userDetails {
+        .userDetails {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            flex-direction: column;
+            margin: auto;
             width: 100%;
             max-width: 500px;
             font-size: 1rem;
             line-height: 1.6;
-            color: #333;
+            color: var(--text-color);
         }
 
-        #userDetails img {
+        .userDetails img {
             width: 100px;
             height: 100px;
             border-radius: 50%;
@@ -92,14 +101,15 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        #userDetails a.download-avatar {
+        .userDetails a.download-avatar,
+        .userDetails a.download-pdf {
             margin-bottom: 1rem;
             font-size: 0.9rem;
             color: var(--primary);
             text-decoration: underline;
         }
 
-        #userDetails p {
+        .userDetails p {
             width: 100%;
             padding: 8px 0;
             border-bottom: 1px solid #eee;
@@ -107,7 +117,7 @@
             justify-content: space-between;
         }
 
-        #userDetails p strong {
+        .userDetails p strong {
             color: var(--text-dark);
         }
 
@@ -127,7 +137,7 @@
         }
 
         .alert.error {
-            background: #dc3545;
+            background: var(--danger);
         }
 
         @keyframes slideIn {
@@ -172,68 +182,65 @@
     </style>
 </head>
 <body>
-<aside class="admin-sidebar">
-    <h2>Wrytix Admin</h2>
-    <nav>
-        <ul>
-            <!--Admin Management-->
-            <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix Admin</h2>
+        <nav>
+            <ul>
+                <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Post Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+                        <li><a href="../post-management/posts-list.html">Posts List</a></li>
+                        <li><a href="../post-management/add-post.html">Add Post</a></li>
+                        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+                        <li><a href="../post-management/post-approval-requests.html">Post Approval Requests</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">Ad Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+                        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+                        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+                        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown open">
+                    <button class="dropdown-toggle">User Management ▼</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="user-dashboard.html">User Dashboard</a></li>
+                        <li><a href="add-user.html">Add User</a></li>
+                        <li><a href="users-list.html">Users List</a></li>
+                        <li><a href="delete-user.html">Delete User</a></li>
+                        <li><a href="user-approval-requests.html">Approval Requests</a></li>
+                        <li><a href="logs.html">Logs</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
 
-            <!--Post Management-->
-            <li class="dropdown open">
-                <button class="dropdown-toggle">Post Management ▼</button>
-                <ul class="dropdown-menu">
-                    <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
-                    <li><a href="../post-management/posts-list.html">Posts List</a></li>
-                    <li><a href="../post-management/add-post.html" >Add Post</a></li>
-                    <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
-                    <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
-                </ul>
-            </li>
-            <!--Ad Management-->
-            <li class="dropdown open">
-                <button class="dropdown-toggle">Ad Management ▼</button>
-                <ul class="dropdown-menu">
-                    <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
-                    <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
-                    <li><a href="../ad-management/ads-list.html">Ads List</a></li>
-                    <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
-                </ul>
-            </li>
-            <!--User Management-->
-            <li class="dropdown open">
-                <button class="dropdown-toggle">User Management ▼</button>
-                <ul class="dropdown-menu">
-                    <li><a href="user-dashboard.html">User Dashboard</a></li>
-                    <li><a href="add-user.html" >Add User</a></li>
-                    <li><a href="users-list.html">Users List</a></li>
-                    <li><a href="delete-user.html">Delete User</a></li>
-                    <li><a href="user-approval-requests.html" >Approval Requests</a></li>
-                    <li><a href="logs.html">Logs</a></li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
-</aside>
-
-<div class="admin-main">
-    <div class="top-bar">
-        <div class="profile-dropdown">
-            <button class="profile-btn" id="profileBtn">Loading...</button>
-            <div class="profile-menu" id="profileMenu">
-                <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <h1>View User</h1>
-    <div id="userDetails">Loading user info...</div>
+        <h1>View Pending User</h1>
+        <div class="userDetails" id="userDetails">Loading user info...</div>
 
-    <div class="back-button">
-        <button onclick="window.location.href='user-approval-requests.html'">
-            ← Back to Users List
-        </button>
-    </div>
+        <div class="back-button">
+            <button onclick="window.location.href='user-approval-requests.html'">
+                ← Back to Approval Requests
+            </button>
+        </div>
+    </main>
 </div>
 
 <script>
@@ -244,7 +251,9 @@
                 credentials: 'include'
             });
 
-            if (!sessionCheck.ok) throw new Error('Session verification failed');
+            if (!sessionCheck.ok) {
+                throw new Error(`Session verification failed: ${sessionCheck.status} ${sessionCheck.statusText}`);
+            }
 
             const { user } = await sessionCheck.json();
 
@@ -256,12 +265,17 @@
             if (user.role !== 'admin') {
                 showError('You do not have permission to access this page.');
                 sessionStorage.clear();
-                return window.location.href = 'login.html';
+                return window.location.href = '../../login.html';
             }
+
+            document.getElementById('profileBtn').textContent = user.username;
         } catch (err) {
-            console.error('Initialization error:', err);
+            console.error('Session verification error:', err);
+            showError('❌ Session verification failed. Redirecting to login...');
             sessionStorage.clear();
-            window.location.href = '../../login.html';
+            setTimeout(() => {
+                window.location.href = '../../login.html';
+            }, 2000);
         }
     };
 
@@ -270,33 +284,53 @@
 
     async function loadUser() {
         try {
-            const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`);
-            if (!res.ok) throw new Error('Failed to fetch user');
+            if (!userId) {
+                throw new Error('No user ID provided in URL');
+            }
+
+            console.log('Fetching pending user with ID:', userId);
+            const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`, {
+                credentials: 'include'
+            });
+
+            console.log('Fetch response status:', res.status, res.statusText);
+            if (!res.ok) {
+                throw new Error(`Failed to fetch pending user: ${res.status} ${res.statusText}`);
+            }
+
             const user = await res.json();
+            console.log('Pending user data:', user);
 
             const container = document.getElementById('userDetails');
-            const avatarHTML = user.avatar
-                ? `<img src="${user.avatar}" alt="Avatar" />
-           <a href="${user.avatar}" download="avatar-${user.username}.png" class="download-avatar">Download Avatar</a>`
+            const avatarUrl = user.avatarId
+                ? `https://wrytix.onrender.com/files/${user.avatarId}`
+                : 'default-avatar.png';
+            const avatarHTML = user.avatarId
+                ? `<img src="${avatarUrl}" alt="Avatar" />
+                   <a href="${avatarUrl}" download="avatar-${user.username || 'user'}.png" class="download-avatar">Download Avatar</a>`
                 : `<img src="default-avatar.png" alt="Default Avatar" />`;
 
+            const pdfHTML = user.pdfId
+                ? `<a href="https://wrytix.onrender.com/files/${user.pdfId}" target="_blank" download="${user.pdfOriginalName || 'document.pdf'}" class="download-pdf">View/Download PDF</a>`
+                : 'None';
+
             container.innerHTML = `
-        ${avatarHTML}
-        <p><strong>Full Name:</strong> ${user.fullName}</p>
-        <p><strong>Username:</strong> ${user.username}</p>
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Role:</strong> ${user.role}</p>
-        <p><strong>Status:</strong> ${user.status}</p>
-        <p><strong>Document:</strong> ${user.document ? `<a href="${user.document}" target="_blank" download>View</a>` : 'None'}</p>
-        <p><strong>Created At:</strong> ${new Date(user.createdAt).toLocaleString()}</p>
-        <p><strong>Created By:</strong> ${user.createdBy || 'Unknown'}</p>
-      `;
+                ${avatarHTML}
+                <p><strong>Full Name:</strong> ${user.fullName || user.fullname || 'N/A'}</p>
+                <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+                <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+                <p><strong>Role:</strong> ${user.role || 'N/A'}</p>
+                <p><strong>Status:</strong> ${user.status || 'N/A'}</p>
+                <p><strong>Document:</strong> ${pdfHTML}</p>
+                <p><strong>Created At:</strong> ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</p>
+                <p><strong>Submitted By:</strong> ${user.submittedBy || 'Unknown'}</p>
+            `;
         } catch (err) {
-            console.error(err);
-            showError('❌ Could not load user info');
+            console.error('Load pending user error:', err);
+            showError(`❌ Could not load pending user info: ${err.message}`);
             setTimeout(() => {
                 window.location.href = 'user-approval-requests.html';
-            }, 1500);
+            }, 2000);
         }
     }
 
