@@ -29,7 +29,6 @@
     #userDetails a.download-avatar,
     #userDetails a.download-pdf {
       margin-bottom: 1rem;
-      font-size: 0.9rem;
       color: var(--primary);
       text-decoration: underline;
     }
@@ -40,33 +39,10 @@
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
+      color: var(--text-color);
     }
 
 
-
-    .alert {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      border-radius: 5px;
-      font-weight: 600;
-      font-size: 1rem;
-      color: #fff;
-      z-index: 9999;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      animation: slideIn 0.3s ease-out;
-    }
-
-    .alert.error {
-      background: #dc3545;
-    }
-
-    @keyframes slideIn {
-      from { top: -50px; opacity: 0; }
-      to { top: 20px; opacity: 1; }
-    }
 
     .back-button {
       margin-top: 2rem;
@@ -81,10 +57,6 @@
       cursor: pointer;
       font-size: 1rem;
       transition: background 0.2s ease;
-    }
-
-    .back-button button:hover {
-      background-color: #e05c00;
     }
 
   </style>
