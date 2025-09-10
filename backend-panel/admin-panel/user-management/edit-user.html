@@ -429,22 +429,6 @@
     }
   });
 
-  function showError(msg) {
-    const div = document.createElement('div');
-    div.className = 'alert error';
-    div.textContent = msg;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 5000);
-  }
-
-  function showSuccess(msg) {
-    const div = document.createElement('div');
-    div.className = 'alert success';
-    div.textContent = msg;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 3000);
-  }
-
   loadUser();
 </script>
 <script src="../admin-panel.js"></script>
