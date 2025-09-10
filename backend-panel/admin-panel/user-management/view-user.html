@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
 
-    #userDetails {
+    .userDetails {
       display: flex;
+      justify-content: center;
       flex-direction: column;
       align-items: center;
       width: 100%;
@@ -43,9 +44,7 @@
       justify-content: space-between;
     }
 
-    #userDetails p strong {
-      color: var(--text-dark);
-    }
+
 
     .alert {
       position: fixed;
@@ -151,7 +150,7 @@
   </div>
 
   <h1>View User</h1>
-  <div id="userDetails">Loading user info...</div>
+  <div class="userDetails"  id="userDetails">Loading user info...</div>
 
   <div class="back-button">
     <button onclick="window.location.href='users-list.html'">
