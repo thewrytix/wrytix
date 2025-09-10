@@ -197,7 +197,7 @@
               : `<img src="default-avatar.png" alt="Default Avatar" />`;
 
       const pdfHTML = user.pdfId
-              ? `<a href="https://wrytix.onrender.com/files/${user.pdfId}" target="_blank" download="${user.pdfOriginalName || 'document.pdf'}" class="download-pdf">View/Download PDF</a>`
+              ? `<a href="https://wrytix.onrender.com/files/${user.pdfId}" target="_blank" download="${user.pdfOriginalName || 'document.pdf'}" class="download-pdf">View Document</a>`
               : 'None';
 
       container.innerHTML = `
