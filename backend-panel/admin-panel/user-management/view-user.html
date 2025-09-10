@@ -92,7 +92,8 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-    #userDetails a.download-avatar {
+    #userDetails a.download-avatar,
+    #userDetails a.download-pdf {
       margin-bottom: 1rem;
       font-size: 0.9rem;
       color: var(--primary);
@@ -176,21 +177,17 @@
   <h2>Wrytix Admin</h2>
   <nav>
     <ul>
-      <!--Admin Management-->
-      <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
-
-      <!--Post Management-->
+      <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
       <li class="dropdown open">
         <button class="dropdown-toggle">Post Management ▼</button>
         <ul class="dropdown-menu">
           <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
           <li><a href="../post-management/posts-list.html">Posts List</a></li>
-          <li><a href="../post-management/add-post.html" >Add Post</a></li>
+          <li><a href="../post-management/add-post.html">Add Post</a></li>
           <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
-          <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+          <li><a href="../post-management/post-approval-requests.html">Post Approval Requests</a></li>
         </ul>
       </li>
-      <!--Ad Management-->
       <li class="dropdown open">
         <button class="dropdown-toggle">Ad Management ▼</button>
         <ul class="dropdown-menu">
@@ -200,12 +197,11 @@
           <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
         </ul>
       </li>
-      <!--User Management-->
       <li class="dropdown open">
         <button class="dropdown-toggle">User Management ▼</button>
         <ul class="dropdown-menu">
           <li><a href="user-dashboard.html">User Dashboard</a></li>
-          <li><a href="add-user.html" >Add User</a></li>
+          <li><a href="add-user.html">Add User</a></li>
           <li><a href="users-list.html">Users List</a></li>
           <li><a href="delete-user.html">Delete User</a></li>
           <li><a href="user-approval-requests.html">Approval Requests</a></li>
@@ -261,7 +257,6 @@
         return window.location.href = 'login.html';
       }
 
-      // Update profile button
       document.getElementById('profileBtn').textContent = user.username;
     } catch (err) {
       console.error('Session verification error:', err);
@@ -282,15 +277,18 @@
         throw new Error('No user ID provided in URL');
       }
 
+      console.log('Fetching user with ID:', userId);
       const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
         credentials: 'include'
       });
 
+      console.log('Fetch response status:', res.status, res.statusText);
       if (!res.ok) {
         throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
       }
 
       const user = await res.json();
+      console.log('User data:', user);
 
       const container = document.getElementById('userDetails');
       const avatarUrl = user.avatarId
@@ -298,7 +296,7 @@
               : 'default-avatar.png';
       const avatarHTML = user.avatarId
               ? `<img src="${avatarUrl}" alt="Avatar" />
-           <a href="${avatarUrl}" download="avatar-${user.username}.png" class="download-avatar">Download Avatar</a>`
+           <a href="${avatarUrl}" download="avatar-${user.username || 'user'}.png" class="download-avatar">Download Avatar</a>`
               : `<img src="default-avatar.png" alt="Default Avatar" />`;
 
       const pdfHTML = user.pdfId
