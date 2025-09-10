@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit User - Wrytix Admin</title>
   <link rel="stylesheet" href="../../backend-panel.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -12,6 +13,8 @@
       --success: #28a745;
       --text-dark: #333;
       --text-light: #fff;
+      --primary-color: #ff6b00;
+      --text-color: #333;
     }
 
     body {
@@ -19,6 +22,11 @@
       margin: 0;
       background-color: #f4f4f4;
       display: flex;
+    }
+
+    .admin-container {
+      display: flex;
+      width: 100%;
     }
 
     .admin-sidebar {
@@ -65,20 +73,40 @@
       border-radius: 12px;
       max-width: 700px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .userDetails {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      margin: auto;
+      width: 100%;
+      max-width: 500px;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-color);
     }
 
     form label {
       font-weight: bold;
       margin-top: 1rem;
       display: block;
+      color: var(--text-dark);
     }
 
-    form input, form select {
+    form input,
+    form select {
       width: 100%;
       padding: 0.6rem;
       margin-top: 0.3rem;
       border: 1px solid #ccc;
       border-radius: 4px;
+      font-size: 1rem;
     }
 
     form button {
@@ -89,6 +117,12 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s ease;
+    }
+
+    form button:hover {
+      background-color: #e05c00;
     }
 
     #avatarPreview {
@@ -115,8 +149,13 @@
       animation: slideIn 0.3s ease-out;
     }
 
-    .alert.success { background: #28a745; }
-    .alert.error { background: #dc3545; }
+    .alert.success {
+      background: var(--success);
+    }
+
+    .alert.error {
+      background: var(--danger);
+    }
 
     @keyframes slideIn {
       from { top: -50px; opacity: 0; }
@@ -126,110 +165,145 @@
     .document-link {
       margin-top: 0.3rem;
       display: inline-block;
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .back-button {
+      margin-top: 2rem;
+    }
+
+    .back-button button {
+      background-color: var(--primary);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s ease;
+    }
+
+    .back-button button:hover {
+      background-color: #e05c00;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .admin-sidebar {
+        width: 100%;
+        min-height: auto;
+      }
+
+      .admin-main {
+        margin: 1rem;
+        padding: 1.5rem;
+      }
     }
   </style>
 </head>
 <body>
-
-<aside class="admin-sidebar">
-  <h2>Wrytix Admin</h2>
-  <nav>
-  <ul>
-    <!--Admin Management-->
-    <li><a href="../admin-dashboard.html" >Admin Dashboard</a></li>
-
-    <!--Post Management-->
-    <li class="dropdown open">
-      <button class="dropdown-toggle">Post Management ▼</button>
-      <ul class="dropdown-menu">
-        <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
-        <li><a href="../post-management/posts-list.html">Posts List</a></li>
-        <li><a href="../post-management/add-post.html" >Add Post</a></li>
-        <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
-        <li><a href="../post-management/post-approval-requests.html" >Post Approval Requests</a></li>
+<div class="admin-container">
+  <aside class="admin-sidebar">
+    <h2>Wrytix Admin</h2>
+    <nav>
+      <ul>
+        <li><a href="../admin-dashboard.html">Admin Dashboard</a></li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Post Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../post-management/post-dashboard.html">Post Dashboard</a></li>
+            <li><a href="../post-management/posts-list.html">Posts List</a></li>
+            <li><a href="../post-management/add-post.html">Add Post</a></li>
+            <li><a href="../post-management/delete-post.html">Delete Posts</a></li>
+            <li><a href="../post-management/post-approval-requests.html">Post Approval Requests</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">Ad Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
+            <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
+            <li><a href="../ad-management/ads-list.html">Ads List</a></li>
+            <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
+          </ul>
+        </li>
+        <li class="dropdown open">
+          <button class="dropdown-toggle">User Management ▼</button>
+          <ul class="dropdown-menu">
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+            <li><a href="add-user.html">Add User</a></li>
+            <li><a href="users-list.html">Users List</a></li>
+            <li><a href="delete-user.html">Delete User</a></li>
+            <li><a href="user-approval-requests.html">Approval Requests</a></li>
+            <li><a href="logs.html">Logs</a></li>
+          </ul>
+        </li>
       </ul>
-    </li>
-    <!--Ad Management-->
-    <li class="dropdown open">
-      <button class="dropdown-toggle">Ad Management ▼</button>
-      <ul class="dropdown-menu">
-        <li><a href="../ad-management/ads-dashboard.html">Ad Dashboard</a></li>
-        <li><a href="../ad-management/add-ad.html">Add Ad</a></li>
-        <li><a href="../ad-management/ads-list.html">Ads List</a></li>
-        <li><a href="../ad-management/delete-ad.html">Delete Ad</a></li>
-      </ul>
-    </li>
-    <!--User Management-->
-    <li class="dropdown open">
-      <button class="dropdown-toggle">User Management ▼</button>
-      <ul class="dropdown-menu">
-        <li><a href="user-dashboard.html">User Dashboard</a></li>
-        <li><a href="add-user.html" >Add User</a></li>
-        <li><a href="users-list.html">Users List</a></li>
-        <li><a href="delete-user.html">Delete User</a></li>
-        <li><a href="user-approval-requests.html">Approval Requests</a></li>
-        <li><a href="logs.html">Logs</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-</aside>
+    </nav>
+  </aside>
 
-<div class="admin-main">
-  <div class="top-bar">
-    <div class="profile-dropdown">
-      <button class="profile-btn" id="profileBtn">Loading...</button>
-      <div class="profile-menu" id="profileMenu">
-        <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+  <main class="admin-main">
+    <div class="top-bar">
+      <div class="profile-dropdown">
+        <button class="profile-btn" id="profileBtn">Loading...</button>
+        <div class="profile-menu" id="profileMenu">
+          <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <h1>Edit User</h1>
-  <form id="editUserForm">
-    <label>Avatar:</label>
-    <img id="avatarPreview" src="" alt="Avatar" />
-    <input type="file" id="avatarInput" accept="image/*" />
+    <h1>Edit User</h1>
+    <div class="userDetails">
+      <form id="editUserForm">
+        <label>Avatar:</label>
+        <img id="avatarPreview" src="default-avatar.png" alt="Avatar" />
+        <input type="file" id="avatarInput" accept="image/*" />
 
-    <label>Full Name:</label>
-    <input type="text" id="fullName" required />
+        <label>Full Name:</label>
+        <input type="text" id="fullName" required />
 
-    <label>Username:</label>
-    <input type="text" id="username" disabled />
+        <label>Username:</label>
+        <input type="text" id="username" disabled />
 
-    <label>Email:</label>
-    <input type="email" id="email" required />
+        <label>Email:</label>
+        <input type="email" id="email" required />
 
-    <label>New Password (optional):</label>
-    <input type="password" id="password" placeholder="Leave blank to keep old password" />
+        <label>New Password (optional):</label>
+        <input type="password" id="password" placeholder="Leave blank to keep old password" />
 
-    <label>Document Upload (optional):</label>
-    <input type="file" id="document" accept=".pdf,.doc,.docx,.jpg,.png" />
-    <div id="existingDocument"></div>
+        <label>Document Upload (optional):</label>
+        <input type="file" id="document" accept=".pdf,.doc,.docx,.jpg,.png" />
+        <div id="existingDocument"></div>
 
-    <label>Role:</label>
-    <select id="role">
-      <option value="viewer">Viewer</option>
-      <option value="author">Author</option>
-      <option value="editor">Editor</option>
-      <option value="admin">Admin</option>
-    </select>
+        <label>Role:</label>
+        <select id="role">
+          <option value="viewer">Viewer</option>
+          <option value="author">Author</option>
+          <option value="editor">Editor</option>
+          <option value="admin">Admin</option>
+        </select>
 
-    <label>Status:</label>
-    <select id="status">
-      <option value="active">Active</option>
-      <option value="inactive">Inactive</option>
-      <option value="suspended">Suspended</option>
-    </select>
+        <label>Status:</label>
+        <select id="status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="suspended">Suspended</option>
+        </select>
 
-    <button type="submit">Update User</button>
+        <button type="submit">Update User</button>
 
-    <div class="back-button">
-      <button onclick="window.location.href='users-list.html'">
-        ← Back to Users List
-      </button>
+        <div class="back-button">
+          <button onclick="window.location.href='users-list.html'">
+            ← Back to Users List
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
+  </main>
 </div>
 
 <script>
@@ -244,25 +318,31 @@
         credentials: 'include'
       });
 
-      if (!sessionCheck.ok) throw new Error('Session verification failed');
+      if (!sessionCheck.ok) {
+        throw new Error(`Session verification failed: ${sessionCheck.status} ${sessionCheck.statusText}`);
+      }
 
       const { user } = await sessionCheck.json();
 
       sessionStorage.setItem('currentUser', user.username);
       sessionStorage.setItem('role', user.role);
-      sessionStorage.setItem('userRole', user.role); // ✅ Fix for endpoint check
+      sessionStorage.setItem('userRole', user.role);
       sessionStorage.setItem('loggedIn', 'true');
 
-      // ✅ Allow only admin
       if (user.role !== 'admin') {
         showError('You do not have permission to access this page.');
         sessionStorage.clear();
         return window.location.href = '../../login.html';
       }
+
+      document.getElementById('profileBtn').textContent = user.username;
     } catch (err) {
-      console.error('Initialization error:', err);
+      console.error('Session verification error:', err);
+      showError('❌ Session verification failed. Redirecting to login...');
       sessionStorage.clear();
-      window.location.href = '../../login.html';
+      setTimeout(() => {
+        window.location.href = '../../login.html';
+      }, 2000);
     }
   };
 
@@ -279,31 +359,48 @@
 
   async function loadUser() {
     try {
-      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`);
-      const user = await res.json();
+      if (!userId) {
+        throw new Error('No user ID provided in URL');
+      }
 
-      document.getElementById('fullName').value = user.fullName || '';
+      console.log('Fetching user with ID:', userId);
+      const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
+        credentials: 'include'
+      });
+
+      console.log('Fetch response status:', res.status, res.statusText);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch user: ${res.status} ${res.statusText}`);
+      }
+
+      const user = await res.json();
+      console.log('User data:', user);
+
+      document.getElementById('fullName').value = user.fullName || user.fullname || '';
       document.getElementById('username').value = user.username || '';
       document.getElementById('email').value = user.email || '';
       document.getElementById('role').value = user.role || 'viewer';
       document.getElementById('status').value = user.status || 'active';
-      document.getElementById('avatarPreview').src = user.avatar || 'default-avatar.png';
+      document.getElementById('avatarPreview').src = user.avatarId
+              ? `https://wrytix.onrender.com/files/${user.avatarId}`
+              : 'default-avatar.png';
 
-      if (user.document) {
+      if (user.pdfId) {
         document.getElementById('existingDocument').innerHTML = `
-          <a class="document-link" href="${user.document}" target="_blank">View Current Document</a>
+          <a class="document-link" href="https://wrytix.onrender.com/files/${user.pdfId}" target="_blank" download="${user.pdfOriginalName || 'document.pdf'}">View Current Document</a>
         `;
       }
     } catch (err) {
-      showError('❌ Could not load user data');
-      setTimeout(() => window.location.href = './users-list.html', 1500);
+      console.error('Load user error:', err);
+      showError(`❌ Could not load user data: ${err.message}`);
+      setTimeout(() => window.location.href = 'users-list.html', 2000);
     }
   }
 
   document.getElementById('editUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('fullName', document.getElementById('fullName').value);
+    formData.append('fullname', document.getElementById('fullName').value);
     formData.append('email', document.getElementById('email').value);
     formData.append('role', document.getElementById('role').value);
     formData.append('status', document.getElementById('status').value);
@@ -318,16 +415,17 @@
       const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
         method: 'PUT',
         body: formData,
-        credentials: 'include' // ✅ Required for session!
-
+        credentials: 'include'
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
       showSuccess('✅ User updated successfully');
       setTimeout(() => window.location.href = 'users-list.html', 1000);
     } catch (err) {
-      console.error(err);
-      showError('❌ Update failed');
+      console.error('Update error:', err);
+      showError(`❌ Update failed: ${err.message}`);
     }
   });
 
