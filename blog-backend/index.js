@@ -774,69 +774,100 @@ app.get('/users', async (req, res) => {
 
 
 app.post('/users', requireAdmin, upload.fields([
-    { name: 'avatar', maxCount: 1 }
+    { name: 'avatar', maxCount: 1 },
+    { name: 'pdf', maxCount: 1 }
 ]), async (req, res) => {
     try {
         const { fullName, username, email, password, role, submittedBy } = req.body;
+
+        // Validate required fields
         if (!fullName || !username || !email || !password || !role) {
+            await logAction(req.session.user?.username, 'user-create-failed', username || email, {
+                reason: 'Missing required fields',
+                fields: { fullName, username, email, password, role }
+            });
             return res.status(400).json({ error: 'Full name, username, email, password, and role are required' });
         }
 
+        // Validate role
         if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
+            await logAction(req.session.user?.username, 'user-create-failed', username || email, {
+                reason: 'Invalid role',
+                role
+            });
             return res.status(400).json({ error: 'Invalid role' });
         }
 
-        let avatarFilename = null;
-        if (req.files && req.files.avatar) {
-            if (!['image/jpeg', 'image/png', 'image/gif'].includes(req.files.avatar[0].mimetype)) {
-                return res.status(400).json({ error: 'Avatar must be an image (JPEG, PNG, or GIF)' });
-            }
-            avatarFilename = req.files.avatar[0].filename;
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = {
-            id: Date.now().toString(), // Add custom id
-            fullname: fullName,
-            username,
-            email,
-            password: hashedPassword,
-            role,
-            submittedBy: submittedBy || req.session.user.username,
-            avatar: avatarFilename,
-            status: 'active',
-            createdAt: new Date()
-        };
-
+        // Check for duplicates
         const duplicate = await User.findOne({
             $or: [{ username }, { email }, { fullname: fullName }]
         }).lean();
         if (duplicate) {
-            await logAction(req.session.user.username, 'user-create-failed', username || email, {
+            await logAction(req.session.user?.username, 'user-create-failed', username || email, {
                 reason: 'Duplicate user'
             });
             return res.status(409).json({ error: 'User already exists' });
         }
 
+        // Handle file uploads
+        let avatarId = null;
+        let pdfId = null;
+        let pdfOriginalName = null;
+
+        if (req.files['avatar'] && req.files['avatar'][0]) {
+            const avatarFile = req.files['avatar'][0];
+            console.log('Avatar received:', avatarFile.originalname);
+            avatarId = await uploadToGridFS(avatarFile, `${Date.now()}-${avatarFile.originalname}`);
+        } else {
+            console.log('No avatar uploaded');
+        }
+
+        if (req.files['pdf'] && req.files['pdf'][0]) {
+            const pdfFile = req.files['pdf'][0];
+            console.log('PDF received:', pdfFile.originalname);
+            pdfId = await uploadToGridFS(pdfFile, `${Date.now()}-${pdfFile.originalname}`);
+            pdfOriginalName = pdfFile.originalname;
+        } else {
+            console.log('No PDF uploaded');
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new user
+        const newUser = {
+            id: Date.now().toString(),
+            fullname: fullName,
+            username,
+            email,
+            password: hashedPassword,
+            role,
+            avatarId,
+            pdfId,
+            pdfOriginalName,
+            submittedBy: submittedBy || req.session.user.username,
+            status: 'active',
+            createdAt: new Date()
+        };
+
         await writeDocument(User, newUser);
-        await logAction(
-            req.session.user.username,
-            'user-created',
-            username || email,
-            { role }
-        );
+        await logAction(req.session.user.username, 'user-created', username, {
+            email,
+            role,
+            hasAvatar: !!avatarId,
+            hasPdf: !!pdfId
+        });
 
         res.status(201).json({ message: 'User added', user: newUser });
     } catch (err) {
-        await logAction(
-            req.session.user.username,
-            'user-create-error',
-            'system',
-            { error: err.message }
-        );
+        await logAction(req.session.user?.username, 'user-create-error', req.body.username || 'unknown', {
+            error: err.message,
+            stack: err.stack
+        });
         res.status(500).json({ error: 'Failed to create user', details: err.message });
     }
 });
+
 
 app.get('/users/:id', async (req, res) => {
     const user = await User.findOne({ _id: req.params.id }).lean();
