@@ -129,11 +129,11 @@
     return `
         <tr>
             <td>
-                    ${user.avatarId
+          ${user.avatarId
             ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/images/default-avatar.png';">`
             : 'No avatar'}
-                </td>
-            <td>${user.user.fullname || '—'}</td>
+        </td>
+            <td>${user.fullname || '—'}</td>
             <td>${user.username}</td>
             <td>${user.email}</td>
             <td>${user.role}</td>
@@ -173,7 +173,10 @@
       return (
               (!roleFilter.value || user.role === roleFilter.value) &&
               (!statusFilter.value || user.status === statusFilter.value) &&
-              (!searchBox.value || user.username.toLowerCase().includes(searchBox.value.toLowerCase()) || user.email.toLowerCase().includes(searchBox.value.toLowerCase()))
+              (!searchBox.value ||
+                      user.username.toLowerCase().includes(searchBox.value.toLowerCase()) ||
+                      user.email.toLowerCase().includes(searchBox.value.toLowerCase()) ||
+                      (user.fullname && user.fullname.toLowerCase().includes(searchBox.value.toLowerCase())))
       );
     });
 
