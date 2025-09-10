@@ -29,7 +29,7 @@
     #userDetails a.download-avatar,
     #userDetails a.download-pdf {
       margin-bottom: 1rem;
-      color: var(--primary);
+      color: var(--text-color);
       text-decoration: underline;
     }
 
@@ -193,7 +193,7 @@
               : 'default-avatar.png';
       const avatarHTML = user.avatarId
               ? `<img src="${avatarUrl}" alt="Avatar" />
-           <a href="${avatarUrl}" download="avatar-${user.username || 'user'}.png" class="download-avatar">Download Avatar</a>`
+           <a href="${avatarUrl}" download="avatar-${user.username || 'user'}.png"  target="_blank" class="download-avatar">Download Avatar</a>`
               : `<img src="default-avatar.png" alt="Default Avatar" />`;
 
       const pdfHTML = user.pdfId
