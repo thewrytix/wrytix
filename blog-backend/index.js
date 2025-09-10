@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 3000;
 // Multer setup with memory storage
 const storage = multer.memoryStorage(); // Store files in memory before uploading to GridFS
 const upload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         if (file.fieldname === 'avatar') {
@@ -925,74 +925,88 @@ app.get('/pendingUsers/:id', async (req, res) => {
     res.json(user);
 });
 
-app.post('/pendingUsers', requireLogin, upload.fields([
+app.post('/pendingUsers', upload.fields([
     { name: 'avatar', maxCount: 1 },
     { name: 'pdf', maxCount: 1 }
 ]), async (req, res) => {
+    const userRole = req.session.user?.role;
+    if (!['editor', 'admin'].includes(userRole)) {
+        await logAction(req.session.user?.username || 'anonymous', 'pending-user-create-failed', 'unauthorized', {
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+        return res.status(403).json({ error: 'Forbidden: Editors or Admins only' });
+    }
+
     try {
-        const { fullName, username, email, password, role, submittedBy } = req.body;
+        const { fullName, username, email, password, role } = req.body;
+
+        // Validate required fields
         if (!fullName || !username || !email || !password || !role) {
-            return res.status(400).json({ error: 'Full name, username, email, password, and role are required' });
-        }
-
-        if (!['viewer', 'author', 'editor', 'admin'].includes(role)) {
-            return res.status(400).json({ error: 'Invalid role. Must be viewer, author, editor, or admin' });
-        }
-
-        const isAdmin = req.session.user?.role === 'admin';
-        if (role === 'admin' && !isAdmin) {
-            await logAction(req.session.user?.username || 'anonymous', 'admin-role-request-denied', username, {
-                reason: 'Non-admin attempted to create admin'
+            await logAction(req.session.user?.username, 'pending-user-create-failed', username || 'unknown', {
+                reason: 'Missing required fields',
+                fields: { fullName, username, email, password, role }
             });
-            return res.status(403).json({ error: 'Only admins can request admin roles' });
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        let avatarFilename = null;
-        let pdfFilename = null;
+        // Check for existing user
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] }).lean();
+        const existingPending = await PendingUser.findOne({ $or: [{ username }, { email }] }).lean();
+        if (existingUser || existingPending) {
+            await logAction(req.session.user?.username, 'pending-user-create-failed', username, {
+                reason: 'User already exists'
+            });
+            return res.status(400).json({ error: 'Username or email already exists' });
+        }
+
+        // Handle file uploads
+        let avatarId = null;
+        let pdfId = null;
         let pdfOriginalName = null;
-        if (req.files) {
-            if (req.files.avatar) {
-                avatarFilename = req.files.avatar[0].filename;
-            }
-            if (req.files.pdf) {
-                pdfFilename = req.files.pdf[0].filename;
-                pdfOriginalName = req.files.pdf[0].originalname;
-            }
+
+        if (req.files['avatar'] && req.files['avatar'][0]) {
+            const avatarFile = req.files['avatar'][0];
+            avatarId = await uploadToGridFS(avatarFile, `${Date.now()}-${avatarFile.originalname}`);
+        }
+
+        if (req.files['pdf'] && req.files['pdf'][0]) {
+            const pdfFile = req.files['pdf'][0];
+            pdfId = await uploadToGridFS(pdfFile, `${Date.now()}-${pdfFile.originalname}`);
+            pdfOriginalName = pdfFile.originalname;
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newRequest = {
-            id: Date.now().toString(), // Add custom id
+        const newPendingUser = {
+            id: Date.now().toString(),
             fullname: fullName,
             username,
             email,
             password: hashedPassword,
             role,
-            submittedBy: submittedBy || req.session.user?.username || 'anonymous',
-            avatar: avatarFilename,
-            pdfFilename,
+            avatarId,
+            pdfId,
             pdfOriginalName,
-            requestedAt: new Date()
+            submittedBy: req.session.user.username,
+            requestedAt: new Date(),
+            status: 'pending'
         };
 
-        await writeDocument(PendingUser, newRequest);
-        await logAction(
-            submittedBy || req.session.user?.username || 'anonymous',
-            'pending-user-created',
-            email || username,
-            { role, submittedBy }
-        );
+        await writeDocument(PendingUser, newPendingUser);
+        await logAction(req.session.user.username, 'pending-user-created', username, {
+            email,
+            role,
+            hasAvatar: !!avatarId,
+            hasPdf: !!pdfId
+        });
 
-        res.status(201).json({ message: 'Pending request submitted', request: newRequest });
+        res.status(201).json({ message: 'Pending user submitted for approval', user: newPendingUser });
     } catch (err) {
-        console.error('Error in /pendingUsers:', err);
-        await logAction(
-            'system',
-            'pending-user-create-error',
-            'system',
-            { error: err.message, stack: err.stack }
-        );
-        res.status(500).json({ error: 'Failed to create pending user', details: err.message });
+        await logAction(req.session.user?.username, 'pending-user-create-error', req.body.username || 'unknown', {
+            error: err.message,
+            stack: err.stack
+        });
+        res.status(500).json({ error: 'Failed to submit pending user', details: err.message });
     }
 });
 
