@@ -133,7 +133,7 @@
             ? `<img src="https://wrytix.onrender.com/files/${user.avatarId}" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%;" onerror="this.src='/images/default-avatar.png';">`
             : 'No avatar'}
                 </td>
-            <td>${user.fullName || '—'}</td>
+            <td>${user.user.fullname || '—'}</td>
             <td>${user.username}</td>
             <td>${user.email}</td>
             <td>${user.role}</td>
