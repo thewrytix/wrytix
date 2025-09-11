@@ -205,7 +205,7 @@
 
     const profileBtn = document.getElementById("profileBtn");
     const sessionUser = JSON.parse(sessionStorage.getItem("username"));
-    profileBtn.textContent = sessionUser || "Admin";
+    profileBtn.textContent = sessionUser || sessionUser;
   };
 
   function viewUser(id) {
