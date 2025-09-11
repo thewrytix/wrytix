@@ -81,16 +81,16 @@
 
     <h1>Delete User</h1>
 
-    <div class="filter-bar">
+    <div class="filter-section">
       <input type="text" id="searchInput" placeholder="Search by username or email"/>
-      <select id="roleFilter">
+      <select id="filterRole">
         <option value="">All Roles</option>
         <option value="viewer">Viewer</option>
         <option value="author">Author</option>
         <option value="editor">Editor</option>
         <option value="admin">Admin</option>
       </select>
-      <select id="statusFilter">
+      <select id="filterStatus">
         <option value="">All Statuses</option>
         <option value="active">Active</option>
         <option value="inactive">Inactive</option>
@@ -124,10 +124,10 @@
 </div>
 
 <script>
-  const roleFilter = document.getElementById('roleFilter');
-  const statusFilter = document.getElementById('statusFilter');
+  const roleFilter = document.getElementById('filterRole');
+  const statusFilter = document.getElementById('filterStatus');
   const searchInput = document.getElementById('searchInput');
-  const tableBody = document.querySelector('#userTable tbody');
+  const tableBody = document.querySelector('#userTableBody');
 
   let currentUser = { role: null, username: null, id: null };
   let users = [];
