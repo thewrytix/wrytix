@@ -199,14 +199,7 @@
   statusFilter.addEventListener('change', () => { currentPage = 1; renderUsers(); });
   searchBox.addEventListener('input', () => { currentPage = 1; renderUsers(); });
 
-  window.onload = async () => {
-    allUsers = await fetchUsers();
-    renderUsers();
 
-    const profileBtn = document.getElementById("profileBtn");
-    const sessionUser = JSON.parse(sessionStorage.getItem("userName"));
-    profileBtn.textContent = sessionUser || "Admin";
-  };
 
   function viewUser(id) {
     window.location.href = `view-user.html?id=${id}`;
