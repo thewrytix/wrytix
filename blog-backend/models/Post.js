@@ -14,6 +14,8 @@ const PostSchema = new mongoose.Schema({
     submittedBy: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     isPublished: { type: Boolean, default: false },
+    approvedBy: { type: String },
+    approvedAt: { type: Date },
     views: { type: Number, default: 0 },
     lastViewed: { type: Date },
 });

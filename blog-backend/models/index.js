@@ -34,6 +34,8 @@ const PostSchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     submittedBy: { type: String, required: true },
     isPublished: { type: Boolean, default: false },
+    approvedBy: { type: String },
+    approvedAt: { type: Date },
     views: { type: Number, default: 0 },
     lastViewed: { type: Date },
 });

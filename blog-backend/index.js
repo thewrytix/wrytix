@@ -522,7 +522,6 @@ app.post('/posts', async (req, res) => {
             id: uuidv4(),
             ...req.body,
             createdAt: now,
-            submittedBy: req.session.user.username,
             schedule: scheduleDate,
             isPublished: scheduleDate <= now
         };
