@@ -86,6 +86,8 @@
 
     const user = JSON.parse(userData);
     const username = (user?.username || "").toLowerCase();
+    const fullname = (user?.fullname || "").toLowerCase();
+
 
     try {
       const [submissionsRes, approvedRes] = await Promise.all([
@@ -96,8 +98,8 @@
       const submissions = await submissionsRes.json();
       const approved = await approvedRes.json();
 
-      const mySubmissions = submissions.filter(p => (p.submittedBy || "").toLowerCase() === username);
-      const myApproved = approved.filter(p => (p.submittedBy || "").toLowerCase() === username);
+      const mySubmissions = submissions.filter(p => (p.submittedBy || "").toLowerCase() === username||fullname);
+      const myApproved = approved.filter(p => (p.submittedBy || "").toLowerCase() === username||fullname);
 
       const pending = mySubmissions.filter(p => p.status === "pending").length;
       const rejected = mySubmissions.filter(p => p.status === "rejected").length;
