@@ -136,13 +136,13 @@ async function deleteAd(id) {
     try {
         const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, { method: 'DELETE' });
         if (res.ok) {
-            alert('Ad deleted');
+            showSuccess('✅Ad deleted');
             loadAds();
         } else {
-            alert('Delete failed');
+            showError('❌Delete failed');
         }
     } catch (err) {
-        alert('Error deleting ad');
+        showError('❌Error deleting ad');
         console.error(err);
     }
 }
@@ -158,14 +158,14 @@ async function toggleAdStatus(id, currentStatus) {
 
         const result = await res.json();
         if (res.ok) {
-            alert(`Ad is now ${result.ad.active ? 'active' : 'inactive'}`);
+            showSuccess(`✅Ad is now ${result.ad.active ? 'active' : 'inactive'}`);
             loadAds();
         } else {
-            alert('Failed to update ad: ' + result.error);
+            showError('❌Failed to update ad: ' + result.error);
         }
     } catch (err) {
         console.error("Toggle error:", err);
-        alert('An error occurred while toggling the ad');
+        showError('❌An error occurred while toggling the ad');
     }
 }
 
