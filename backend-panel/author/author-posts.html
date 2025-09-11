@@ -173,6 +173,7 @@
           <th>Status</th>
           <th>Scheduled</th>
           <th>Created At</th>
+          <th>Views</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -189,6 +190,7 @@
               <td class="${statusClass}">${post.status.charAt(0).toUpperCase() + post.status.slice(1)}</td>
               <td>${new Date(post.schedule || post.createdAt).toLocaleString()}</td>
               <td>${new Date(post.createdAt).toLocaleString()}</td>
+              <td>${post.views || 0}</td>
               <td>
                 ${post.status === 'rejected' ? `
                   <button class="btn view-reason-btn" data-reason="${escapedReason}">View Reason</button>
