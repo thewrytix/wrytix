@@ -214,11 +214,11 @@
             for (const checkbox of selected) {
                 await fetch(`https://wrytix.onrender.com/ads/${checkbox.dataset.id}`, { method: 'DELETE' });
             }
-            alert('Selected ads deleted successfully.');
+            showSuccess('✅Selected ads deleted successfully.');
             await loadAds();
         } catch (err) {
             console.error(err);
-            alert('Error deleting selected ads.');
+            showError('❌Error deleting selected ads.');
         }
     }
 
