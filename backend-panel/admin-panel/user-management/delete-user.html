@@ -317,21 +317,6 @@
     filterAndRender();
   }
 
-  function showError(msg) {
-    const div = document.createElement('div');
-    div.className = 'alert error';
-    div.textContent = msg;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 4000);
-  }
-
-  function showSuccess(msg) {
-    const div = document.createElement('div');
-    div.className = 'alert success';
-    div.textContent = msg;
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), 3000);
-  }
 </script>
 <script src="../admin-panel.js"></script>
 <script src="../../backend-panel.js"></script>
