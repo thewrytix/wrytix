@@ -11,6 +11,7 @@ const PostSchema = new mongoose.Schema({
     source: { type: String, required: true }, // Add source
     featured: { type: Boolean, default: false }, // Add featured
     schedule: { type: Date },
+    submittedBy: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     isPublished: { type: Boolean, default: false },
     views: { type: Number, default: 0 },
