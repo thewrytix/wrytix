@@ -1,0 +1,154 @@
+# Phase 1 Migration Guide
+
+## Files Created
+- `config/paths.js` - Centralized file paths
+- `utils/jsonHelpers.js` - JSON file operations
+- `utils/logger.js` - Logging functions
+- `middleware/auth.js` - Authentication middleware
+- `middleware/logging.js` - Request logging middleware
+- `config/middleware.js` - Middleware configuration
+
+## Step-by-Step Integration
+
+### Step 1: Replace File Paths
+In your main `server.js`, replace these lines:
+```javascript
+// OLD
+const usersPath = path.join(__dirname, 'users.json');
+const pendingUsersPath = path.join(__dirname, 'pendingUsers.json');
+// ... etc
+
+// NEW
+const PATHS = require('./config/paths');
+```
+
+### Step 2: Replace JSON Functions
+Replace your existing functions:
+```javascript
+// OLD
+function readJson(file) { /* your existing code */ }
+function writeJson(file, data) { /* your existing code */ }
+
+// NEW
+const { readJson, writeJson } = require('./utils/jsonHelpers');
+```
+
+### Step 3: Replace Logging Function
+```javascript
+// OLD
+function logAction(actor, action, target, additionalData = {}) { /* existing code */ }
+
+// NEW
+const { logAction } = require('./utils/logger');
+```
+
+### Step 4: Replace Authentication Middleware
+```javascript
+// OLD
+function requireAdmin(req, res, next) { /* existing code */ }
+function requireLogin(req, res, next) { /* existing code */ }
+// etc.
+
+// NEW
+const {
+    requireAdmin,
+    requireLogin,
+    requireRole
+} = require('./middleware/auth');
+```
+
+### Step 5: Update Your Routes
+Instead of inline path definitions, use PATHS:
+```javascript
+// OLD
+const users = readJson(path.join(__dirname, 'users.json'));
+
+// NEW
+const users = readJson(PATHS.users);
+```
+
+## Benefits You'll See Immediately
+
+1. **Cleaner server.js** - Reduced from ~800 lines to ~100 lines
+2. **Centralized paths** - Change file locations in one place
+3. **Better error handling** - JSON operations have proper error handling
+4. **Enhanced logging** - More detailed logs with better structure
+5. **Reusable middleware** - Auth logic is now modular
+
+## Testing the Migration
+
+1. **Backup your current server.js**
+2. **Install the new files** in their respective directories
+3. **Update imports** one section at a time
+4. **Test each change** before moving to the next
+
+## Example: Migrating One Route
+
+Here's how a route changes:
+
+### Before:
+```javascript
+app.get('/users', (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        logAction(req.session.user?.username, 'admin-access-denied', req.path, {
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+        });
+        return res.status(403).json({ error: 'Forbidden – Admins only' });
+    }
+
+    const users = readJson(path.join(__dirname, 'users.json'));
+    res.json(users);
+});
+```
+
+### After:
+```javascript
+const { requireAdmin } = require('./middleware/auth');
+const { readJson } = require('./utils/jsonHelpers');
+const PATHS = require('./config/paths');
+
+app.get('/users', requireAdmin, (req, res) => {
+    const users = readJson(PATHS.users);
+    res.json(users);
+});
+```
+
+## Migration Checklist
+
+- [ ] Create directory structure (`config/`, `utils/`, `middleware/`)
+- [ ] Add the new files to your project
+- [ ] Update imports in server.js
+- [ ] Replace path constants with PATHS object
+- [ ] Replace JSON functions with new utilities
+- [ ] Replace logging function
+- [ ] Replace authentication middleware
+- [ ] Test each route to ensure it works
+- [ ] Update error handling
+- [ ] Verify logging still works
+
+## What's Next?
+
+Once Phase 1 is complete and working:
+- **Phase 2**: Extract Post management into controllers and routes
+- **Phase 3**: Extract User management
+- **Phase 4**: Extract Ads and Comments
+- **Phase 5**: Final cleanup and optimization
+
+## Troubleshooting
+
+**If routes stop working:**
+1. Check that all file paths are correct
+2. Verify middleware is imported properly
+3. Check that PATHS object has correct file locations
+4. Ensure directory structure matches expectations
+
+**If logging stops working:**
+5. Check that logs directory exists
+6. Verify logger has write permissions
+7. Check console for error messages
+
+**Common Issues:**
+- Path resolution errors: Make sure `config/paths.js` correctly calculates BASE_DIR
+- Permission errors: Ensure application has read/write access to JSON files
+- Middleware order: Authentication middleware must come before protected routes

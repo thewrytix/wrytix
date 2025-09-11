@@ -1,0 +1,9 @@
+{"timestamp":"2025-08-24T20:53:17.947Z","action":"USER_CREATED","details":{"userId":3,"username":"newuser"}}
+{"timestamp":"2025-08-24T20:53:17.957Z","action":"USER_UPDATED","details":{"userId":3,"changes":["role"]}}
+{"timestamp":"2025-08-24T20:53:17.964Z","action":"USER_DELETED","details":{"userId":3,"username":"newuser"}}
+{"timestamp":"2025-08-24T20:55:00.821Z","action":"USER_CREATED","details":{"userId":3,"username":"newuser"}}
+{"timestamp":"2025-08-24T20:55:00.828Z","action":"USER_UPDATED","details":{"userId":3,"changes":["role"]}}
+{"timestamp":"2025-08-24T20:55:00.836Z","action":"USER_DELETED","details":{"userId":3,"username":"newuser"}}
+{"timestamp":"2025-08-24T21:07:19.006Z","action":"USER_CREATED","details":{"userId":3,"username":"newuser"}}
+{"timestamp":"2025-08-24T21:07:19.033Z","action":"USER_UPDATED","details":{"userId":3,"changes":["role"]}}
+{"timestamp":"2025-08-24T21:07:19.039Z","action":"USER_DELETED","details":{"userId":3,"username":"newuser"}}

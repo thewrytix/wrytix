@@ -65,6 +65,32 @@
             <a href="html/technology.html">Technology</a>
             <a href="html/lifestyle.html">Lifestyle</a>
         </div>
+
+
+        <!-- User Icon -->
+        <div class="viewer">
+            <a id="loginBtn"><i class="fa-solid fa-user"></i></a>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-modal">
+            <div class="login-content">
+                <span class="close">&times;</span>
+                <h2>User Login</h2>
+                <form>
+                    <input type="text" placeholder="Username" required />
+                    <input type="password" placeholder="Password" required />
+                    <button type="submit">Login</button>
+                    <p class="forgot-password">
+                        <a href="#" id="forgot-password">Forgot Password?</a>
+                    </p>
+                    <p class="switch-form">
+                        Don't have an account? <a href="#" id="switch-to-signup">Sign up</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
     </nav>
 
     <section class="headline-section">
@@ -213,5 +239,6 @@
 <div id="backToTop">
     <span ><i class="fa-solid fa-angle-up"></i></span> </div>
 <script src="js/frontend.js"></script>
+<script src="js/viewer-login.js"></script>
 </body>
 </html>

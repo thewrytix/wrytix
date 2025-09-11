@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <img src="${post.thumbnail}" alt="${post.title}">
                 <div>
                     <h4><a href="posts/view-post.html?slug=${post.slug}">${post.title}</a></h4>
-                    <p>${truncateText(post.content, 15)}</p>
+                    <p>${truncateText(post.content, 10)}</p>
                 </div>
             </div>
         `).join("");
@@ -364,5 +364,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         blogData.init();
     }
 })();
+
 
 
