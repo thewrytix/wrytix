@@ -32,7 +32,7 @@ const PostSchema = new Schema({
     featured: { type: Boolean, default: false }, // Add featured
     schedule: { type: Date },
     createdAt: { type: Date, default: Date.now },
-    submittedBy: { type: String, required: true },
+    submittedBy: { type: String },
     isPublished: { type: Boolean, default: false },
     approvedBy: { type: String },
     approvedAt: { type: Date },
