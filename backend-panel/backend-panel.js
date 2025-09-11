@@ -126,7 +126,7 @@ function showToast(message, type = 'success', duration = 3000) {
     alertBox.textContent = message;
     document.body.appendChild(alertBox);
 
-    // Trigger fade-out before removal.
+    // Trigger fade-out before removal
     setTimeout(() => {
         alertBox.style.opacity = '0';
         alertBox.style.transform = 'translateX(-50%) translateY(-20px)';
