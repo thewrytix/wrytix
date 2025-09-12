@@ -190,7 +190,7 @@
             usernameStatus.textContent = '';
             emailStatus.textContent = '';
 
-            console.log("✅ User added:", resData);
+            console.log('✅ User added:', { message: response.message, userId: response.user.id });
         } catch (err) {
             console.error("❌ Unexpected Add User error:", err);
             showError(`Unexpected error while adding user: ${err.message}`);
