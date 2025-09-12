@@ -7,7 +7,8 @@ const getUsers = async (req, res) => {
     const users = await User.find().lean();
     const mappedUsers = users.map(user => ({
         ...user,
-        fullName: user.fullname
+        fullName: user.fullname,
+        createdAt: user.createdAt // Ensure createdAt is included
     }));
     res.json(mappedUsers);
 };
@@ -75,7 +76,7 @@ const createUser = async (req, res) => {
             pdfOriginalName,
             submittedBy: submittedBy || req.session.user.username,
             status: 'active',
-            createdAt: new Date()
+            createdAt: new Date() // Ensure createdAt is set
         };
 
         await User.create(newUser);
@@ -86,7 +87,7 @@ const createUser = async (req, res) => {
             hasPdf: !!pdfId
         });
 
-        // SECURITY FIX: Return safe user object without password
+        // SECURITY: Return safe user object without password
         const safeUser = {
             id: newUser.id,
             fullname: newUser.fullname,
@@ -98,7 +99,7 @@ const createUser = async (req, res) => {
             pdfOriginalName: newUser.pdfOriginalName,
             submittedBy: newUser.submittedBy,
             status: newUser.status,
-            createdAt: newUser.createdAt
+            createdAt: newUser.createdAt // Include createdAt
         };
 
         res.status(201).json({ message: 'User added', user: safeUser });
@@ -144,7 +145,7 @@ const updateUser = async (req, res) => {
             pdfOriginalName: updatedUser.pdfOriginalName,
             submittedBy: updatedUser.submittedBy,
             status: updatedUser.status,
-            createdAt: updatedUser.createdAt
+            createdAt: updatedUser.createdAt // Include createdAt
         };
 
         res.json({ message: 'User updated', user: safeUpdatedUser });
@@ -172,7 +173,8 @@ const deleteUser = async (req, res) => {
             fullname: user.fullname,
             username: user.username,
             email: user.email,
-            role: user.role
+            role: user.role,
+            createdAt: user.createdAt // Include createdAt
         };
 
         await User.deleteOne({ _id: req.params.id });
@@ -194,7 +196,7 @@ const getPendingUsers = async (req, res) => {
     const mappedPending = pending.map(user => ({
         ...user,
         fullName: user.fullname,
-        createdAt: user.requestedAt
+        createdAt: user.requestedAt // Map requestedAt to createdAt
     }));
     res.json(mappedPending);
 };
@@ -207,7 +209,8 @@ const getPendingUserById = async (req, res) => {
     // SECURITY: Sanitize for pending user too
     const safeUser = {
         ...user,
-        password: undefined // Remove password if it exists
+        password: undefined, // Remove password if it exists
+        createdAt: user.requestedAt // Map to createdAt
     };
     res.json(safeUser);
 };
@@ -259,7 +262,7 @@ const createPendingUser = async (req, res) => {
             pdfId,
             pdfOriginalName,
             submittedBy: req.session.user.username,
-            requestedAt: new Date(),
+            requestedAt: new Date(), // Set requestedAt
             status: 'pending'
         };
 
@@ -271,7 +274,7 @@ const createPendingUser = async (req, res) => {
             hasPdf: !!pdfId
         });
 
-        // SECURITY FIX: Return safe pending user without password
+        // SECURITY: Return safe pending user without password
         const safePendingUser = {
             id: newPendingUser.id,
             fullname: newPendingUser.fullname,
@@ -282,7 +285,7 @@ const createPendingUser = async (req, res) => {
             pdfId: newPendingUser.pdfId,
             pdfOriginalName: newPendingUser.pdfOriginalName,
             submittedBy: newPendingUser.submittedBy,
-            requestedAt: newPendingUser.requestedAt,
+            requestedAt: newPendingUser.requestedAt, // Map to createdAt in frontend
             status: newPendingUser.status
         };
 
@@ -311,7 +314,8 @@ const deletePendingUser = async (req, res) => {
             fullname: user.fullname,
             username: user.username,
             email: user.email,
-            role: user.role
+            role: user.role,
+            requestedAt: user.requestedAt // Map to createdAt
         };
 
         await PendingUser.deleteOne({ _id: req.params.id });
