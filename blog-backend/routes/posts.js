@@ -30,8 +30,15 @@ router.get('/postSubmissions', requireRole(['author', 'editor', 'admin']), getPo
 router.get('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), getPostSubmissionById);
 router.put('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), updatePostSubmission);
 router.delete('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), deletePostSubmission);
-router.get('/posts/:slug.html', (req, res) => {
-    res.sendFile(path.join(__dirname, '../posts/view-post.html'));
+
+// Serve static HTML file - use a fixed path or make it optional
+router.get('/:slug.html', (req, res) => {
+    const filePath = path.join(__dirname, '../posts/view-post.html');
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(404).send('File not found');
+        }
+    });
 });
 
 module.exports = router;

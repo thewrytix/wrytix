@@ -1,14 +1,38 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.fieldname === 'avatar') {
+            if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.mimetype)) {
+                return cb(new Error('Avatar must be an image (JPEG, PNG, or GIF)'));
+            }
+        } else if (file.fieldname === 'pdf') {
+            if (file.mimetype !== 'application/pdf') {
+                return cb(new Error('Document must be a PDF'));
+            }
+        }
+        cb(null, true);
+    }
+});
+
+const corsOptions = {
+    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
+};
 
 const setupMiddleware = (app) => {
-    app.use(cors({
-        origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
-    }));
+    // Enable preflight requests - FIXED: Use '/:catchAll' for Express 5 wildcard
+    app.options('/:catchAll', cors(corsOptions));
+
+    app.use(cors(corsOptions));
 
     app.get("/", (req, res) => {
         res.send("Backend is running 🚀");
@@ -23,6 +47,9 @@ const setupMiddleware = (app) => {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
         next();
     });
+
+    return { upload };
 };
 
-module.exports = setupMiddleware;
+// Export upload directly for route imports
+module.exports = { setupMiddleware, upload, corsOptions };

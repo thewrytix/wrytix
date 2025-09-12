@@ -1,6 +1,6 @@
 const express = require('express');
 const { connectDB } = require('./config/database');
-const setupMiddleware = require('./config/middleware');
+const { setupMiddleware } = require('./config/middleware');
 const setupSession = require('./config/session');
 const routes = require('./routes');
 const { logAction } = require('./utils/logger');
@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 
 // Ping endpoint
 app.get('/ping', (req, res) => {
-    logAction(req.session.user?.username, 'ping', 'admin');
+    logAction(req.session?.user?.username, 'ping', 'admin');
     res.json({ message: 'Backend is alive!' });
 });
 
