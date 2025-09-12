@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const {
     getHeadline,
     updateHeadline,
@@ -13,6 +14,8 @@ const {
     clearLogs
 } = require('../controllers/adminController');
 const { requireAdmin, verifySession } = require('../middleware/auth');
+const { corsOptions } = require('../config/middleware');
+const { getFileById } = require('../utils/fileHelpers');
 
 const router = express.Router();
 
@@ -27,6 +30,13 @@ router.post('/pendingDeletions/:id/reject', requireAdmin, rejectDeletion);
 router.delete('/pendingDeletions/:id', cancelDeletion);
 router.get('/logs', getLogs);
 router.delete('/logs', clearLogs);
+
+// FIXED: Add CORS to file serving route
+router.get('/files/:id', cors({
+    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
+    methods: ['GET'],
+    allowedHeaders: ['Content-Type']
+}), getFileById);
 
 router.get('/debug/timecheck', async (req, res) => {
     try {
