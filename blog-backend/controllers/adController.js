@@ -51,9 +51,20 @@ const createAd = async (req, res) => {
 const getAds = async (req, res) => {
     try {
         const ads = await readAds();
-        res.json(ads);
+        if (res) {
+            res.json(ads);
+        } else {
+            // Called from interval - no response, just return data
+            return ads;
+        }
     } catch (e) {
-        res.status(500).json({ error: 'Failed to fetch ads' });
+        console.error('Error fetching ads:', e);
+        if (res) {
+            res.status(500).json({ error: 'Failed to fetch ads' });
+        } else {
+            // For interval, just log - don't throw
+            console.error('Ad auto-refresh failed:', e);
+        }
     }
 };
 
