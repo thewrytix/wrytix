@@ -210,7 +210,7 @@
           </td>
 
           <td>${user.submittedBy || 'Unknown'}</td>
-          <td>${new Date(user.createdAt || user.requestedAt).toLocaleString()}</td>
+          <td>${new Date(user.createdAt).toLocaleString()}</td>
           <td>
             <button class="btn approve" onclick="approveUser('${user._id}')">Approve</button>
             <button class="btn reject" onclick="rejectUser('${user._id}')">Reject</button>
