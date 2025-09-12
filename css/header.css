@@ -472,4 +472,8 @@
         left: 0;
     }
 
+    .hamburger{
+        margin-left: 15px;
+    }
+
 }
