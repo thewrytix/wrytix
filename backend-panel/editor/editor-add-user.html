@@ -118,22 +118,10 @@
         formData.append('role', role);
         formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
         if (avatar) formData.append('avatar', avatar);
-        formData.append('pdf', documentFile); // Required for editors
-
-        // SECURITY: Safe FormData logging (skip password and files)
-        console.log('FormData entries:');
-        for (const [key, value] of formData.entries()) {
-            if (key === 'password') {
-                console.log(`${key}: [HIDDEN]`);
-            } else if (value instanceof File) {
-                console.log(`${key}: ${value.name}`);
-            } else {
-                console.log(`${key}: ${value}`);
-            }
-        }
+        formData.append('pdf', documentFile);
 
         try {
-            const endpoint = '/pendingUsers'; // Editors always use pending
+            const endpoint = '/pendingUsers';
 
             const res = await fetch(`https://wrytix.onrender.com${endpoint}`, {
                 method: 'POST',
@@ -163,14 +151,13 @@
             usernameStatus.textContent = '';
             emailStatus.textContent = '';
 
-            // SECURITY: Safe logging using resData (backend already sanitized)
             console.log('✅ User submitted:', {
                 message: resData.message,
                 userId: resData.user?.id,
                 username: resData.user?.username
             });
         } catch (err) {
-            console.error("❌ Unexpected Add User error:", err);
+            console.error('❌ Unexpected Add User error:', err);
             showError(`Unexpected error while submitting user: ${err.message}`);
         }
     });

@@ -149,21 +149,7 @@
         formData.append('role', role);
         formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
         if (avatar) formData.append('avatar', avatar);
-        if (documentFile) {  // Always append for admin
-            formData.append('pdf', documentFile);
-        }
-
-        // SECURITY: Safe FormData logging (skip password and files)
-        console.log('FormData entries:');
-        for (const [key, value] of formData.entries()) {
-            if (key === 'password') {
-                console.log(`${key}: [HIDDEN]`);
-            } else if (value instanceof File) {
-                console.log(`${key}: ${value.name}`);
-            } else {
-                console.log(`${key}: ${value}`);
-            }
-        }
+        if (documentFile) formData.append('pdf', documentFile);
 
         try {
             const isAdmin = sessionStorage.getItem('userRole') === 'admin';
@@ -197,14 +183,13 @@
             usernameStatus.textContent = '';
             emailStatus.textContent = '';
 
-            // SECURITY: Safe logging using resData (backend already sanitized)
             console.log('✅ User added:', {
                 message: resData.message,
                 userId: resData.user?.id,
                 username: resData.user?.username
             });
         } catch (err) {
-            console.error("❌ Unexpected Add User error:", err);
+            console.error('❌ Unexpected Add User error:', err);
             showError(`Unexpected error while adding user: ${err.message}`);
         }
     });
