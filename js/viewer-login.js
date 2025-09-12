@@ -1,22 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.getElementById("loginModal");
+    const loginModal = document.getElementById("loginModal");
+    const signupModal = document.getElementById("signupModal");
     const loginBtn = document.getElementById("loginBtn");
-    const closeBtn = modal.querySelector(".close");
+    const closes = document.querySelectorAll(".close");
 
-    // Open modal
+    // Open login modal
     loginBtn.addEventListener("click", () => {
-        modal.style.display = "flex";
+        loginModal.style.display = "flex"; // flex centers content
     });
 
-    // Close modal on X
-    closeBtn.addEventListener("click", () => {
-        modal.style.display = "none";
+    // Switch to signup
+    document.getElementById("switch-to-signup").addEventListener("click", (e) => {
+        e.preventDefault();
+        loginModal.style.display = "none";
+        signupModal.style.display = "flex";
     });
 
-    // Close only if clicking *outside* modal content
-    modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            modal.style.display = "none";
-        }
+    // Switch back to login
+    document.getElementById("switch-to-login").addEventListener("click", (e) => {
+        e.preventDefault();
+        signupModal.style.display = "none";
+        loginModal.style.display = "flex";
+    });
+
+    // Close on X
+    closes.forEach((close) => {
+        close.addEventListener("click", () => {
+            loginModal.style.display = "none";
+            signupModal.style.display = "none";
+        });
+    });
+
+    // Close if clicking *outside* modal content
+    window.addEventListener("click", (e) => {
+        if (e.target === loginModal) loginModal.style.display = "none";
+        if (e.target === signupModal) signupModal.style.display = "none";
     });
 });
