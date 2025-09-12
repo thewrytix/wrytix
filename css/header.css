@@ -476,4 +476,8 @@
         margin-left: 15px;
     }
 
+    .main-nav .viewer span{
+        display: none;
+    }
+
 }
