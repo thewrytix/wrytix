@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add User - Wrytix Admin</title>
+    <title>Add User - Wrytix Editor</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="../backend-panel.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
@@ -12,70 +13,66 @@
             color: #666;
             margin-top: 0.2rem;
         }
-
     </style>
 </head>
 <body>
 <div class="admin-container">
-<aside class="admin-sidebar">
-    <h2>Editor Panel</h2>
-    <nav>
-        <ul>
-            <li><a href="editor-dashboard.html" >Dashboard</a></li>
-            <li><a href="editor-add-post.html">Add New Post</a></li>
-            <li><a href="editor-posts.html" >Manage Posts</a></li>
-            <li><a href="editor-posts-approval.html" >Post Approval Requests</a></li>
-            <li><a href="editor-add-user.html" class="active">Add User</a></li>
+    <aside class="admin-sidebar">
+        <h2>Editor Panel</h2>
+        <nav>
+            <ul>
+                <li><a href="editor-dashboard.html" >Dashboard</a></li>
+                <li><a href="editor-add-post.html">Add New Post</a></li>
+                <li><a href="editor-posts.html" >Manage Posts</a></li>
+                <li><a href="editor-posts-approval.html" >Post Approval Requests</a></li>
+                <li><a href="editor-add-user.html" class="active">Add User</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-        </ul>
-    </nav>
-</aside>
-
-<main class="admin-main">
-    <div class="top-bar">
-        <div class="profile-dropdown">
-            <button class="profile-btn" id="profileBtn">Loading...</button>
-            <div class="profile-menu" id="profileMenu">
-                <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <h1>Add New User</h1>
-    <form id="addUserForm">
-        <label for="fullName">Full Name</label>
-        <input type="text" id="fullName" required />
+        <h1>Add New Author</h1>
+        <form id="addUserForm">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" required />
 
-        <label for="username">Username</label>
-        <input type="text" id="username" required />
-        <div id="username-status" class="tooltip"></div>
+            <label for="username">Username</label>
+            <input type="text" id="username" required />
+            <div id="username-status" class="tooltip"></div>
 
-        <label for="email">Email</label>
-        <input type="email" id="email" required />
-        <div id="email-status" class="tooltip"></div>
+            <label for="email">Email</label>
+            <input type="email" id="email" required />
+            <div id="email-status" class="tooltip"></div>
 
-        <div style="position: relative;">
-            <label for="password">Password</label>
-            <input type="password" id="password" required style="padding-right: 40px;" />
-            <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
-        </div>
+            <div style="position: relative;">
+                <label for="password">Password</label>
+                <input type="password" id="password" required style="padding-right: 40px;" />
+                <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #888;"></i>
+            </div>
 
-        <label for="role">Role</label>
-        <select id="role" required>
-            <option value="">Select Role</option>
-            <option value="author">Author - Can write and submit posts</option>
-        </select>
-        <div class="tooltip">Choose role based on responsibilities.</div>
+            <label for="role">Role</label>
+            <select id="role" required>
+                <option value="author">Author - Can write and submit posts</option>
+            </select>
 
-        <label for="avatar">Profile Picture (Optional, JPEG/PNG/GIF)</label>
-        <input type="file" id="avatar" accept="image/jpeg,image/png,image/gif" />
+            <label for="avatar">Profile Picture (Optional, JPEG/PNG/GIF)</label>
+            <input type="file" id="avatar" accept="image/jpeg,image/png,image/gif" />
 
-        <label for="document">Attach Document (Optional, PDF only)</label>
-        <input type="file" id="document" accept="application/pdf" />
+            <label for="document">Attach Document (Required for approval, PDF only)</label>
+            <input type="file" id="document" accept="application/pdf" required />
 
-        <button type="submit">Add User</button>
-    </form>
-</main>
+            <button type="submit">Submit for Approval</button>
+        </form>
+    </main>
 </div>
 <script>
     document.getElementById('togglePassword').addEventListener('click', () => {
@@ -98,8 +95,8 @@
         const avatar = document.getElementById('avatar').files[0];
         const documentFile = document.getElementById('document').files[0];
 
-        if (!fullName || !username || !email || !password || !role) {
-            showError('Please fill all required fields.');
+        if (!fullName || !username || !email || !password || !role || !documentFile) {
+            showError('Please fill all required fields, including document.');
             return;
         }
 
@@ -121,18 +118,22 @@
         formData.append('role', role);
         formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
         if (avatar) formData.append('avatar', avatar);
-        if (documentFile && sessionStorage.getItem('userRole') !== 'admin') {
-            formData.append('pdf', documentFile); // Only append pdf for non-admin
-        }
+        formData.append('pdf', documentFile); // Required for editors
 
+        // SECURITY: Safe FormData logging (skip password and files)
         console.log('FormData entries:');
         for (const [key, value] of formData.entries()) {
-            console.log(`${key}: ${value instanceof File ? value.name : value}`);
+            if (key === 'password') {
+                console.log(`${key}: [HIDDEN]`);
+            } else if (value instanceof File) {
+                console.log(`${key}: ${value.name}`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
         }
 
         try {
-            const isAdmin = sessionStorage.getItem('userRole') === 'admin';
-            const endpoint = isAdmin ? '/users' : '/pendingUsers';
+            const endpoint = '/pendingUsers'; // Editors always use pending
 
             const res = await fetch(`https://wrytix.onrender.com${endpoint}`, {
                 method: 'POST',
@@ -151,23 +152,29 @@
             if (!res.ok) {
                 console.error(`❌ Add user failed. Status: ${res.status}`, resData);
                 const msg = resData?.message || resData?.error || 'Unknown error';
-                showError(`Failed to add user. (${res.status}) ${msg}`);
+                showError(`Failed to submit user. (${res.status}) ${msg}`);
                 return;
             }
 
-            showSuccess(isAdmin ? 'User added successfully!' : 'Submitted for admin approval.');
+            showSuccess('Author submitted for admin approval.');
             document.getElementById('addUserForm').reset();
             isUsernameAvailable = false;
             isEmailAvailable = false;
             usernameStatus.textContent = '';
             emailStatus.textContent = '';
 
-            console.log('✅ User added:', { message: response.message, userId: response.user.id });
+            // SECURITY: Safe logging using resData (backend already sanitized)
+            console.log('✅ User submitted:', {
+                message: resData.message,
+                userId: resData.user?.id,
+                username: resData.user?.username
+            });
         } catch (err) {
             console.error("❌ Unexpected Add User error:", err);
-            showError(`Unexpected error while adding user: ${err.message}`);
+            showError(`Unexpected error while submitting user: ${err.message}`);
         }
     });
+
     const usernameInput = document.getElementById('username');
     const usernameStatus = document.getElementById('username-status');
     const emailInput = document.getElementById('email');

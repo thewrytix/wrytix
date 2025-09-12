@@ -166,12 +166,21 @@ const deleteUser = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // SECURITY: Sanitize deleted user response
+        const safeUser = {
+            id: user.id,
+            fullname: user.fullname,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        };
+
         await User.deleteOne({ _id: req.params.id });
         await logAction(req.session.user.username, 'user-deleted', user.username || user.email, {
             role: user.role
         });
 
-        res.json({ message: 'User deleted', user });
+        res.json({ message: 'User deleted', user: safeUser });
     } catch (err) {
         await logAction(req.session.user.username, 'user-delete-error', req.params.id, {
             error: err.message
@@ -195,7 +204,12 @@ const getPendingUserById = async (req, res) => {
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
-    res.json(user);
+    // SECURITY: Sanitize for pending user too
+    const safeUser = {
+        ...user,
+        password: undefined // Remove password if it exists
+    };
+    res.json(safeUser);
 };
 
 const createPendingUser = async (req, res) => {
@@ -291,12 +305,21 @@ const deletePendingUser = async (req, res) => {
             return res.status(404).json({ error: 'Pending user not found' });
         }
 
+        // SECURITY: Sanitize removed user
+        const safeUser = {
+            id: user.id,
+            fullname: user.fullname,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        };
+
         await PendingUser.deleteOne({ _id: req.params.id });
         await logAction(req.session.user.username, 'pending-user-deleted', user.email || user.username, {
             reason: 'Admin action'
         });
 
-        res.json({ message: 'Pending request removed', removed: user });
+        res.json({ message: 'Pending request removed', removed: safeUser });
     } catch (err) {
         await logAction(req.session.user.username, 'pending-user-delete-error', req.params.id, {
             error: err.message
