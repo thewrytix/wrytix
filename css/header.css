@@ -156,9 +156,15 @@
 .main-nav .viewer{
     margin: 4px;
     cursor: pointer;
-}
 
-.main-nav .viewer i{
+
+}
+.main-nav .viewer .loginBtn{
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+}
+.main-nav .viewer i, .main-nav .viewer span{
     color: var(--neutral-color);
 }
 
