@@ -31,22 +31,36 @@ router.delete('/pendingDeletions/:id', cancelDeletion);
 router.get('/logs', getLogs);
 router.delete('/logs', clearLogs);
 
-// FIXED: Secure file route with authentication and public access for images
-router.get('/files/:id', cors({
-    origin: ["https://wrytix.netlify.app", "http://localhost:5500"],
-    methods: ['GET'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true // Allow cookies/session
-}), (req, res, next) => {
-    // Skip auth for images (public view), require for PDFs
-    const user = req.session?.user;
-    const fileId = req.params.id;
-    const isImage = fileId === '68c3f99e2ebc776e97ece5a2'; // Your avatar ID - adjust if dynamic
+router.get('/files/:id', cors(corsOptions), getFileById);
 
-    if (!isImage && !user) {
-        return res.status(401).json({ error: 'Unauthorized: Log in for documents' });
+router.get('/debug/timecheck', async (req, res) => {
+    try {
+        const { Post } = require('../models');
+        const posts = await Post.find().lean();
+        const now = new Date();
+        const samplePost = posts.length > 0 ? posts[0] : null;
+
+        const { logAction } = require('../utils/logger');
+        await logAction(req.session.user?.username, 'timecheck-requested', 'system');
+        res.json({
+            serverTime: now.toISOString(),
+            serverTimeLocal: now.toString(),
+            postCount: posts.length,
+            samplePost: samplePost ? {
+                title: samplePost.title,
+                schedule: samplePost.schedule,
+                isPublished: new Date(samplePost.schedule) <= now
+            } : null,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            note: "Remember: /posts filters by schedule, /posts/all shows all"
+        });
+    } catch (err) {
+        const { logAction } = require('../utils/logger');
+        await logAction(req.session.user?.username, 'timecheck-failed', 'system', {
+            error: err.message
+        });
+        res.status(500).json({ error: "Server error" });
     }
-    next();
-}, getFileById);
+});
 
 module.exports = router;

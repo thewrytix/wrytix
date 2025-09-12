@@ -14,7 +14,7 @@ router.use(postRoutes);
 router.use(userRoutes);
 router.use(adRoutes);
 router.use(commentRoutes);
-router.use(adminRoutes);
+router.use(adminRoutes); // /files/:id becomes top-level
 router.use(marketDataRoutes);
 
 module.exports = router;
