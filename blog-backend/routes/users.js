@@ -1,7 +1,7 @@
 const express = require('express');
 const { getUsers, getUserById, createUser, updateUser, deleteUser, getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser } = require('../controllers/userController');
 const { requireAdmin, requireEditorOrAdmin } = require('../middleware/auth');
-const { upload } = require('../config/multer'); // Fixed: Import from multer config directly
+const { upload } = require('../config/middleware');
 
 const router = express.Router();
 

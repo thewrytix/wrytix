@@ -50,12 +50,12 @@ const createUser = async (req, res) => {
         let pdfId = null;
         let pdfOriginalName = null;
 
-        if (req.files['avatar'] && req.files['avatar'][0]) {
+        if (req.files && req.files['avatar'] && req.files['avatar'][0]) {
             const avatarFile = req.files['avatar'][0];
             avatarId = await uploadToGridFS(avatarFile, `${Date.now()}-${avatarFile.originalname}`);
         }
 
-        if (req.files['pdf'] && req.files['pdf'][0]) {
+        if (req.files && req.files['pdf'] && req.files['pdf'][0]) {
             const pdfFile = req.files['pdf'][0];
             pdfId = await uploadToGridFS(pdfFile, `${Date.now()}-${pdfFile.originalname}`);
             pdfOriginalName = pdfFile.originalname;
@@ -86,7 +86,22 @@ const createUser = async (req, res) => {
             hasPdf: !!pdfId
         });
 
-        res.status(201).json({ message: 'User added', user: newUser });
+        // SECURITY FIX: Return safe user object without password
+        const safeUser = {
+            id: newUser.id,
+            fullname: newUser.fullname,
+            username: newUser.username,
+            email: newUser.email,
+            role: newUser.role,
+            avatarId: newUser.avatarId,
+            pdfId: newUser.pdfId,
+            pdfOriginalName: newUser.pdfOriginalName,
+            submittedBy: newUser.submittedBy,
+            status: newUser.status,
+            createdAt: newUser.createdAt
+        };
+
+        res.status(201).json({ message: 'User added', user: safeUser });
     } catch (err) {
         await logAction(req.session.user?.username, 'user-create-error', req.body.username || 'unknown', {
             error: err.message
@@ -105,12 +120,34 @@ const updateUser = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        await User.updateOne({ _id: req.params.id }, req.body);
+        // SECURITY: Never update password via this endpoint without special handling
+        const updateData = { ...req.body };
+        if (updateData.password) {
+            updateData.password = await bcrypt.hash(updateData.password, 10);
+        }
+
+        await User.updateOne({ _id: req.params.id }, updateData);
         await logAction(req.session.user.username, 'user-updated', user.username || user.email, {
             changes: Object.keys(req.body)
         });
 
-        res.json({ message: 'User updated', user: { ...user, ...req.body } });
+        // SECURITY: Return safe updated user
+        const updatedUser = await User.findOne({ _id: req.params.id }).lean();
+        const safeUpdatedUser = {
+            id: updatedUser.id,
+            fullname: updatedUser.fullname,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            avatarId: updatedUser.avatarId,
+            pdfId: updatedUser.pdfId,
+            pdfOriginalName: updatedUser.pdfOriginalName,
+            submittedBy: updatedUser.submittedBy,
+            status: updatedUser.status,
+            createdAt: updatedUser.createdAt
+        };
+
+        res.json({ message: 'User updated', user: safeUpdatedUser });
     } catch (err) {
         await logAction(req.session.user.username, 'user-update-error', req.params.id, {
             error: err.message
@@ -185,12 +222,12 @@ const createPendingUser = async (req, res) => {
         let pdfId = null;
         let pdfOriginalName = null;
 
-        if (req.files['avatar'] && req.files['avatar'][0]) {
+        if (req.files && req.files['avatar'] && req.files['avatar'][0]) {
             const avatarFile = req.files['avatar'][0];
             avatarId = await uploadToGridFS(avatarFile, `${Date.now()}-${avatarFile.originalname}`);
         }
 
-        if (req.files['pdf'] && req.files['pdf'][0]) {
+        if (req.files && req.files['pdf'] && req.files['pdf'][0]) {
             const pdfFile = req.files['pdf'][0];
             pdfId = await uploadToGridFS(pdfFile, `${Date.now()}-${pdfFile.originalname}`);
             pdfOriginalName = pdfFile.originalname;
@@ -220,7 +257,22 @@ const createPendingUser = async (req, res) => {
             hasPdf: !!pdfId
         });
 
-        res.status(201).json({ message: 'Pending user submitted for approval', user: newPendingUser });
+        // SECURITY FIX: Return safe pending user without password
+        const safePendingUser = {
+            id: newPendingUser.id,
+            fullname: newPendingUser.fullname,
+            username: newPendingUser.username,
+            email: newPendingUser.email,
+            role: newPendingUser.role,
+            avatarId: newPendingUser.avatarId,
+            pdfId: newPendingUser.pdfId,
+            pdfOriginalName: newPendingUser.pdfOriginalName,
+            submittedBy: newPendingUser.submittedBy,
+            requestedAt: newPendingUser.requestedAt,
+            status: newPendingUser.status
+        };
+
+        res.status(201).json({ message: 'Pending user submitted for approval', user: safePendingUser });
     } catch (err) {
         await logAction(req.session.user?.username, 'pending-user-create-error', req.body.username || 'unknown', {
             error: err.message
