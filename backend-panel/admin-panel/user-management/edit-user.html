@@ -209,7 +209,7 @@
         throw new Error('No user ID provided in URL');
       }
 
-      console.log('Fetching user with ID:', userId);
+      console.log('Fetching user with ID');
       const res = await fetch(`https://wrytix.onrender.com/users/${userId}`, {
         credentials: 'include'
       });
@@ -220,7 +220,7 @@
       }
 
       const user = await res.json();
-      console.log('User data:', user);
+      console.log('User data');
 
       document.getElementById('fullName').value = user.fullName || user.fullname || '';
       document.getElementById('username').value = user.username || '';
