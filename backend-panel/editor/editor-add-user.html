@@ -151,11 +151,7 @@
             usernameStatus.textContent = '';
             emailStatus.textContent = '';
 
-            console.log('✅ User submitted:', {
-                message: resData.message,
-                userId: resData.user?.id,
-                username: resData.user?.username
-            });
+            console.log('✅ User submitted');
         } catch (err) {
             console.error('❌ Unexpected Add User error:', err);
             showError(`Unexpected error while submitting user: ${err.message}`);
