@@ -114,7 +114,86 @@
     }
 })();
 
-// Toast helpers
+////////////// Confirmation helper///////////////////
+function showConfirmation(message, onConfirm, onCancel) {
+    // Remove existing one if open
+    const existing = document.querySelector('.confirm-box');
+    if (existing) existing.remove();
+
+    // Create confirmation box
+    const box = document.createElement('div');
+    box.className = 'confirm-box';
+    box.innerHTML = `
+      <div class="confirm-content">
+        <p>${message}</p>
+        <div class="confirm-actions">
+          <button class="btn-confirm">Yes</button>
+          <button class="btn-cancel">No</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(box);
+
+    // Button listeners
+    box.querySelector('.btn-confirm').addEventListener('click', () => {
+        onConfirm?.();
+        box.remove();
+    });
+    box.querySelector('.btn-cancel').addEventListener('click', () => {
+        onCancel?.();
+        box.remove();
+    });
+}
+
+// Confirmation styling
+const confirmStyle = document.createElement('style');
+confirmStyle.textContent = `
+  .confirm-box {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+  .confirm-content {
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    animation: popIn 0.3s ease;
+  }
+  .confirm-content p {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+  }
+  .confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  .confirm-actions button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .btn-confirm { background: #28a745; color: white; }
+  .btn-cancel { background: #dc3545; color: white; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+`;
+document.head.appendChild(confirmStyle);
+
+
+//////////////////// Toast helpers//////////////////////////
 function showToast(message, type = 'success', duration = 3000) {
     // Remove existing toast first
     const existingToast = document.querySelector('.alert');
