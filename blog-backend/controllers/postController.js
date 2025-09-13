@@ -48,15 +48,9 @@ const incrementPostView = async (req, res) => {
             { $inc: { views: 1 }, $set: { lastViewed: new Date() } }
         );
 
-        await logAction(req.session.user?.username, 'post-viewed', post.slug, {
-            views: (post.views || 0) + 1
-        });
-
         res.status(200).json({ message: "View incremented" });
     } catch (err) {
-        await logAction(req.session.user?.username, 'post-view-error', req.params.slug, {
-            error: err.message
-        });
+
         res.status(500).json({ error: "Server error" });
     }
 };
