@@ -139,6 +139,7 @@
     const actionFilter = document.getElementById('filterAction');
     const dateFilter = document.getElementById('filterDate');
     const resetBtn = document.getElementById('resetFilters');
+    const clearBtn = document.getElementById('clearLogs');
 
     let allLogs = [];
     let currentPage = 1;
@@ -231,7 +232,7 @@
       renderLogs();
     });
 
-    const clearBtn = document.getElementById('clearLogs');
+
 
     clearBtn.addEventListener('click', async () => {
       if (!confirm("Are you sure you want to delete ALL logs? This action cannot be undone.")) return;
