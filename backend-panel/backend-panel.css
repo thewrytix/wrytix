@@ -615,7 +615,8 @@ form button {
      #filterCategory,
      #filterType,
      #filterRole,
-     #filterAction{
+     #filterAction,
+     #filterDate{
          flex: none;
          width: 120px;          /* fixed smaller width */
          padding: 10px 14px;
