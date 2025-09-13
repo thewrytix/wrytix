@@ -595,7 +595,9 @@ form button {
          flex-wrap: wrap;
      }
 
-     #searchInput {
+     #searchInput,
+     #searchTarget,
+     #searchActor{
          flex: none;
          width: 320px;          /* fixed smaller width */
          padding: 10px 14px;
@@ -612,7 +614,8 @@ form button {
      #filterAuthor,
      #filterCategory,
      #filterType,
-     #filterRole{
+     #filterRole,
+     #filterAction{
          flex: none;
          width: 120px;          /* fixed smaller width */
          padding: 10px 14px;
