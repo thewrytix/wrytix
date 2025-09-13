@@ -502,27 +502,33 @@ form button {
 
 
      /* ====== Posts ====== */
-.posts-table {
+.posts-table, .user-table, .log-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
 
 .posts-table th,
-.posts-table td {
+.posts-table td, .user-table th,
+.user-table td,.log-table th,
+.log-table td  {
     padding: 0.8rem;
     border: 1px solid var(--border-color);
     text-align: left;
     font-size: 0.95rem;
 }
 
-.posts-table th {
+     .user-table th,
+     .posts-table th,
+     .log-table th{
     background-color: var(--primary-color);
     color: var(--neutral-color);
     font-weight: 700;
 }
 
-.posts-table tr:hover {
+.posts-table tr:hover,
+.user-table tr:hover,
+.log-table tr:hover{
     background-color: var(--background-light);
 }
 
