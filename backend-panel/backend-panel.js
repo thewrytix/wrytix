@@ -126,13 +126,30 @@ function showToast(message, type = 'success', duration = 3000) {
     alertBox.textContent = message;
     document.body.appendChild(alertBox);
 
-    // Trigger fade-out before removal
-    setTimeout(() => {
-        alertBox.style.opacity = '0';
-        alertBox.style.transform = 'translateX(-50%) translateY(-20px)';
-    }, duration - 500); // fade before removing
+    let hideTimeout, removeTimeout;
 
-    setTimeout(() => alertBox.remove(), duration);
+    function startTimers() {
+        hideTimeout = setTimeout(() => {
+            alertBox.style.opacity = '0';
+            alertBox.style.transform = 'translateX(-50%) translateY(-20px)';
+        }, duration - 500);
+
+        removeTimeout = setTimeout(() => alertBox.remove(), duration);
+    }
+
+    function clearTimers() {
+        clearTimeout(hideTimeout);
+        clearTimeout(removeTimeout);
+    }
+
+    // Start auto-hide
+    startTimers();
+
+    // Pause on hover
+    alertBox.addEventListener('mouseenter', clearTimers);
+
+    // Resume when mouse leaves
+    alertBox.addEventListener('mouseleave', startTimers);
 }
 
 // Easy access versions
@@ -161,6 +178,7 @@ toastStyle.textContent = `
     animation: slideIn 0.4s ease-out;
     transition: opacity 0.5s ease, transform 0.5s ease;
     opacity: 1;
+    cursor: pointer;
   }
 
   .alert.success { background: #28a745; }
