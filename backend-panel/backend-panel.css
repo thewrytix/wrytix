@@ -650,7 +650,12 @@ form button {
      #resetBtn,
      #resetFilters{
          background-color: var(--primary-color);
-         color: white;
+         color: var(--neutral-color);
+     }
+
+     #clearLogs{
+         background-color: var(--secondary-color);
+         color: var(--neutral-color);
      }
 
 
