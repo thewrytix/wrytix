@@ -84,6 +84,7 @@
       <button id="clearLogs" style="background-color:#d9534f;color:white;">Clear All Logs</button>
     </div>
 
+    <!-- Use same table structure/class as users page -->
     <table class="posts-table">
       <thead>
       <tr>
@@ -100,18 +101,18 @@
       </tbody>
     </table>
 
-    <div id="paginationControls" style="margin-top:1rem; text-align:center;"></div>
+    <div id="paginationControls" style="margin-top: 1rem; text-align: center;"></div>
   </main>
 </div>
 
 <script>
-  const tableBody = document.getElementById('logsTableBody');
-  const paginationControls = document.getElementById('paginationControls');
   const searchActor = document.getElementById('searchActor');
   const searchTarget = document.getElementById('searchTarget');
   const actionFilter = document.getElementById('filterAction');
   const dateFilter = document.getElementById('filterDate');
   const resetBtn = document.getElementById('resetFilters');
+  const tableBody = document.getElementById('logsTableBody');
+  const paginationControls = document.getElementById('paginationControls');
 
   let allLogs = [];
   let currentPage = 1;
@@ -122,12 +123,13 @@
       const url = new URL('https://wrytix.onrender.com/logs');
       url.searchParams.append('limit', limit);
       const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error('Failed to fetch logs: ' + res.status);
       allLogs = await res.json();
       renderLogs();
     } catch (err) {
-      console.error('Error loading logs:', err);
+      console.error(err);
       tableBody.innerHTML = '<tr><td colspan="6">Failed to load logs.</td></tr>';
+      paginationControls.innerHTML = '';
     }
   }
 
@@ -139,7 +141,9 @@
         <td>${log.username || log.target || 'N/A'}</td>
         <td>${log.ip || 'N/A'}</td>
         <td>${new Date(log.timestamp).toLocaleString()}</td>
-        <td><button onclick="showLogDetails('${log.id}')" class="btn-view">Details</button></td>
+        <td class="action-buttons">
+          <button onclick="showLogDetails('${log.id || log._id || ''}')" class="btn-view">Details</button>
+        </td>
       </tr>
     `;
   }
@@ -151,30 +155,27 @@
 
   function updatePagination(filteredLogs) {
     const totalPages = Math.ceil(filteredLogs.length / pageSize);
-    let buttons = '';
-
     if (totalPages <= 1) {
       paginationControls.innerHTML = '';
       return;
     }
-
+    let buttons = '';
     for (let i = 1; i <= totalPages; i++) {
-      buttons += `<button onclick="goToPage(${i})" style="margin:0 4px;padding:5px 10px;background:${i === currentPage ? '#ff6b00':'#eee'};color:${i === currentPage ? 'white':'black'};border:none;border-radius:4px;">${i}</button>`;
+      buttons += `<button onclick="goToPage(${i})" style="margin: 0 4px; padding: 5px 10px; background: ${i === currentPage ? '#ff6b00' : '#eee'}; color: ${i === currentPage ? 'white' : 'black'}; border: none; border-radius: 4px;">${i}</button>`;
     }
-
     paginationControls.innerHTML = buttons;
   }
 
   function renderLogs() {
-    const actorQuery = searchActor.value.toLowerCase();
-    const targetQuery = searchTarget.value.toLowerCase();
+    const actorQuery = searchActor.value.trim().toLowerCase();
+    const targetQuery = searchTarget.value.trim().toLowerCase();
     const selectedAction = actionFilter.value.toLowerCase();
     const selectedDate = dateFilter.value;
 
     const filtered = allLogs.filter(log => {
-      const actorMatch = log.actor?.toLowerCase().includes(actorQuery);
-      const actionMatch = !selectedAction || log.action?.toLowerCase().includes(selectedAction);
-      const targetMatch = (log.username?.toLowerCase().includes(targetQuery) || log.target?.toLowerCase().includes(targetQuery));
+      const actorMatch = !actorQuery || (log.actor && log.actor.toLowerCase().includes(actorQuery));
+      const actionMatch = !selectedAction || (log.action && log.action.toLowerCase().includes(selectedAction));
+      const targetMatch = !targetQuery || ((log.username && log.username.toLowerCase().includes(targetQuery)) || (log.target && log.target.toLowerCase().includes(targetQuery)));
       const dateMatch = !selectedDate || new Date(log.timestamp).toISOString().slice(0,10) === selectedDate;
       return actorMatch && actionMatch && targetMatch && dateMatch;
     });
@@ -192,10 +193,10 @@
     renderLogs();
   }
 
-  window.showLogDetails = (logId) => {
-    const log = allLogs.find(l => l.id === logId);
-    if (!log) return alert("Log not found");
-    alert(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
+  window.showLogDetails = (id) => {
+    const log = allLogs.find(l => (l.id === id || l._id === id));
+    if (!log) return alert('Log not found');
+    alert(JSON.stringify(log, null, 2));
   };
 
   function handleFilterChange() {
@@ -204,7 +205,6 @@
   }
 
   [searchActor, searchTarget, actionFilter, dateFilter].forEach(el => el.addEventListener('input', handleFilterChange));
-
   resetBtn.addEventListener('click', () => {
     searchActor.value = '';
     searchTarget.value = '';
@@ -222,14 +222,15 @@
         credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to clear logs.');
-      alert("All logs have been cleared!");
+      alert('All logs cleared');
       await fetchLogs();
     } catch (err) {
       console.error(err);
-      alert("Error clearing logs.");
+      alert('Error clearing logs');
     }
   });
 
+  // initial load
   window.onload = fetchLogs;
 </script>
 
