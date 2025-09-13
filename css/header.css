@@ -166,6 +166,7 @@
 }
 .main-nav .viewer i, .main-nav .viewer span{
     color: var(--neutral-color);
+    font-weight: var(--font-weight-bold);
 }
 
 .main-nav .login-modal{
