@@ -647,7 +647,8 @@ form button {
      }
 
 
-     #resetBtn{
+     #resetBtn,
+     #resetFilters{
          background-color: var(--primary-color);
          color: white;
      }
