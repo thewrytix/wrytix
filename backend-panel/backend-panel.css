@@ -656,6 +656,7 @@ form button {
      #clearLogs{
          background-color: var(--secondary-color);
          color: var(--neutral-color);
+         font-weight: 600;
      }
 
 
