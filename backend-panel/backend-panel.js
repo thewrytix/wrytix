@@ -114,13 +114,13 @@
     }
 })();
 
-////////////// Confirmation helper///////////////////
-function showConfirmation(message, onConfirm, onCancel) {
-    // Remove existing one if open
-    const existing = document.querySelector('.confirm-box');
-    if (existing) existing.remove();
+//////////////// Confirmation Helpers //////////////////
 
-    // Create confirmation box
+// Core confirmation box
+function showConfirmation(message, onConfirm, onCancel) {
+    // Remove existing one if already open
+    document.querySelector('.confirm-box')?.remove();
+
     const box = document.createElement('div');
     box.className = 'confirm-box';
     box.innerHTML = `
@@ -134,7 +134,7 @@ function showConfirmation(message, onConfirm, onCancel) {
     `;
     document.body.appendChild(box);
 
-    // Button listeners
+    // Events
     box.querySelector('.btn-confirm').addEventListener('click', () => {
         onConfirm?.();
         box.remove();
@@ -143,6 +143,22 @@ function showConfirmation(message, onConfirm, onCancel) {
         onCancel?.();
         box.remove();
     });
+}
+
+// Quick wrapper (like showError/showSuccess)
+function confirmAndRun(message, action, cancelMessage = "❌ Action canceled.") {
+    showConfirmation(
+        message,
+        async () => {
+            try {
+                await action();
+            } catch (err) {
+                console.error(err);
+                showError(`❌ ${err.message || "Action failed."}`);
+            }
+        },
+        () => cancelMessage && showError(cancelMessage)
+    );
 }
 
 // Confirmation styling

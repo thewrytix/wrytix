@@ -217,30 +217,21 @@
       renderLogs();
     });
 
-    clearBtn.addEventListener('click', async () => {
-      showConfirmation(
+    clearBtn.addEventListener('click', () => {
+      confirmAndRun(
               "Are you sure you want to delete ALL logs? This action cannot be undone.",
               async () => {
-                try {
-                  const res = await fetch('https://wrytix.onrender.com/logs', {
-                    method: 'DELETE',
-                    credentials: 'include'
-                  });
-
-                  if (!res.ok) throw new Error('Failed to clear logs.');
-
-                  showSuccess("✅ All logs have been cleared!");
-                  await fetchLogs();
-                } catch (err) {
-                  console.error(err);
-                  showError("❌ Error clearing logs.");
-                }
-              },
-              () => {
-                showError("❌ Logs clear action canceled.");
+                const res = await fetch('https://wrytix.onrender.com/logs', {
+                  method: 'DELETE',
+                  credentials: 'include'
+                });
+                if (!res.ok) throw new Error('Failed to clear logs.');
+                await fetchLogs();
+                showSuccess("✅ All logs cleared!");
               }
       );
     });
+
 
     await fetchLogs();
   });
