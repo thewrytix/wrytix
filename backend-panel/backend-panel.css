@@ -600,7 +600,7 @@ form button {
      #searchActor{
          flex: none;
          width: 320px;          /* fixed smaller width */
-         padding: 10px 14px;
+         padding: 0.5rem;
          border: 1px solid var(--border-color);
          border-radius: 6px;
          font-size: 1rem;
