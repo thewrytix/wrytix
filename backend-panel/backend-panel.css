@@ -631,7 +631,8 @@ form button {
 
 
      #searchBtn,
-     #resetBtn {
+     #resetBtn,
+     #resetFilters{
          padding: 10px 18px;
          border: none;
          border-radius: 6px;
