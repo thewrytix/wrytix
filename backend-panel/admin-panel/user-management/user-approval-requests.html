@@ -7,65 +7,6 @@
   <link rel="stylesheet" href="../../backend-panel.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
-    :root {
-      --primary: #ff6b00;
-      --danger: #d9534f;
-      --success: #28a745;
-      --text-dark: #333;
-      --text-light: #fff;
-    }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      background-color: #f4f4f4;
-    }
-
-    .admin-container {
-      display: flex;
-    }
-
-    .admin-main {
-      flex-grow: 1;
-      padding: 2rem;
-      background: #fff;
-      box-shadow: inset 0 0 20px #e2e2e2;
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ccc;
-      text-align: left;
-    }
-
-    th {
-      background-color: #fafafa;
-    }
-
-    .btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .btn.approve {
-      background: var(--success);
-      color: white;
-    }
-
-    .btn.reject {
-      background: var(--danger);
-      color: white;
-    }
 
     .section-title {
       margin-top: 2rem;
@@ -133,7 +74,7 @@
 
     <h1>User Approval Requests</h1>
 
-    <div class="section-title">Pending Author Additions</div>
+    <div class="user-table">Pending Author Additions</div>
     <table>
       <thead>
       <tr>
@@ -153,7 +94,7 @@
       </tbody>
     </table>
 
-    <div class="section-title">Delete Requests</div>
+    <div class="user-table">Delete Requests</div>
     <table>
       <thead>
       <tr>
