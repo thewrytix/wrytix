@@ -196,7 +196,7 @@
     window.showLogDetails = (logId) => {
       const log = allLogs.find(l => l.id === logId);
       if (!log) return alert("Log not found");
-      alert(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
+      showSuccess(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
     };
 
     function handleFilterChange() {
