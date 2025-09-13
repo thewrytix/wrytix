@@ -228,11 +228,11 @@
 
         if (!res.ok) throw new Error('Failed to clear logs.');
 
-        alert("All logs have been cleared!");
+        showSuccess("✅ All logs have been cleared!");
         await fetchLogs();
       } catch (err) {
         console.error(err);
-        alert("Error clearing logs.");
+        showError("❌ Error clearing logs.");
       }
     });
 
