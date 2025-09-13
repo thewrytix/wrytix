@@ -686,6 +686,11 @@ img {
 
 @media (max-width: 486px) {
 
+    .headline-title {
+        font-size: 1rem;
+        padding: 0 10px;
+
+    }
 
     .featured-large img {
         height: 200px;
