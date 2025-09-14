@@ -47,10 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             postElement.innerHTML = `
                 <div>
-                    <h3>${post.title}</h3>
+                    <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                      <!--<small class="post-date">${date}</small>-->
                     <p>${post.content.slice(0, 120)}...</p>
-                    <a href="../posts/view-post.html?slug=${post.slug}">Read More</a>
+                    
                 </div>
                 <img src="${post.thumbnail}" alt="${post.title}">
             `;
