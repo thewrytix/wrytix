@@ -86,18 +86,25 @@ footer {
 .social-icons a.tiktok::before {
     content: "\e07b"; /* TikTok FA6 */
 }
+
+/* LinkedIn */
+.social-icons a.linkedin::before {
+    content: "\f0e1"; /* LinkedIn icon code in Font Awesome */
+}
 .social-icons a.tiktok,
 .social-icons a.youtube,
 .social-icons a.instagram,
 .social-icons a.twitter,
-.social-icons a.facebook{
+.social-icons a.facebook,
+.social-icons a.linkedin{
     color: var(--neutral-color);
 }
 .social-icons a.tiktok:hover,
 .social-icons a.youtube:hover,
 .social-icons a.instagram:hover,
 .social-icons a.twitter:hover,
-.social-icons a.facebook:hover{
+.social-icons a.facebook:hover,
+.social-icons a.linkedin:hover{
     transform: translateY(-2px);
 }
 

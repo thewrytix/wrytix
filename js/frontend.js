@@ -409,6 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
     <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
     <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
+    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="linkedin" aria-label="LinkedIn"></a>
   `;
 
     // Select all places you want the icons injected

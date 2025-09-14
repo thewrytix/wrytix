@@ -104,18 +104,26 @@
 .header-social-icons a.tiktok::before {
     content: "\e07b"; /* TikTok FA6 */
 }
+
+/* LinkedIn */
+.header-social-icons a.linkedin::before {
+    content: "\f0e1"; /* LinkedIn icon code in Font Awesome */
+}
+
 .header-social-icons a.tiktok,
 .header-social-icons a.youtube,
 .header-social-icons a.instagram,
 .header-social-icons a.twitter,
-.header-social-icons a.facebook{
+.header-social-icons a.facebook,
+.header-social-icons a.linkedin{
     color: var(--text-color);
 }
 .header-social-icons a.tiktok:hover,
 .header-social-icons a.youtube:hover,
 .header-social-icons a.instagram:hover,
 .header-social-icons a.twitter:hover,
-.header-social-icons a.facebook:hover{
+.header-social-icons a.facebook:hover,
+.header-social-icons a.linkedin:hover{
     transform: translateY(-2px);
 }
 
