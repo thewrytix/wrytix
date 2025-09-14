@@ -240,7 +240,7 @@ img {
 }
 
 .featured-large h2 a:hover {
-    color: var(--accent-color);
+    text-decoration: underline;
 }
 
 .featured-large p {
@@ -420,7 +420,7 @@ img {
 }
 
 .sidebar-section ul li a:hover {
-    color: var(--accent-color);
+    text-decoration: underline;
     cursor: pointer;
 }
 
