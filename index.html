@@ -8,6 +8,112 @@
     <link rel="stylesheet" href="css/footer.css" />
     <link rel="stylesheet" href="css/header.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<style>
+    /* ================= Skeleton Loader ================= */
+
+    /* Generic skeleton box */
+    .skeleton {
+        background-color: #e0e0e0; /* light gray for placeholder */
+        border-radius: var(--border-radius-md);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Shimmer animation */
+    .skeleton::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150px;
+        width: 150px;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -150px; }
+        100% { left: 100%; }
+    }
+
+    /* Featured Section Skeletons */
+    .featured-large.skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        height: 300px; /* match your featured-large image height */
+    }
+
+    .featured-large.skeleton .image-skeleton {
+        width: 100%;
+        height: 300px;
+        border-radius: var(--border-radius-md);
+    }
+
+    .featured-large.skeleton .text-skeleton {
+        height: 80px;
+        margin: var(--spacing-sm) 0;
+        border-radius: var(--border-radius-sm);
+    }
+
+    /* Grid of Smaller Posts Skeletons */
+    .featured-grid .small-post.skeleton {
+        display: flex;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-md);
+        height: 100px;
+    }
+
+    .featured-grid .small-post.skeleton .image-skeleton {
+        width: 90px;
+        height: 70px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .featured-grid .small-post.skeleton .text-skeleton {
+        flex: 1;
+        height: 60px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    /* Category Section Skeletons */
+    .category-section .post-preview.skeleton {
+        display: flex;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-md);
+        height: 150px;
+    }
+
+    .category-section .post-preview.skeleton img.skeleton {
+        width: 150px;
+        height: 150px;
+        border-radius: var(--border-radius-sm);
+        flex-shrink: 0;
+    }
+
+    .category-section .post-preview.skeleton .text-skeleton {
+        flex: 1;
+        height: 120px;
+        border-radius: var(--border-radius-sm);
+    }
+
+    /* Sidebar Skeletons */
+    .sidebar-section ul li.skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 6px 0;
+    }
+
+    .sidebar-section ul li.skeleton .text-skeleton {
+        height: 14px;
+        border-radius: var(--border-radius-sm);
+    }
+
+</style>
 </head>
 <body>
 <header>
@@ -121,27 +227,49 @@
     <!-- Featured Post -->
     <!-- Featured Section -->
     <h2 class="featured-section-h2">Featured</h2>
-    <section class="featured-section">
+    <section class="featured-section" id="featured-skeleton">
 
-        <!-- Large Featured Post -
-        <div class="featured-large">
-            <img src="{post.thumbnail}" alt="Featured Post">
-            <div class="featured-info">
-                <h2><a href="#">How I Flipped My First Laptop for 2x Profit</a></h2>
-                <p>Learn the secrets behind buying low and selling smart in Ghana’s laptop market.</p>
+        <!-- Large Featured Post -->
+        <div class="featured-large skeleton">
+            <div class="image-skeleton skeleton"></div>
+            <div class="text-skeleton skeleton"></div>
+        </div>
+
+
+
+        Grid of Smaller Featured Posts
+        <div class="featured-grid">
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            </div>
+
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            </div>
+
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            </div>
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            </div>
+
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            </div>
+
+            <div class="small-post skeleton">
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
             </div>
         </div>
 
-      Grid of Smaller Featured Posts
-        <div class="featured-grid">
-            <div class="small-post">
-                <img src="{post.thumbnail}" alt="Post 2">
-                <div>
-                    <h4><a href="#">Top 5 Tools for Laptop Repairs</a></h4>
-                    <p>Essential gear every laptop flipper should own.</p>
-                </div>
-            </div>
-        </div> --->
+
     </section>
 
 
@@ -150,43 +278,64 @@
         <section class="blog-posts">
 
             <!-- Latest News -->
-            <section class="category-section" id="news">
-                <h2 class="blog-posts-h2">News</h2>
-
+            <section class="category-section skeleton-category" id="news" >
+                <h2 class="blog-posts-h2 skeleton-title">News</h2>
+                <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+                </div>
                 <!-- Add more posts for Latest News -->
             </section>
 
             <!-- Foreign (optional 5th section) -->
-            <section class="category-section" id="foreign">
-                <h2 class="blog-posts-h2">Foreign</h2>
-
+            <section class="category-section skeleton-category" id="foreign">
+                <h2 class="blog-posts-h2 skeleton-title">Foreign</h2>
+                <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+                </div>
             </section>
 
             <!-- Business -->
-            <section class="category-section" id="business">
-                <h2 class="blog-posts-h2">Business</h2>
-
+            <section class="category-section skeleton-category" id="business">
+                <h2 class="blog-posts-h2 skeleton-title">Business</h2>
+                <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+                </div>
                 <!-- More business posts -->
             </section>
 
             <!-- Sports -->
-            <section class="category-section" id="sports">
-                <h2 class="blog-posts-h2">Sports</h2>
+            <section class="category-section skeleton-category" id="sports">
+                <h2 class="blog-posts-h2 skeleton-title">Sports</h2>
+                    <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+
+                </div>
 
                 <!-- More sports posts -->
             </section>
 
             <!-- Lifestyle -->
-            <section class="category-section" id="lifestyle">
-                <h2 class="blog-posts-h2">Lifestyle</h2>
+            <section class="category-section skeleton-category" id="lifestyle">
+                <h2 class="blog-posts-h2 skeleton-title">Lifestyle</h2>
+                <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+                </div>
 
                 <!-- More lifestyle posts -->
             </section>
 
             <!-- Technology (optional 5th section) -->
-            <section class="category-section" id="technology">
-                <h2 class="blog-posts-h2">Technology</h2>
-
+            <section class="category-section skeleton-category" id="technology">
+                <h2 class="blog-posts-h2 skeleton-title">Technology</h2>
+                <div class="post-preview skeleton">
+                    <div class="image-skeleton skeleton"></div>
+                    <div class="text-skeleton skeleton"></div>
+                </div>
         </section>
 
         <!-- Add more blog previews -->
@@ -196,12 +345,22 @@
         <aside class="sidebar">
              <div class="sidebar-section" id="trending-posts">
                         <h3> Trending </h3><!- (Most viewed last 2 weeks)->
-                        <ul id="trending-list"></ul>
+                        <ul id="trending-list">
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                        </ul>
+
                     </div>
 
                     <div class="sidebar-section" id="popular-posts">
                         <h3> Popular </h3><!- (Most viewed within a month)->
-                        <ul id="popular-list"></ul>
+                        <ul id="popular-list">
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                            <li class="skeleton"><div class="text-skeleton skeleton"></div></li>
+                        </ul>
+
                     </div>
         </aside>
     </div>

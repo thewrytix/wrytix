@@ -1,3 +1,71 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    /* =================== FEATURED SECTION =================== */
+    const featuredSection = document.querySelector(".featured-section");
+
+    if (featuredSection) {
+        // Large featured skeleton
+        const largeSkeleton = document.createElement("div");
+        largeSkeleton.className = "featured-large skeleton";
+        largeSkeleton.innerHTML = `
+            <div class="image-skeleton skeleton"></div>
+            <div class="text-skeleton skeleton"></div>
+        `;
+
+        // Small featured grid skeleton
+        const smallGridSkeleton = document.createElement("div");
+        smallGridSkeleton.className = "featured-grid";
+        for (let i = 0; i < 3; i++) { // show 3 skeleton posts
+            const smallPost = document.createElement("div");
+            smallPost.className = "small-post skeleton";
+            smallPost.innerHTML = `
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            `;
+            smallGridSkeleton.appendChild(smallPost);
+        }
+
+        featuredSection.appendChild(largeSkeleton);
+        featuredSection.appendChild(smallGridSkeleton);
+    }
+
+    /* =================== CATEGORY SECTIONS =================== */
+    const categorySections = document.querySelectorAll(".category-section");
+
+    categorySections.forEach(section => {
+        for (let i = 0; i < 3; i++) { // 3 skeleton posts per category
+            const postSkeleton = document.createElement("div");
+            postSkeleton.className = "post-preview skeleton";
+            postSkeleton.innerHTML = `
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            `;
+            section.appendChild(postSkeleton);
+        }
+    });
+
+    /* =================== SIDEBAR LISTS =================== */
+    const sidebarLists = document.querySelectorAll(".sidebar-section ul");
+
+    sidebarLists.forEach(list => {
+        for (let i = 0; i < 5; i++) { // 5 skeleton items
+            const li = document.createElement("li");
+            li.className = "skeleton";
+            li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
+            list.appendChild(li);
+        }
+    });
+
+    /* =================== SIMULATE DATA LOAD =================== */
+    // Example: Remove skeletons after 2 seconds (replace with actual API call)
+    setTimeout(() => {
+        document.querySelectorAll(".skeleton").forEach(el => el.remove());
+        // Here you would inject your real content
+    }, 2000);
+
+});
+
+
 (() => {
     async function fetchForexRates() {
         try {
