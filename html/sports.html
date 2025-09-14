@@ -82,11 +82,6 @@
     <nav class="main-nav">
         <a href="../index.html" class="logo">Logo</a>
 
-        <div class="hamburger">
-            <span></span>
-            <span></span>
-            <span></span></div>
-
         <div class="nav-links">
             <a href="../index.html" >Home</a>
             <a href="news.html">News</a>
@@ -96,6 +91,62 @@
             <a href="technology.html">Technology</a>
             <a href="lifestyle.html">Lifestyle</a>
         </div>
+
+
+        <!-- User Icon -->
+        <div class="viewer">
+            <a id="loginBtn" class="loginBtn"><span>Login / Sign Up</span><i class="fa-solid fa-user"></i></a>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-modal">
+            <div class="login-content">
+                <span class="close">&times;</span>
+                <h2>User Login</h2>
+                <form>
+                    <label for="email"></label>
+                    <input type="email" id="email" placeholder="Username" required />
+                    <label for="password"></label>
+                    <input type="password" id="password" placeholder="Password" required />
+                    <button type="submit">Login</button>
+                    <p class="forgot-password">
+                        <a href="#" id="forgot-password">Forgot Password?</a>
+                    </p>
+                    <p class="switch-form">
+                        Don't have an account? <a href="#" id="switch-to-signup">Sign up</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Signup Modal -->
+        <div id="signupModal" class="login-modal">
+            <div class="login-content">
+                <span class="close">&times;</span>
+                <h2>Create Account</h2>
+                <form id="signupForm">
+                    <label for="signup-username"></label>
+                    <input type="text" id="signup-username" placeholder="Username" required />
+                    <label for="signup-email"></label>
+                    <input type="email" id="signup-email" placeholder="Email" required />
+                    <label for="signup-password"></label>
+                    <input type="password" id="signup-password" placeholder="Password" required />
+                    <label for="signup-confirm"></label>
+                    <input type="password" id="signup-confirm" placeholder="Confirm Password" required />
+                    <button type="submit">Sign Up</button>
+                    <p class="switch-form">
+                        Already have an account? <a href="#" id="switch-to-login">Login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
     </nav>
 </header>
 
