@@ -420,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
             instagram: "instagram://user?username=wrytixofficial",
             youtube: "youtube://channel/UCig810dXawPE2YlVwwS6EOQ",
             tiktok: "snssdk1128://user/profile/wrytix",
-            linkedin: "linkedin://company/wrytix/?viewAsMember=true"
+            linkedin: "linkedin://profile/company/wrytix"
         }
     };
 
