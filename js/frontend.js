@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
         document.querySelectorAll(".skeleton").forEach(el => el.remove());
         // Here you would inject your real content
-    }, 2000);
+    }, 3000);
 
 });
 
