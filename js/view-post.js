@@ -1,122 +1,62 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const slug = new URLSearchParams(location.search).get("slug");
+    if (!slug) return;
+
     const titleEl = document.getElementById("post-title");
     const thumbnailEl = document.getElementById("post-thumbnail");
-    const authorSpan = document.getElementById("post-author");
-    const dateSpan = document.getElementById("post-date");
     const contentEl = document.getElementById("post-content");
-    // the <p><strong>By ...</strong></p> parent
-    const metaParagraph = authorSpan ? authorSpan.closest("p") : null;
+    const metaEl = document.querySelector("#post-author")?.closest("p");
 
-    // 1) SHOW skeleton placeholders immediately
-    function showSkeletons() {
-        if (titleEl) titleEl.classList.add("skeleton");
-        if (thumbnailEl) {
-            // ensure no src is set yet (so browser doesn't try to load)
-            // keep src blank or placeholder if you prefer:
-            thumbnailEl.removeAttribute("src");
-            thumbnailEl.classList.add("skeleton");
-        }
-        if (metaParagraph) {
-            // replace meta content with skeleton structure (but keep original spans for later)
-            // add a helper class to style the skeleton pieces
-            metaParagraph.classList.add("post-meta-skeleton", "skeleton");
-            // create two small skeleton pills (we won't remove the paragraph element)
-            metaParagraph.innerHTML = `
-        <span class="meta-pill"></span>
-        <span class="meta-pill"></span>
-      `;
+    // --- skeleton placeholders ---
+    const showSkeletons = () => {
+        titleEl?.classList.add("skeleton");
+        thumbnailEl?.classList.add("skeleton");
+        if (thumbnailEl) thumbnailEl.removeAttribute("src");
+
+        if (metaEl) {
+            metaEl.className = "skeleton post-meta-skeleton";
+            metaEl.innerHTML = `<span class="meta-pill"></span><span class="meta-pill"></span>`;
         }
 
-        // content skeleton lines (insert into #post-content)
         if (contentEl) {
-            contentEl.innerHTML = ""; // ensure empty while loading
-            for (let i = 0; i < 5; i++) {
-                const line = document.createElement("div");
-                line.className = "skeleton-line skeleton";
-                contentEl.appendChild(line);
-            }
+            contentEl.innerHTML = Array(5).fill(`<div class="skeleton-line skeleton"></div>`).join("");
         }
-    }
+    };
 
-    // 2) REMOVE skeletons and populate real data
-    async function loadPostAndShow(slug) {
+    // --- fetch + render post ---
+    const loadPost = async () => {
         try {
             const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) throw new Error(res.status);
             const post = await res.json();
 
-            // populate title and make it visible
             if (titleEl) {
                 titleEl.textContent = post.title || "";
                 titleEl.classList.remove("skeleton");
             }
 
-            // set thumbnail src first, wait for load, then remove its skeleton
             if (thumbnailEl) {
-                if (post.thumbnail) {
-                    // add handlers before setting src to ensure we catch load/error
-                    const cleanUpThumb = () => {
-                        thumbnailEl.classList.remove("skeleton");
-                        thumbnailEl.removeEventListener("load", cleanUpThumb);
-                        thumbnailEl.removeEventListener("error", handleThumbError);
-                    };
-                    const handleThumbError = () => {
-                        // Use a fallback image URL if you have one, otherwise remove skeleton anyway
-                        thumbnailEl.classList.remove("skeleton");
-                        thumbnailEl.removeEventListener("load", cleanUpThumb);
-                        thumbnailEl.removeEventListener("error", handleThumbError);
-                        // optionally: thumbnailEl.src = '/images/default-thumb.jpg';
-                    };
-
-                    thumbnailEl.addEventListener("load", cleanUpThumb);
-                    thumbnailEl.addEventListener("error", handleThumbError);
-
-                    // set the src which triggers load event
-                    thumbnailEl.src = post.thumbnail;
-                } else {
-                    // no thumbnail provided
-                    thumbnailEl.classList.remove("skeleton");
-                    thumbnailEl.src = ""; // or a placeholder
-                }
+                thumbnailEl.src = post.thumbnail || "";
+                thumbnailEl.onload = thumbnailEl.onerror = () => thumbnailEl.classList.remove("skeleton");
             }
 
-            // populate author and date AFTER thumbnail skeleton has been created (order)
-            if (metaParagraph) {
-                // restore metaParagraph markup to original structure
-                metaParagraph.classList.remove("skeleton", "post-meta-skeleton");
-                metaParagraph.innerHTML = `<strong>By <span id="post-author">${post.author || "Unknown"}</span> | <span id="post-date">${post.date ? new Date(post.date).toLocaleDateString() : "N/A"}</span></strong>`;
-            } else {
-                // fallback if paragraph not found: set spans if they exist
-                if (authorSpan) authorSpan.textContent = post.author || "Unknown";
-                if (dateSpan) dateSpan.textContent = post.date ? new Date(post.date).toLocaleDateString() : "N/A";
+            if (metaEl) {
+                metaEl.className = "";
+                metaEl.innerHTML = `<strong>By <span id="post-author">${post.author || "Unknown"}</span> | <span id="post-date">${post.date ? new Date(post.date).toLocaleDateString() : "N/A"}</span></strong>`;
             }
 
-            // replace content (this overwrites skeleton lines)
-            if (contentEl) {
-                contentEl.innerHTML = post.content || "<p>No content</p>";
-            }
+            if (contentEl) contentEl.innerHTML = post.content || "<p>No content</p>";
 
-            // remove any remaining skeleton classes just in case
+        } catch (e) {
+            console.error("Post load failed:", e);
             document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton"));
-
-        } catch (err) {
-            console.error("Error loading post:", err);
-            // keep skeleton removed so user can see error or show an error message
-            document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton"));
-            // optionally show an error UI here
         }
-    }
+    };
 
-    // run
-    const slug = new URLSearchParams(window.location.search).get("slug");
-    if (slug) {
-        showSkeletons();
-        loadPostAndShow(slug);
-    } else {
-        // If no slug, remove any skeletons so UI doesn't stay grey
-        setTimeout(() => document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton")), 1000);
-    }
+    showSkeletons();
+    loadPost();
 });
+
 
 
 
