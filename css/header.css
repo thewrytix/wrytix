@@ -58,7 +58,7 @@
 
 
 /* Social icons container */
-.top-right a {
+.header-social-icons a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -68,19 +68,56 @@
     border-radius: 50%;
     font-size: var(--font-size-md);
     transition: background-color 0.3s, color 0.3s;
+    font-family: "Font Awesome 6 Brands",serif;
+    font-weight: var(--font-weight-bold);
+    font-style: normal;
     text-decoration: none;
 }
 
 
-.top-right a i{
+/* Facebook */
+.header-social-icons a.facebook::before {
+    content: "\f39e";
+}
+
+
+/* Twitter / X */
+.header-social-icons a.twitter::before {
+    content: "\e61b"; /* X logo (FA6) */
+}
+
+
+/* Instagram */
+.header-social-icons a.instagram::before {
+    content: "\f16d";
+}
+
+
+
+/* YouTube */
+.header-social-icons a.youtube::before {
+    content: "\f167";
+}
+
+
+/* TikTok */
+.header-social-icons a.tiktok::before {
+    content: "\e07b"; /* TikTok FA6 */
+}
+.header-social-icons a.tiktok,
+.header-social-icons a.youtube,
+.header-social-icons a.instagram,
+.header-social-icons a.twitter,
+.header-social-icons a.facebook{
     color: var(--text-color);
 }
-
-.top-right a:hover i{
+.header-social-icons a.tiktok:hover,
+.header-social-icons a.youtube:hover,
+.header-social-icons a.instagram:hover,
+.header-social-icons a.twitter:hover,
+.header-social-icons a.facebook:hover{
     transform: translateY(-2px);
 }
-
-
 
 
 #forex-rates {

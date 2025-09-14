@@ -42,6 +42,10 @@ footer {
     color: var(--neutral-color);
     font-size: var(--font-size-lg);
     transition: color 0.3s ease;
+    font-family: "Font Awesome 6 Brands",serif;
+    font-weight: 400;
+    font-style: normal;
+    text-decoration: none;
 }
 
 .footer-logo-social .social-icons a i{
@@ -54,6 +58,48 @@ footer {
     transform: translateY(-2px);
 }
 
+/* Facebook */
+.social-icons a.facebook::before {
+    content: "\f39e";
+}
+
+
+/* Twitter / X */
+.social-icons a.twitter::before {
+    content: "\e61b"; /* X logo (FA6) */
+}
+
+
+/* Instagram */
+.social-icons a.instagram::before {
+    content: "\f16d";
+}
+
+
+/* YouTube */
+.social-icons a.youtube::before {
+    content: "\f167";
+}
+
+
+/* TikTok */
+.social-icons a.tiktok::before {
+    content: "\e07b"; /* TikTok FA6 */
+}
+.social-icons a.tiktok,
+.social-icons a.youtube,
+.social-icons a.instagram,
+.social-icons a.twitter,
+.social-icons a.facebook{
+    color: var(--neutral-color);
+}
+.social-icons a.tiktok:hover,
+.social-icons a.youtube:hover,
+.social-icons a.instagram:hover,
+.social-icons a.twitter:hover,
+.social-icons a.facebook:hover{
+    transform: translateY(-2px);
+}
 
 
 /* Quick Links */

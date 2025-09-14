@@ -389,4 +389,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 })();
 
 
+document.addEventListener("DOMContentLoaded", () => {
+    const socialHtml = `
+    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
+    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
+    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
+    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
+    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
+  `;
 
+    // Select all places you want the icons injected
+    const containers = document.querySelectorAll('.social-icons, .header-social-icons');
+
+    containers.forEach(container => {
+        // safety: if it already has at least one <a>, skip to avoid duplicates
+        if (container.querySelector('a')) return;
+
+        container.innerHTML = socialHtml;
+    });
+});
