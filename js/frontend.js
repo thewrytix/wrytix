@@ -1,33 +1,46 @@
-// Fetch Forex rates
-async function fetchForexRates() {
-    try {
-        const response = await fetch("https://open.er-api.com/v6/latest/USD");
-        const data = await response.json();
+(() => {
+    async function fetchForexRates() {
+        try {
+            const response = await fetch("https://open.er-api.com/v6/latest/USD");
+            const data = await response.json();
 
-        console.log("API response:", data);
+            console.log("API response:", data);
 
-        if (!data || !data.rates) {
-            throw new Error("Invalid data format from API");
+            if (!data || !data.rates) {
+                throw new Error("Invalid data format from API");
+            }
+
+            // Some APIs use GHS not GHC, let's check both
+            const usdToGhc = data.rates.GHC || data.rates.GHC;
+            const usdToEur = data.rates.EUR;
+            const usdToGbp = data.rates.GBP;
+
+            if (!usdToGhc || !usdToEur || !usdToGbp) {
+                throw new Error("Missing rate values in API response");
+            }
+
+            const eurToGhc = usdToGhc / usdToEur;
+            const gbpToGhc = usdToGhc / usdToGbp;
+
+            const usdEl = document.getElementById("usd-rate");
+            const eurEl = document.getElementById("eur-rate");
+            const gbpEl = document.getElementById("gbp-rate");
+
+            // ✅ Only update if elements exist
+            if (usdEl) usdEl.textContent = `💵 USD/GHS: ${usdToGhc.toFixed(2)}`;
+            if (eurEl) eurEl.textContent = `💶 EUR/GHS: ${eurToGhc.toFixed(2)}`;
+            if (gbpEl) gbpEl.textContent = `💷 GBP/GHS: ${gbpToGhc.toFixed(2)}`;
+        } catch (error) {
+            console.error("Error fetching forex rates:", error);
         }
-
-        const usdToGhc = data.rates.GHC;
-        const usdToEur = data.rates.EUR;
-        const usdToGbp = data.rates.GBP;
-
-        const eurToGhc = usdToGhc / usdToEur;
-        const gbpToGhc = usdToGhc / usdToGbp;
-
-        document.getElementById("usd-rate").textContent = `💵 USD/GHS: ${usdToGhc.toFixed(2)}`;
-        document.getElementById("eur-rate").textContent = `💶 EUR/GHS: ${eurToGhc.toFixed(2)}`;
-        document.getElementById("gbp-rate").textContent = `💷 GBP/GHS: ${gbpToGhc.toFixed(2)}`;
-    } catch (error) {
-        console.error("Error fetching forex rates:", error);
     }
-}
 
-// Auto-refresh every 5 minutes (300,000 milliseconds)
-setInterval(fetchForexRates, 300000);
-document.addEventListener("DOMContentLoaded", fetchForexRates);
+    // Run once page loads
+    document.addEventListener("DOMContentLoaded", fetchForexRates);
+
+    // Refresh every 5 minutes
+    setInterval(fetchForexRates, 300000);
+})();
 
 
 // Back to the top
@@ -389,23 +402,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 })();
 
 
-(() => {
-    document.addEventListener("DOMContentLoaded", () => {
-        const socialHtml = `
-      <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
-      <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
-      <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
-      <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
-      <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
-    `;
+document.addEventListener("DOMContentLoaded", () => {
+    const socialHtml = `
+    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
+    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
+    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
+    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
+    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
+  `;
 
-        const containers = document.querySelectorAll('.social-icons, .header-social-icons');
+    // Select all places you want the icons injected
+    const containers = document.querySelectorAll('.social-icons, .header-social-icons');
 
-        containers.forEach(container => {
-            if (!container.dataset.socialInjected) { // ✅ avoid duplicates
-                container.innerHTML = socialHtml;
-                container.dataset.socialInjected = "true";
-            }
-        });
+    containers.forEach(container => {
+        // safety: if it already has at least one <a>, skip to avoid duplicates
+        if (container.querySelector('a')) return;
+
+        container.innerHTML = socialHtml;
     });
-})();
+});
