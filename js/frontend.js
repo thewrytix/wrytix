@@ -350,10 +350,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             return `
             <article class="post-preview">
                 <div>
-                    <h3>${post.title}</h3>
+                    <h3><a href="./posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                   <!--  <small class="post-date">${this.formatDate(post.date)}</small>-->
                     <p>${post.excerpt}</p>
-                  <a href="./posts/view-post.html?slug=${post.slug}">Read More</a>
                 </div>
                 ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" onerror="this.style.display='none'">` : ''}
             </article>`;
