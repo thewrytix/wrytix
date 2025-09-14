@@ -98,10 +98,10 @@ article strong {
 .skeleton {
     background: linear-gradient(90deg, #efefef 25%, #e7e7e7 37%, #efefef 63%);
     background-size: 400% 100%;
-    animation: shimmer 1.5s linear infinite;
+    animation: shimmer 2.5s linear infinite; /* slower shimmer */
     border-radius: 6px;
     display: block;
-    color: transparent; /* hides text while skeleton active */
+    color: transparent;
 }
 
 @keyframes shimmer {
