@@ -1,21 +1,23 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     const title = document.getElementById("post-title");
     const thumbnail = document.getElementById("post-thumbnail");
     const content = document.getElementById("post-content");
+    const author = document.getElementById("post-author").parentElement; // <p><strong>By ...</strong></p>
 
     // Apply skeletons
     title.classList.add("skeleton");
     thumbnail.classList.add("skeleton");
 
+    // Meta skeleton goes AFTER the image (before author/date text)
     const metaSkeleton = document.createElement("div");
     metaSkeleton.className = "post-meta-skeleton";
     metaSkeleton.innerHTML = `
         <div class="text-skeleton skeleton"></div>
         <div class="text-skeleton skeleton"></div>
     `;
-    title.insertAdjacentElement("afterend", metaSkeleton);
+    thumbnail.insertAdjacentElement("afterend", metaSkeleton);
 
+    // Content skeleton lines
     for (let i = 0; i < 4; i++) {
         const line = document.createElement("div");
         line.className = "text-skeleton skeleton";
@@ -23,7 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-
+// Example once API data loads:
+// fetch(...).then(() => {
+//   document.querySelectorAll(".skeleton").forEach(el => el.remove());
+// })
 
 
 document.addEventListener("DOMContentLoaded", async function () {
