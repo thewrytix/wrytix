@@ -90,28 +90,6 @@ body {
 }
 
 
-
-/* Webkit browsers (Chrome, Edge, Safari, Opera) */
-::-webkit-scrollbar {
-    width: 15px;  /* Much thicker scrollbar */
-    height: 15px; /* For horizontal scrollbar */
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-    border: 3px solid transparent;
-    background-clip: content-box; /* Creates padding effect */
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--text-light);
-    border-radius: 10px;
-    border: 4px solid rgba(0, 0, 0, 0); /* Transparent border */
-    background-clip: padding-box; /* Ensures color doesn't bleed */
-    min-height: 40px; /* Minimum thumb size */
-}
-
 /* Typography */
 h1, h2, h3, h4 {
     line-height: 1.2;
