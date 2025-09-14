@@ -27,9 +27,9 @@
             const gbpEl = document.getElementById("gbp-rate");
 
             // ✅ Only update if elements exist
-            if (usdEl) usdEl.textContent = `💵 USD/GHS: ${usdToGhc.toFixed(2)}`;
-            if (eurEl) eurEl.textContent = `💶 EUR/GHS: ${eurToGhc.toFixed(2)}`;
-            if (gbpEl) gbpEl.textContent = `💷 GBP/GHS: ${gbpToGhc.toFixed(2)}`;
+            if (usdEl) usdEl.textContent = `💵 USD/GHC: ${usdToGhc.toFixed(2)}`;
+            if (eurEl) eurEl.textContent = `💶 EUR/GHC: ${eurToGhc.toFixed(2)}`;
+            if (gbpEl) gbpEl.textContent = `💷 GBP/GHC: ${gbpToGhc.toFixed(2)}`;
         } catch (error) {
             console.error("Error fetching forex rates:", error);
         }
