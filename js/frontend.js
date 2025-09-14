@@ -304,7 +304,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         title: post.title,
                         slug: post.slug, // ✅ Add this line
                         url: post.url,
-                       // date: post.schedule,
+                       date: post.schedule,
                         category: post.category,
                         excerpt: post.content.slice(0, 100) + '...',
                         thumbnail: thumbnail
