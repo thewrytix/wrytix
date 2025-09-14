@@ -289,7 +289,7 @@ img {
 }
 
 .small-post a:hover {
-    color: var(--accent-color);
+    text-decoration: underline;
 }
 
 .small-post p {
@@ -361,6 +361,10 @@ img {
     color: var(--text-color);
     font-weight: var(--font-weight-bold);
     text-decoration: none;
+}
+
+.post-preview a:hover {
+    text-decoration: underline;
 }
 
 
