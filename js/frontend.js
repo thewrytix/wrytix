@@ -403,33 +403,56 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Detect if mobile (≤486px)
-    const isMobile = window.matchMedia("(max-width: 486px)").matches;
+    const MOBILE_BREAKPOINT = 486;
 
-    // Choose links: mobile deep links OR web links
-    const links = {
-        facebook: isMobile ? "fb://page/your-page-id" : "https://facebook.com",
-        twitter: isMobile ? "twitter://user?screen_name=WrytixOfficial" : "https://x.com/WrytixOfficial",
-        instagram: isMobile ? "instagram://user?username=wrytixofficial" : "https://www.instagram.com/wrytixofficial/",
-        youtube: isMobile ? "vnd.youtube://channel/UCig810dXawPE2YlVwwS6EOQ" : "https://www.youtube.com/channel/UCig810dXawPE2YlVwwS6EOQ",
-        tiktok: isMobile ? "snssdk1233://user/profile/@wrytix" : "https://www.tiktok.com/@wrytix",
-        linkedin: isMobile ? "linkedin://company/wrytix" : "https://www.linkedin.com/company/wrytix/?viewAsMember=true"
+    const SOCIAL_LINKS = {
+        web: {
+            facebook: "https://facebook.com",
+            twitter: "https://x.com/WrytixOfficial",
+            instagram: "https://www.instagram.com/wrytixofficial/",
+            youtube: "https://www.youtube.com/channel/UCig810dXawPE2YlVwwS6EOQ",
+            tiktok: "https://www.tiktok.com/@wrytix",
+            linkedin: "https://www.linkedin.com/company/wrytix/?viewAsMember=true"
+        },
+        mobile: {
+            facebook: "fb://page/your-page-id",
+            twitter: "twitter://user?screen_name=WrytixOfficial",
+            instagram: "instagram://user?username=wrytixofficial",
+            youtube: "youtube://channel/UCig810dXawPE2YlVwwS6EOQ",
+            tiktok: "snssdk1128://user/profile/wrytix",
+            linkedin: "linkedin://company/wrytix"
+        }
     };
 
-    const socialHtml = `
-    <a href="${links.facebook}" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
-    <a href="${links.twitter}" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
-    <a href="${links.instagram}" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
-    <a href="${links.youtube}" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
-    <a href="${links.tiktok}" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
-    <a href="${links.linkedin}" target="_blank" rel="noopener noreferrer" class="linkedin" aria-label="LinkedIn"></a>
-  `;
+    const buildSocialHtml = () => {
+        const links = window.innerWidth <= MOBILE_BREAKPOINT ? SOCIAL_LINKS.mobile : SOCIAL_LINKS.web;
+        return Object.entries(links)
+            .map(([platform, url]) =>
+                `<a href="${url}" target="_blank" rel="noopener noreferrer" class="${platform}" aria-label="${platform}"></a>`
+            ).join('');
+    };
 
-    // Inject into all containers
-    const containers = document.querySelectorAll(".social-icons, .header-social-icons");
+    const injectSocialIcons = () => {
+        document.querySelectorAll('.social-icons, .header-social-icons')
+            .forEach(container => {
+                if (!container.querySelector('a')) {
+                    container.innerHTML = buildSocialHtml();
+                }
+            });
+    };
 
-    containers.forEach(container => {
-        if (container.querySelector("a")) return; // prevent duplicates
-        container.innerHTML = socialHtml;
+    injectSocialIcons();
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            document.querySelectorAll('.social-icons a, .header-social-icons a')
+                .forEach(link => {
+                    const platform = link.className;
+                    const links = window.innerWidth <= MOBILE_BREAKPOINT ? SOCIAL_LINKS.mobile : SOCIAL_LINKS.web;
+                    link.href = links[platform];
+                });
+        }, 100);
     });
 });
