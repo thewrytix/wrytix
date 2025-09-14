@@ -1,154 +1,83 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const slug = new URLSearchParams(location.search).get("slug");
-    if (!slug) return;
-
-    const titleEl = document.getElementById("post-title");
-    const thumbnailEl = document.getElementById("post-thumbnail");
-    const contentEl = document.getElementById("post-content");
-    const metaEl = document.querySelector("#post-author")?.closest("p");
-
-    // --- skeleton placeholders ---
-    const showSkeletons = () => {
-        titleEl?.classList.add("skeleton");
-        thumbnailEl?.classList.add("skeleton");
-        if (thumbnailEl) thumbnailEl.removeAttribute("src");
-
-        if (metaEl) {
-            metaEl.className = "skeleton post-meta-skeleton";
-            metaEl.innerHTML = `<span class="meta-pill"></span><span class="meta-pill"></span>`;
-        }
-
-        if (contentEl) {
-            contentEl.innerHTML = Array(5).fill(`<div class="skeleton-line skeleton"></div>`).join("");
-        }
-    };
-
-    // --- fetch + render post ---
-    const loadPost = async () => {
-        try {
-            const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
-            if (!res.ok) throw new Error(res.status);
-            const post = await res.json();
-
-            if (titleEl) {
-                titleEl.textContent = post.title || "";
-                titleEl.classList.remove("skeleton");
-            }
-
-            if (thumbnailEl) {
-                thumbnailEl.src = post.thumbnail || "";
-                thumbnailEl.onload = thumbnailEl.onerror = () => thumbnailEl.classList.remove("skeleton");
-            }
-
-            if (metaEl) {
-                metaEl.className = "";
-                metaEl.innerHTML = `<strong>By <span id="post-author">${post.author || "Unknown"}</span> | <span id="post-date">${post.date ? new Date(post.date).toLocaleDateString() : "N/A"}</span></strong>`;
-            }
-
-            if (contentEl) contentEl.innerHTML = post.content || "<p>No content</p>";
-
-        } catch (e) {
-            console.error("Post load failed:", e);
-            document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton"));
-        }
-    };
-
-    showSkeletons();
-    loadPost();
-});
-
-
-
-
-
-
-document.addEventListener("DOMContentLoaded", async () => {
-    const slug = new URLSearchParams(location.search).get("slug");
-    const container = document.getElementById("post-container");
-    // <div id="post-container"></div> should exist in your HTML as mount point
+document.addEventListener("DOMContentLoaded", async function () {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
 
     if (!slug) {
-        container.innerHTML = "<p>No post selected.</p>";
+        document.getElementById("post-title").textContent = "No post selected.";
         return;
     }
 
-    // --- Create article template ---
-    container.innerHTML = `
-    <article data-category="">
-      <nav class="breadcrumbs" id="breadcrumbs"></nav>
-      <h1 id="post-title" class="skeleton"></h1>
-      <img id="post-thumbnail" class="skeleton" alt=""
-           style="width:100%; max-height:400px; object-fit:cover; margin:16px 0; border-radius:8px;">
-      <p class="skeleton post-meta-skeleton">
-        <span class="meta-pill"></span>
-        <span class="meta-pill"></span>
-      </p>
-      <div id="post-content">
-        ${Array(5).fill(`<div class="skeleton-line skeleton"></div>`).join("")}
-      </div>
-      <div class="source">Source: <span id="post-source"> </span></div>
-    </article>
-  `;
-
-    // --- Fetch + populate post ---
     try {
+        // Step 1: Fetch post quickly
         const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
         if (!res.ok) throw new Error("Post not found");
         const post = await res.json();
 
-        // Title
-        const titleEl = document.getElementById("post-title");
-        titleEl.textContent = post.title || "";
-        titleEl.classList.remove("skeleton");
+        // Step 2: Render the post
+        document.title = post.title;
+        document.getElementById("post-title").textContent = post.title;
+        document.getElementById("post-author").textContent = post.author || "Unknown";
+        document.getElementById("post-date").textContent = post.schedule
+            ? new Date(post.schedule).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+            : "N/A";
 
-        // Thumbnail
-        const thumb = document.getElementById("post-thumbnail");
         if (post.thumbnail) {
-            thumb.src = post.thumbnail;
-            thumb.onload = thumb.onerror = () => thumb.classList.remove("skeleton");
-        } else {
-            thumb.classList.remove("skeleton");
+            document.getElementById("post-thumbnail").src = post.thumbnail;
         }
 
-        // Meta
-        const meta = titleEl.nextElementSibling.nextElementSibling; // the <p>
-        meta.className = "";
-        meta.innerHTML = `<strong>By <span id="post-author">${post.author || "Unknown"}</span> | 
-      <span id="post-date">${post.schedule ? new Date(post.schedule).toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric"
-        }) : "N/A"}</span></strong>`;
+        document.getElementById("post-content").innerHTML = post.content;
 
-        // Content
-        const contentEl = document.getElementById("post-content");
-        contentEl.innerHTML = post.content || "<p>No content</p>";
-
-        // Source
+        // source
         const sourceEl = document.getElementById("post-source");
-        if (post.source && post.source.startsWith("http")) {
+        if (post.source && post.source.startsWith('http')) {
             sourceEl.innerHTML = `<a href="${post.source}" target="_blank">${post.source}</a>`;
+        } else if (post.source) {
+            sourceEl.textContent = post.source;
         } else {
-            sourceEl.textContent = post.source || "N/A";
+            sourceEl.textContent = "N/A";
         }
 
-        // Breadcrumbs
-        const crumbs = document.getElementById("breadcrumbs");
-        if (crumbs) {
+
+        // Step 3: Render breadcrumbs
+        const breadcrumbsContainer = document.getElementById("breadcrumbs");
+        if (breadcrumbsContainer) {
             const category = post.category || "Uncategorized";
-            document.querySelector("article").setAttribute("data-category", category);
-            crumbs.innerHTML = `
-        <a href="../index.html">Home</a>
-        <span>›</span>
-        <a href="../html/${category.toLowerCase()}.html">${category}</a>
-        <span>›</span>
-        <span>${post.title}</span>`;
+            breadcrumbsContainer.innerHTML = `
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../html/${category.toLowerCase()}.html">${category}</a>
+                    <span>›</span>
+                    <span>${post.title}</span>
+                `;
         }
 
-        // Increment views in background
-        fetch(`https://wrytix.onrender.com/posts/${slug}/view`, { method: "POST" })
+        // Step 4: Fetch related posts in background
+        setTimeout(async () => {
+            try {
+                const allPostsRes = await fetch("https://wrytix.onrender.com/posts");
+                const allPosts = await allPostsRes.json();
+                const relatedPosts = allPosts.filter(p => p.category === post.category && p.slug !== post.slug).slice(0, 10);
+
+                const relatedList = document.getElementById("related-list");
+                if (relatedPosts.length === 0) {
+                    relatedList.innerHTML = "<li>No related posts found.</li>";
+                } else {
+                    relatedList.innerHTML = relatedPosts.map(p => `
+                            <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                        `).join('');
+                }
+            } catch (err) {
+                console.error("Failed to load related posts:", err);
+            }
+        }, 0);
+
+        // Step 5: Increment views in background
+        fetch(`https://wrytix.onrender.com/posts/${slug}/view`, { method: 'POST' })
             .catch(err => console.warn("Failed to update views:", err));
 
-    } catch (err) {
-        console.error("Error loading post:", err);
-        container.innerHTML = "<p>Failed to load post.</p>";
+    } catch (error) {
+        console.error("Error loading post:", error);
+        document.getElementById("post-title").textContent = "Failed to load post";
+        document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
     }
 });
