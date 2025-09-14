@@ -1,3 +1,31 @@
+
+document.addEventListener("DOMContentLoaded", () => {
+    const title = document.getElementById("post-title");
+    const thumbnail = document.getElementById("post-thumbnail");
+    const content = document.getElementById("post-content");
+
+    // Apply skeletons
+    title.classList.add("skeleton");
+
+    thumbnail.classList.add("skeleton");
+
+    const metaSkeleton = document.createElement("div");
+    metaSkeleton.className = "post-meta-skeleton";
+    metaSkeleton.innerHTML = `
+        <div class="text-skeleton skeleton"></div>
+        <div class="text-skeleton skeleton"></div>
+    `;
+    title.insertAdjacentElement("afterend", metaSkeleton);
+
+    for (let i = 0; i < 4; i++) {
+        const line = document.createElement("div");
+        line.className = "text-skeleton skeleton";
+        content.appendChild(line);
+    }
+});
+
+
+
 document.addEventListener("DOMContentLoaded", async function () {
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("slug");
