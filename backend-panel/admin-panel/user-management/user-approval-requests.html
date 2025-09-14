@@ -167,90 +167,112 @@
   }
 
   async function approveUser(userId) {
-    if (!confirm("Approve this user?")) return;
 
-    try {
-      const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}/approve`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
+    confirmAndRun(
+            "Approve this user?",
+            async () =>{
+              try {
+                const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}/approve`, {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json'}
+                });
 
-      const resData = await res.json();
-      console.log('Approve response:', resData);
-      if (!res.ok) {
-        throw new Error(resData.error || 'Failed to approve user');
-      }
+                const resData = await res.json();
+                console.log('Approve response:', resData);
+                if (!res.ok) {
+                  throw new Error(resData.error || 'Failed to approve user');
+                }
 
-      await loadAuthorRequests();
-      showSuccess("User approved successfully");
-    } catch (err) {
-      console.error("Approval failed:", err);
-      showError(`Approval failed: ${err.message}`);
-    }
+                await loadAuthorRequests();
+                showSuccess("✅ User approved successfully");
+              } catch (err) {
+                console.error("Approval failed:", err);
+                showError(`❌ Approval failed: ${err.message}`);
+              }
+            },
+
+            "❌ Rejection canceled."
+    );
+
+
+
   }
 
   async function rejectUser(userId) {
-    if (!confirm("Reject this user?")) return;
 
-    try {
-      const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
+    confirmAndRun( "Reject this user?", async () => {
+      try {
+        const res = await fetch(`https://wrytix.onrender.com/pendingUsers/${userId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-      const resData = await res.json();
-      console.log('Reject response:', resData);
-      if (!res.ok) {
-        throw new Error(resData.error || 'Failed to reject user');
+        const resData = await res.json();
+        console.log('Reject response:', resData);
+        if (!res.ok) {
+          throw new Error(resData.error || 'Failed to reject user');
+        }
+
+        await loadAuthorRequests();
+        showSuccess("✅ User rejected");
+      } catch (err) {
+        console.error("Rejection failed:", err);
+        showError(`❌ Rejection failed: ${err.message}`);
       }
+            }, "❌ Rejection canceled."
+    );
 
-      await loadAuthorRequests();
-      showSuccess("User rejected");
-    } catch (err) {
-      console.error("Rejection failed:", err);
-      showError(`Rejection failed: ${err.message}`);
-    }
+
   }
 
 
   async function approveDelete(requestId) {
-    if (!confirm("Approve this deletion?")) return;
 
-    try {
-      const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/approve`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+    confirmAndRun( "Approve this deletion?",
+            async () => { try {
+              const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/approve`, {
+                method: 'POST',
+                credentials: 'include'
+              });
 
-      if (!res.ok) throw new Error(await res.text());
+              if (!res.ok) throw new Error(await res.text());
 
-      await loadDeleteRequests();
-      showSuccess("Deletion approved");
-    } catch (err) {
-      console.error("Deletion approval failed:", err);
-      showError(`Deletion approval failed: ${err.message}`);
-    }
+              await loadDeleteRequests();
+              showSuccess("✅ Deletion approved");
+            } catch (err) {
+              console.error("Deletion approval failed:", err);
+              showError(`❌ Deletion approval failed: ${err.message}`);
+            }
+    }, "❌ Rejection canceled."
+
+    );
+
   }
 
   async function rejectDelete(requestId) {
-    if (!confirm("Reject this deletion request?")) return;
 
-    try {
-      const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/reject`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+    confirmAndRun(
+            "Reject this deletion request?",
+async () => {try {
+  const res = await fetch(`https://wrytix.onrender.com/pendingDeletions/${requestId}/reject`, {
+    method: 'POST',
+    credentials: 'include'
+  });
 
-      if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await res.text());
 
-      await loadDeleteRequests();
-      showSuccess("Deletion request rejected");
-    } catch (err) {
-      console.error("Rejection failed:", err);
-      showError(`Rejection failed: ${err.message}`);
-    }
+  await loadDeleteRequests();
+  showSuccess("✅ Deletion request rejected");
+} catch (err) {
+  console.error("Rejection failed:", err);
+  showError(`❌ Rejection failed: ${err.message}`);
+}
+    },
+            "❌ Rejection canceled."
+    );
+
   }
 
 </script>
