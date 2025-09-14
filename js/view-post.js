@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Apply skeletons
     title.classList.add("skeleton");
-
     thumbnail.classList.add("skeleton");
 
     const metaSkeleton = document.createElement("div");
@@ -23,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         content.appendChild(line);
     }
 });
+
 
 
 
