@@ -11,7 +11,7 @@
             }
 
             // Some APIs use GHS not GHC, let's check both
-            const usdToGhc = data.rates.GHC || data.rates.GHC;
+            const usdToGhc = data.rates.GHC || data.rates.GHS;
             const usdToEur = data.rates.EUR;
             const usdToGbp = data.rates.GBP;
 
