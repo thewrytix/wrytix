@@ -319,31 +319,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-           // formatDate: function (dateStr) {
-             //   const date = new Date(dateStr);
-             //   const now = new Date();
-            //    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+           formatDate: function (dateStr) {
+                const date = new Date(dateStr);
+                const now = new Date();
+              const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
-          //      function timeAgo(time) {
-            //        const seconds = Math.floor((now - time) / 1000);
-             //       if (seconds < 5) return "Just now";
-         //           if (seconds < 60) return `${seconds} seconds ago`;
-          //          const minutes = Math.floor(seconds / 60);
-          //          if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
-           //         const hours = Math.floor(minutes / 60);
-          //          if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
-            //        const days = Math.floor(hours / 24);
-           //         return `${days} day${days !== 1 ? "s" : ""} ago`;
-           //     }
+               function timeAgo(time) {
+                   const seconds = Math.floor((now - time) / 1000);
+                  if (seconds < 5) return "Just now";
+                  if (seconds < 60) return `${seconds} seconds ago`;
+                  const minutes = Math.floor(seconds / 60);
+                  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+                   const hours = Math.floor(minutes / 60);
+                  if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+                   const days = Math.floor(hours / 24);
+                  return `${days} day${days !== 1 ? "s" : ""} ago`;
+              }
 
-        //        if (diffDays < 7) {
-          //          // Show relative time if within 7 days
-            //        return timeAgo(date);
-          //      } else {
-                    // Show absolute date if 7+ days
-            //        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-           //         return date.toLocaleDateString(undefined, options);
-             //   }},
+                if (diffDays < 7) {
+                   // Show relative time if within 7 days
+                   return timeAgo(date);
+                } else {
+                   //  Show absolute date if 7+ days
+                   const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString(undefined, options);
+              }},
 
 
         createPostHTML: function (post) {
