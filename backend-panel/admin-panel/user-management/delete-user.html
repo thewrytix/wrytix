@@ -244,44 +244,47 @@
   }
 
   async function deleteUser(id) {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    try {
-      if (currentUser.role === 'admin') {
-        await fetch(`https://wrytix.onrender.com/users/${id}`, { method: 'DELETE', credentials: 'include' });
-        showSuccess('✅ User deleted.');
-      } else {
-        await fetch('https://wrytix.onrender.com/pendingDeletions', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            targetId: id,
-            requestedBy: currentUser.username
-          })
-        });
-        showSuccess('🔒 Delete request sent for admin approval.');
+      confirmAndRun('Are you sure you want to delete this user?', async () => {
+      try {
+        if (currentUser.role === 'admin') {
+          await fetch(`https://wrytix.onrender.com/users/${id}`, { method: 'DELETE', credentials: 'include' });
+          showSuccess('✅ User deleted.');
+        } else {
+          await fetch('https://wrytix.onrender.com/pendingDeletions', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              targetId: id,
+              requestedBy: currentUser.username
+            })
+          });
+          showSuccess('🔒 Delete request sent for admin approval.');
+        }
+        await fetchUsers();
+        await fetchPendingDeletions();
+        filterAndRender();
+      } catch {
+        showError('❌ Error deleting user.');
       }
-      await fetchUsers();
-      await fetchPendingDeletions();
-      filterAndRender();
-    } catch {
-      showError('❌ Error deleting user.');
-    }
+    },  "❌ Rejection canceled.");
+
   }
 
   async function deleteSelectedUsers() {
     const selected = document.querySelectorAll('tbody input[type="checkbox"]:checked');
     if (selected.length === 0) return showError('Please select at least one user.');
 
-    if (!confirm('Are you sure you want to delete selected users?')) return;
-
-    try {
+    confirmAndRun('Are you sure you want to delete selected users?', async () => {try {
       for (const box of selected) {
         await deleteUser(box.dataset.id);
       }
     } catch {
       showError('❌ Error deleting selected users.');
     }
+    }, "❌ Rejection canceled.");
+
+
   }
 
   document.getElementById('selectAll').addEventListener('change', e => {
