@@ -403,36 +403,33 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Detect if mobile (≤486px)
+    const isMobile = window.matchMedia("(max-width: 486px)").matches;
+
+    // Choose links: mobile deep links OR web links
+    const links = {
+        facebook: isMobile ? "fb://page/your-page-id" : "https://facebook.com",
+        twitter: isMobile ? "twitter://user?screen_name=WrytixOfficial" : "https://x.com/WrytixOfficial",
+        instagram: isMobile ? "instagram://user?username=wrytixofficial" : "https://www.instagram.com/wrytixofficial/",
+        youtube: isMobile ? "vnd.youtube://channel/UCig810dXawPE2YlVwwS6EOQ" : "https://www.youtube.com/channel/UCig810dXawPE2YlVwwS6EOQ",
+        tiktok: isMobile ? "snssdk1233://user/profile/@wrytix" : "https://www.tiktok.com/@wrytix",
+        linkedin: isMobile ? "linkedin://company/wrytix" : "https://www.linkedin.com/company/wrytix/?viewAsMember=true"
+    };
+
     const socialHtml = `
-    <a href="fb://page/yourPageId"
-       onclick="window.location='https://facebook.com/wrytix'"
-       target="_blank" class="facebook" aria-label="Facebook"></a>
-
-    <a href="twitter://user?screen_name=WrytixOfficial"
-       onclick="window.location='https://x.com/WrytixOfficial'"
-       target="_blank" class="twitter" aria-label="Twitter"></a>
-
-    <a href="instagram://user?username=wrytixofficial"
-       onclick="window.location='https://www.instagram.com/wrytixofficial/'"
-       target="_blank" class="instagram" aria-label="Instagram"></a>
-
-    <a href="vnd.youtube://channel/UCig810dXawPE2YlVwwS6EOQ"
-       onclick="window.location='https://www.youtube.com/channel/UCig810dXawPE2YlVwwS6EOQ'"
-       target="_blank" class="youtube" aria-label="YouTube"></a>
-
-    <a href="snssdk1233://user/profile/yourTikTokId"
-       onclick="window.location='https://www.tiktok.com/@wrytix'"
-       target="_blank" class="tiktok" aria-label="TikTok"></a>
-
-    <a href="linkedin://company/12345678"
-       onclick="window.location='https://www.linkedin.com/company/wrytix/'"
-       target="_blank" class="linkedin" aria-label="LinkedIn"></a>
+    <a href="${links.facebook}" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
+    <a href="${links.twitter}" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
+    <a href="${links.instagram}" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
+    <a href="${links.youtube}" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
+    <a href="${links.tiktok}" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
+    <a href="${links.linkedin}" target="_blank" rel="noopener noreferrer" class="linkedin" aria-label="LinkedIn"></a>
   `;
 
-    const containers = document.querySelectorAll('.social-icons, .header-social-icons');
+    // Inject into all containers
+    const containers = document.querySelectorAll(".social-icons, .header-social-icons");
+
     containers.forEach(container => {
-        if (!container.querySelector('a')) {
-            container.innerHTML = socialHtml;
-        }
+        if (container.querySelector("a")) return; // prevent duplicates
+        container.innerHTML = socialHtml;
     });
 });
