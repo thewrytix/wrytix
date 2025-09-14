@@ -110,14 +110,14 @@
       </tbody>
     </table>
 
-    <div id="paginationControls" style="margin-top: 1rem; text-align: center;"></div>
+    <div id="pagination" class="pagination-controls" ></div>
   </main>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
     const logsTable = document.querySelector('#logsTable tbody');
-    const pagination = document.getElementById('paginationControls');
+    const pagination = document.getElementById('pagination');
     const searchInput = document.getElementById('searchActor');
     const targetInput = document.getElementById('searchTarget');
     const actionFilter = document.getElementById('filterAction');
