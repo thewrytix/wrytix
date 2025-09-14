@@ -259,7 +259,7 @@
               requestedBy: currentUser.username
             })
           });
-          showSuccess('🔒 Delete request sent for admin approval.');
+          showSuccess('✅ Delete request sent for admin approval.');
         }
         await fetchUsers();
         await fetchPendingDeletions();
@@ -279,6 +279,7 @@
       for (const box of selected) {
         await deleteUser(box.dataset.id);
       }
+      showSuccess('✅ Selected users deleted.');
     } catch {
       showError('❌ Error deleting selected users.');
     }
