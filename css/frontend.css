@@ -358,7 +358,6 @@ img {
 }
 
 .post-preview a {
-    color: var(--accent-color);
     font-weight: var(--font-weight-bold);
     text-decoration: none;
 }
