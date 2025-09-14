@@ -10,16 +10,16 @@ async function fetchForexRates() {
             throw new Error("Invalid data format from API");
         }
 
-        const usdToGhs = data.rates.GHS;
+        const usdToGhc = data.rates.GHC;
         const usdToEur = data.rates.EUR;
         const usdToGbp = data.rates.GBP;
 
-        const eurToGhs = usdToGhs / usdToEur;
-        const gbpToGhs = usdToGhs / usdToGbp;
+        const eurToGhc = usdToGhc / usdToEur;
+        const gbpToGhc = usdToGhc / usdToGbp;
 
-        document.getElementById("usd-rate").textContent = `💵 USD/GHS: ${usdToGhs.toFixed(2)}`;
-        document.getElementById("eur-rate").textContent = `💶 EUR/GHS: ${eurToGhs.toFixed(2)}`;
-        document.getElementById("gbp-rate").textContent = `💷 GBP/GHS: ${gbpToGhs.toFixed(2)}`;
+        document.getElementById("usd-rate").textContent = `💵 USD/GHS: ${usdToGhc.toFixed(2)}`;
+        document.getElementById("eur-rate").textContent = `💶 EUR/GHS: ${eurToGhc.toFixed(2)}`;
+        document.getElementById("gbp-rate").textContent = `💷 GBP/GHS: ${gbpToGhc.toFixed(2)}`;
     } catch (error) {
         console.error("Error fetching forex rates:", error);
     }
