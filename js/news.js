@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
             postElement.innerHTML = `
                 <div>
                     <h3>${post.title}</h3>
-                    <small class="post-date">${date}</small>
+                     <!--<small class="post-date">${date}</small>-->
                     <p>${post.content.slice(0, 120)}...</p>
                   <a href="../posts/view-post.html?slug=${post.slug}">Read More</a>
                 </div>
