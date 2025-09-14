@@ -405,11 +405,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.addEventListener("DOMContentLoaded", () => {
     const socialHtml = `
     <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="facebook" aria-label="Facebook"></a>
-    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
-    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
-    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
-    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
-    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="linkedin" aria-label="LinkedIn"></a>
+    <a href="https://x.com/WrytixOfficial" target="_blank" rel="noopener noreferrer" class="twitter" aria-label="Twitter"></a>
+    <a href="https://www.instagram.com/wrytixofficial/" target="_blank" rel="noopener noreferrer" class="instagram" aria-label="Instagram"></a>
+    <a href="https://www.youtube.com/channel/UCig810dXawPE2YlVwwS6EOQ" target="_blank" rel="noopener noreferrer" class="youtube" aria-label="YouTube"></a>
+    <a href="https://www.tiktok.com/@wrytix" target="_blank" rel="noopener noreferrer" class="tiktok" aria-label="TikTok"></a>
+    <a href="https://www.linkedin.com/company/wrytix/?viewAsMember=true" target="_blank" rel="noopener noreferrer" class="linkedin" aria-label="LinkedIn"></a>
   `;
 
     // Select all places you want the icons injected
