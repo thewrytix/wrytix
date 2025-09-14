@@ -233,13 +233,13 @@ img {
     background: var(--neutral-color);
 }
 
-.featured-large h2 a {
+.featured-large h3 a {
     color: var(--text-color);
     text-decoration: none;
     font-weight: var(--font-weight-bold);
 }
 
-.featured-large h2 a:hover {
+.featured-large h3 a:hover {
     text-decoration: underline;
 }
 

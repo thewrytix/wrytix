@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="featured-large">
                 <img src="${largePost.thumbnail}" alt="${largePost.title}">
                 <div class="featured-info">
-                    <h2><a href="posts/view-post.html?slug=${largePost.slug}">${largePost.title}</a></h2>
+                    <h3><a href="posts/view-post.html?slug=${largePost.slug}">${largePost.title}</a></h3>
                     <p>${truncateText(largePost.content, 20)}</p>
                 </div>
             </div>
