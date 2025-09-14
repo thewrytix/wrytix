@@ -1,28 +1,45 @@
-async function loadPost(slug) {
-    try {
-        const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
-        const post = await res.json();
-
-        // Fill in real content
-        document.getElementById("post-title").textContent = post.title;
-        document.getElementById("post-thumbnail").src = post.thumbnail;
-        document.getElementById("post-author").textContent = post.author;
-        document.getElementById("post-date").textContent = new Date(post.date).toLocaleDateString();
-        document.getElementById("post-content").innerHTML = post.content;
-        document.getElementById("post-source").textContent = post.source;
-
-        // ✅ Remove skeletons once real data is injected
-        document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton"));
-
-    } catch (err) {
-        console.error("Error loading post:", err);
-    }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
+    const titleEl = document.getElementById("post-title");
+    const thumbnailEl = document.getElementById("post-thumbnail");
+    const authorEl = document.getElementById("post-author");
+    const dateEl = document.getElementById("post-date");
+    const contentEl = document.getElementById("post-content");
+    const sourceEl = document.getElementById("post-source");
+
+    // STEP 1: add skeleton placeholders
+    titleEl.classList.add("skeleton");
+    thumbnailEl.classList.add("skeleton");
+    authorEl.classList.add("skeleton");
+    dateEl.classList.add("skeleton");
+    contentEl.classList.add("skeleton");
+    sourceEl.classList.add("skeleton");
+
+    async function loadPost(slug) {
+        try {
+            const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
+            const post = await res.json();
+
+            // STEP 2: inject real data
+            titleEl.textContent = post.title;
+            thumbnailEl.src = post.thumbnail;
+            authorEl.textContent = post.author;
+            dateEl.textContent = new Date(post.date).toLocaleDateString();
+            contentEl.innerHTML = post.content;
+            sourceEl.textContent = post.source;
+
+            // STEP 3: remove skeleton class once loaded
+            [titleEl, thumbnailEl, authorEl, dateEl, contentEl, sourceEl]
+                .forEach(el => el.classList.remove("skeleton"));
+
+        } catch (err) {
+            console.error("Error loading post:", err);
+        }
+    }
+
     const slug = new URLSearchParams(window.location.search).get("slug");
     if (slug) loadPost(slug);
 });
+
 
 
 
