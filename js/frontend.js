@@ -56,12 +56,94 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    /* =================== SIMULATE DATA LOAD =================== */
-    // Example: Remove skeletons after 2 seconds (replace with actual API call)
-    setTimeout(() => {
-        document.querySelectorAll(".skeleton").forEach(el => el.remove());
-        // Here you would inject your real content
-    }, 3000);
+    /* =================== FETCH API DATA =================== */
+    async function loadContent() {
+        try {
+            // Replace with your actual API endpoint
+            const [featuredRes, categoriesRes, sidebarRes] = await Promise.all([
+                fetch('https://wrytix.onrender.com/posts"')
+
+            ]);
+
+            const featuredData = await featuredRes.json();
+            const categoriesData = await categoriesRes.json();
+            const sidebarData = await sidebarRes.json();
+
+            /* ---- Remove all skeletons ---- */
+            document.querySelectorAll('.skeleton').forEach(el => el.remove());
+
+            /* ---- Inject Featured Posts ---- */
+            if (featuredSection) {
+                const largePost = featuredData.large;
+                const smallPosts = featuredData.small;
+
+                // Large featured
+                const largeDiv = document.createElement("div");
+                largeDiv.className = "featured-large";
+                largeDiv.innerHTML = `
+                    <img src="${largePost.thumbnail}" alt="${largePost.title}">
+                    <div class="featured-info">
+                        <h2><a href="${largePost.link}">${largePost.title}</a></h2>
+                        <p>${largePost.description}</p>
+                    </div>
+                `;
+                featuredSection.appendChild(largeDiv);
+
+                // Grid of small posts
+                const gridDiv = document.createElement("div");
+                gridDiv.className = "featured-grid";
+                smallPosts.forEach(post => {
+                    const smallDiv = document.createElement("div");
+                    smallDiv.className = "small-post";
+                    smallDiv.innerHTML = `
+                        <img src="${post.thumbnail}" alt="${post.title}">
+                        <div>
+                            <h4><a href="${post.link}">${post.title}</a></h4>
+                            <p>${post.description}</p>
+                        </div>
+                    `;
+                    gridDiv.appendChild(smallDiv);
+                });
+                featuredSection.appendChild(gridDiv);
+            }
+
+            /* ---- Inject Category Posts ---- */
+            categorySections.forEach(section => {
+                const categoryId = section.id;
+                const posts = categoriesData[categoryId] || [];
+                posts.forEach(post => {
+                    const postDiv = document.createElement("div");
+                    postDiv.className = "post-preview";
+                    postDiv.innerHTML = `
+                        <img src="${post.thumbnail}" alt="${post.title}">
+                        <div>
+                            <h3><a href="${post.link}">${post.title}</a></h3>
+                            <p>${post.description}</p>
+                            <span class="post-date">${post.date}</span>
+                        </div>
+                    `;
+                    section.appendChild(postDiv);
+                });
+            });
+
+            /* ---- Inject Sidebar Lists ---- */
+            sidebarLists.forEach(list => {
+                const listId = list.id; // assuming ul has id matching API
+                const items = sidebarData[listId] || [];
+                items.forEach(item => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<a href="${item.link}">${item.title}</a>
+                                    <span>${item.date}</span>`;
+                    list.appendChild(li);
+                });
+            });
+
+        } catch (error) {
+            console.error("Error loading content:", error);
+        }
+    }
+
+    loadContent();
 
 });
 
