@@ -249,7 +249,7 @@ function updateSidebarPosts(posts) {
         return `
         <li>
           <a href="posts/view-post.html?slug=${encodeURIComponent(post.slug)}">${post.title}</a>
-          <span class="post-date">${formatDate(post.schedule)}</span>
+        <!--  <span class="post-date">${formatDate(post.schedule)}</span>-->
         </li>`;
     }
 
