@@ -1,34 +1,29 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const title = document.getElementById("post-title");
-    const thumbnail = document.getElementById("post-thumbnail");
-    const content = document.getElementById("post-content");
-    const author = document.getElementById("post-author").parentElement; // <p><strong>By ...</strong></p>
+async function loadPost(slug) {
+    try {
+        const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
+        const post = await res.json();
 
-    // Apply skeletons
-    title.classList.add("skeleton");
-    thumbnail.classList.add("skeleton");
+        // Fill in real content
+        document.getElementById("post-title").textContent = post.title;
+        document.getElementById("post-thumbnail").src = post.thumbnail;
+        document.getElementById("post-author").textContent = post.author;
+        document.getElementById("post-date").textContent = new Date(post.date).toLocaleDateString();
+        document.getElementById("post-content").innerHTML = post.content;
+        document.getElementById("post-source").textContent = post.source;
 
-    // Meta skeleton goes AFTER the image (before author/date text)
-    const metaSkeleton = document.createElement("div");
-    metaSkeleton.className = "post-meta-skeleton";
-    metaSkeleton.innerHTML = `
-        <div class="text-skeleton skeleton"></div>
-        <div class="text-skeleton skeleton"></div>
-    `;
-    thumbnail.insertAdjacentElement("afterend", metaSkeleton);
+        // ✅ Remove skeletons once real data is injected
+        document.querySelectorAll(".skeleton").forEach(el => el.classList.remove("skeleton"));
 
-    // Content skeleton lines
-    for (let i = 0; i < 4; i++) {
-        const line = document.createElement("div");
-        line.className = "text-skeleton skeleton";
-        content.appendChild(line);
+    } catch (err) {
+        console.error("Error loading post:", err);
     }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const slug = new URLSearchParams(window.location.search).get("slug");
+    if (slug) loadPost(slug);
 });
 
-// Example once API data loads:
-// fetch(...).then(() => {
-//   document.querySelectorAll(".skeleton").forEach(el => el.remove());
-// })
 
 
 document.addEventListener("DOMContentLoaded", async function () {
