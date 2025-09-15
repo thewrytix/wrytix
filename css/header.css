@@ -495,7 +495,7 @@
 
     .top-left {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         text-align: center;
         max-width: 100%;
