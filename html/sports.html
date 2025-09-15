@@ -9,55 +9,46 @@
     <link rel="stylesheet" href="../css/header.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
-        /* Slider styles */
-        .league-slider {
-            position: relative;
-            overflow: hidden;
-            width: 100%;
+        /* Sports Data Styles */
+        .sports-data {
+            margin-top: 20px;
+            background: var(--background-light);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .sports-data h3 {
+            margin-top: 0;
+            color: var(--neutral-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .sport-group {
+            margin-bottom: 15px;
+        }
+        .sport-group h4 {
+            margin: 10px 0 5px;
+            font-size: 15px;
+            color: var(--primary-color);
+        }
+        .sport-item {
+            margin: 8px 0;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .sport-item:last-child {
+            border-bottom: none;
         }
 
-        .league-slides {
-            display: flex;
-            transition: transform 0.5s ease-in-out;
-        }
-
-        .league-slide {
-            min-width: 100%;
-        }
-
-        .league-dots {
-            text-align: center;
-            margin-top: 6px;
-        }
-
-        .league-dots span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            margin: 0 3px;
-            background: #ccc;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .league-dots span.active {
-            background: var(--primary-color, #ff6b00);
-        }
-
-        .league-table {
-            width: 100%;
-            font-size: 12px;
-            border-collapse: collapse;
-        }
-        .league-table th,
-        .league-table td {
-            padding: 3px 4px;
-        }
-        .league-table th {
-            text-align: left;
-        }
-        .league-table td:last-child {
+        .last-updated {
+            font-size: 11px;
+            color: var(--text-color);
             text-align: right;
+            margin-top: 10px;
+        }
+        .loading {
+            color: var(--text-color);
+            font-style: italic;
         }
     </style>
 
@@ -257,7 +248,7 @@
 <script src="../js/frontend.js"></script>
 <script src="../js/sports.js"></script>
 <script>
-    const RAPIDAPI_KEY = "YOUR_RAPIDAPI_KEY";
+    const RAPIDAPI_KEY = "Y2f6a5b4b7msh7016003fef81b31p1ea28djsn7a13a5500f1c"; // 🔑 Replace with your actual key
 
     async function fetchSportsData() {
         try {
@@ -308,59 +299,36 @@
                     continue;
                 }
 
-                // Split into chunks of 10 teams
-                const chunks = [];
-                for (let i = 0; i < standings.length; i += 10) {
-                    chunks.push(standings.slice(i, i + 10));
-                }
-
-                let slidesHTML = chunks.map((chunk, index) => `
-                    <div class="league-slide">
-                        <table class="league-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Team</th>
-                                    <th>Pts</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${chunk.map(team => `
-                                    <tr>
-                                        <td>${team.rank}</td>
-                                        <td>
-                                            <img src="${team.team.logo}"
-                                                 alt="${team.team.name}"
-                                                 style="height:14px; vertical-align:middle; margin-right:5px;">
-                                            ${team.team.name}
-                                        </td>
-                                        <td>${team.points}</td>
-                                    </tr>
-                                `).join("")}
-                            </tbody>
-                        </table>
-                    </div>
+                const tableRows = standings.slice(0, 5).map(team => `
+                    <tr>
+                        <td>${team.rank}</td>
+                        <td>
+                            <img src="${team.team.logo}" alt="${team.team.name}" style="height:14px; vertical-align:middle; margin-right:5px;">
+                            ${team.team.name}
+                        </td>
+                        <td>${team.points}</td>
+                    </tr>
                 `).join("");
-
-                // Dots
-                let dotsHTML = chunks.map((_, i) =>
-                    `<span data-index="${i}" ${i === 0 ? 'class="active"' : ""}></span>`
-                ).join("");
 
                 allTables += `
                     <div class="sport-group">
                         <h4>${league.name}</h4>
-                        <div class="league-slider" id="slider-${league.id}">
-                            <div class="league-slides">
-                                ${slidesHTML}
-                            </div>
-                        </div>
-                        <div class="league-dots" id="dots-${league.id}">
-                            ${dotsHTML}
+                        <div class="sport-item">
+                            <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left;">#</th>
+                                        <th style="text-align:left;">Team</th>
+                                        <th style="text-align:right;">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 `;
-
             } catch (err) {
                 console.error(`Error fetching ${league.name}:`, err);
                 allTables += `
@@ -372,29 +340,9 @@
         }
 
         container.innerHTML = allTables;
-
-        // Init sliders after rendering
-        initSliders();
     }
 
-    function initSliders() {
-        document.querySelectorAll(".sport-group").forEach(group => {
-            const slider = group.querySelector(".league-slides");
-            const dots = group.querySelectorAll(".league-dots span");
-            if (!slider || dots.length === 0) return;
-
-            dots.forEach(dot => {
-                dot.addEventListener("click", () => {
-                    const index = parseInt(dot.getAttribute("data-index"));
-                    slider.style.transform = `translateX(-${index * 100}%)`;
-
-                    dots.forEach(d => d.classList.remove("active"));
-                    dot.classList.add("active");
-                });
-            });
-        });
-    }
-
+    // Initial + refresh every 1 min
     fetchSportsData();
     setInterval(fetchSportsData, 60000);
 </script>
