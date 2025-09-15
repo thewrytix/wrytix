@@ -151,39 +151,18 @@ document.addEventListener("DOMContentLoaded", () => {
 (() => {
     async function fetchForexRates() {
         try {
-            const response = await fetch("https://open.er-api.com/v6/latest/USD");
+            const response = await fetch("https://wrytix.onrender.com/api/forex");
             const data = await response.json();
 
-            console.log("API response:", data);
-
-            if (!data || !data.rates) {
-                throw new Error("Invalid data format from API");
-            }
-
-            // Some APIs use GHS not GHC, let's check both
-            const usdToGhc = data.rates.GHC || data.rates.GHS;
-            const usdToEur = data.rates.EUR;
-            const usdToGbp = data.rates.GBP;
-
-            if (!usdToGhc || !usdToEur || !usdToGbp) {
-                throw new Error("Missing rate values in API response");
-            }
-
-            const eurToGhc = usdToGhc / usdToEur;
-            const gbpToGhc = usdToGhc / usdToGbp;
-
-            const usdEl = document.getElementById("usd-rate");
-            const eurEl = document.getElementById("eur-rate");
-            const gbpEl = document.getElementById("gbp-rate");
-
-            // ✅ Only update if elements exist
-            if (usdEl) usdEl.textContent = `💵 USD/GHC: ${usdToGhc.toFixed(2)}`;
-            if (eurEl) eurEl.textContent = `💶 EUR/GHC: ${eurToGhc.toFixed(2)}`;
-            if (gbpEl) gbpEl.textContent = `💷 GBP/GHC: ${gbpToGhc.toFixed(2)}`;
+            document.getElementById("usd-rate").textContent = `💵 USD/GHC: ${data.USD.toFixed(2)}`;
+            document.getElementById("eur-rate").textContent = `💶 EUR/GHC: ${data.EUR.toFixed(2)}`;
+            document.getElementById("gbp-rate").textContent = `💷 GBP/GHC: ${data.GBP.toFixed(2)}`;
         } catch (error) {
-            console.error("Error fetching forex rates:", error);
+            console.error("Error fetching forex rates from backend:", error);
         }
     }
+
+    fetchForexRates();
 
     // Run once page loads
     document.addEventListener("DOMContentLoaded", fetchForexRates);
