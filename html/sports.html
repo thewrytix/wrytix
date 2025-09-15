@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../css/header.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
-        /* Sports Data Styles */
+        /* Football Standings Styles */
         .sports-data {
             margin-top: 20px;
             background: var(--background-light);
@@ -22,33 +22,102 @@
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
         }
-        .sport-group {
-            margin-bottom: 15px;
+        .league-group {
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
         }
-        .sport-group h4 {
-            margin: 10px 0 5px;
-            font-size: 15px;
+        .league-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .league-content {
+            padding: 12px;
+        }
+        .standings-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+        .standings-table th {
+            background: #f8f9fa;
+            padding: 8px 6px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .standings-table td {
+            padding: 6px 6px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+        }
+        .standings-table tr:hover {
+            background: #f8f9fa;
+        }
+        .team-logo {
+            height: 18px;
+            width: 18px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .team-name {
+            font-weight: 500;
+        }
+        .position {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+            width: 30px;
+        }
+        .points {
+            font-weight: bold;
+            text-align: center;
+            width: 35px;
             color: var(--primary-color);
         }
-        .sport-item {
-            margin: 8px 0;
-            font-size: 13px;
-            padding: 6px 0;
-            border-bottom: 1px dashed var(--border-color);
+        .stats {
+            text-align: center;
+            width: 25px;
+            font-size: 11px;
         }
-        .sport-item:last-child {
-            border-bottom: none;
-        }
-
         .last-updated {
             font-size: 11px;
             color: var(--text-color);
             text-align: right;
-            margin-top: 10px;
+            margin-top: 15px;
+            font-style: italic;
         }
         .loading {
             color: var(--text-color);
             font-style: italic;
+            text-align: center;
+            padding: 30px;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            background: #f8d7da;
+            border-radius: 4px;
+        }
+        .api-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .api-info a {
+            color: #0c5460;
+            font-weight: bold;
         }
     </style>
 
@@ -191,17 +260,15 @@
                     </div>
                 </div>
             </div>
-            <!-- NEW: Sports Data Section -->
+            <div class="sidebar-section sports-data" id="standings">
+                <h3>⚽ League Standings</h3>
 
-                <div class="sidebar-section sports-data">
-                    <h3>League Standings</h3>
-
-                    <div id="football-leagues">
-                        <!-- League tables will be inserted here -->
-                    </div>
-
-                    <div class="last-updated" id="sports-updated">Last updated: --:--:--</div>
+                <div id="football-leagues">
+                    <div class="loading">Loading league standings...</div>
                 </div>
+
+                <div class="last-updated" id="sports-updated">Last updated: --:--:--</div>
+            </div>
         </aside>
     </div>
     <div id="pagination-controls"></div>
@@ -248,103 +315,170 @@
 <script src="../js/frontend.js"></script>
 <script src="../js/sports.js"></script>
 <script>
-    const RAPIDAPI_KEY = "Y2f6a5b4b7msh7016003fef81b31p1ea28djsn7a13a5500f1c"; // 🔑 Replace with your actual key
+    // Football Standings Manager - Clean & Simple
+    class FootballStandingsManager {
+        constructor() {
+            // Replace with your API key from football-data.org
+            this.API_KEY = '6f9bb75e7cd942f49e24fb72185bbd9d';
 
-    async function fetchSportsData() {
-        try {
-            await fetchFootballData();
-            document.getElementById("sports-updated").textContent =
-                `Last updated: ${new Date().toLocaleTimeString()}`;
-        } catch (error) {
-            console.error("Sports data error:", error);
+            this.leagues = [
+                { id: 'PL', name: "🇬🇧 Premier League" },
+                { id: 'PD', name: "🇪🇸 La Liga" },
+                { id: 'SA', name: "🇮🇹 Serie A" },
+                { id: 'BL1', name: "🇩🇪 Bundesliga" },
+                { id: 'FL1', name: "🇫🇷 Ligue 1" }
+            ];
+
+            this.container = document.getElementById("football-leagues");
+            this.updatedElement = document.getElementById("sports-updated");
         }
-    }
 
-    async function fetchFootballData() {
-        const leagues = [
-            { id: 39, name: "🇬🇧 EPL" },
-            { id: 140, name: "🇪🇸 La Liga" },
-            { id: 135, name: "🇮🇹 Serie A" },
-            { id: 78, name: "🇩🇪 Bundesliga" },
-            { id: 61, name: "🇫🇷 Ligue 1" }
-        ];
+        async fetchStandings() {
+            if (this.API_KEY === 'YOUR_API_KEY') {
+                this.showApiKeyMessage();
+                return;
+            }
 
-        const container = document.getElementById("football-leagues");
-        container.innerHTML = `<p class="loading">Loading standings...</p>`;
+            this.container.innerHTML = '<div class="loading">Loading league standings...</div>';
 
-        let allTables = "";
+            let allStandings = "";
 
-        for (const league of leagues) {
-            try {
-                const response = await fetch(
-                    `https://api-football-v1.p.rapidapi.com/v3/standings?season=2024&league=${league.id}`,
-                    {
+            for (const league of this.leagues) {
+                try {
+                    const response = await fetch(`https://api.football-data.org/v4/competitions/${league.id}/standings`, {
                         method: "GET",
                         headers: {
-                            "X-RapidAPI-Key": RAPIDAPI_KEY,
-                            "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
+                            "X-Auth-Token": this.API_KEY
                         }
+                    });
+
+                    if (response.status === 429) {
+                        // Rate limit - wait and continue
+                        await this.delay(1000);
+                        continue;
                     }
-                );
 
-                const data = await response.json();
-                const standings = data.response[0]?.league?.standings[0] || [];
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
 
-                if (!standings.length) {
-                    allTables += `
-                        <div class="sport-group">
-                            <h4>${league.name}</h4>
-                            <div class="sport-item">No data available.</div>
-                        </div>`;
-                    continue;
-                }
+                    const data = await response.json();
+                    const standings = data.standings[0]?.table || [];
 
-                const tableRows = standings.slice(0, 5).map(team => `
-                    <tr>
-                        <td>${team.rank}</td>
-                        <td>
-                            <img src="${team.team.logo}" alt="${team.team.name}" style="height:14px; vertical-align:middle; margin-right:5px;">
-                            ${team.team.name}
-                        </td>
-                        <td>${team.points}</td>
-                    </tr>
-                `).join("");
+                    if (!standings.length) {
+                        allStandings += this.createLeagueError(league.name, 'No data available');
+                        continue;
+                    }
 
-                allTables += `
-                    <div class="sport-group">
-                        <h4>${league.name}</h4>
-                        <div class="sport-item">
-                            <table style="width:100%; font-size:12px; border-collapse:collapse;">
-                                <thead>
-                                    <tr>
-                                        <th style="text-align:left;">#</th>
-                                        <th style="text-align:left;">Team</th>
-                                        <th style="text-align:right;">Pts</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRows}
-                                </tbody>
-                            </table>
+                    // Show top 8 teams
+                    const tableRows = standings.slice(0, 8).map((team, index) => {
+                        // Highlight top 4 positions
+                        const rowClass = index < 4 ? 'style="background: #f0f8f0;"' : '';
+
+                        return `
+                            <tr ${rowClass}>
+                                <td class="position">${team.position}</td>
+                                <td class="team-name">
+                                    ${team.team.crest ? `<img src="${team.team.crest}" class="team-logo" alt="${team.team.name}" onerror="this.style.display='none'">` : ''}
+                                    ${team.team.shortName || team.team.name}
+                                </td>
+                                <td class="stats">${team.playedGames}</td>
+                                <td class="stats">${team.won}</td>
+                                <td class="stats">${team.draw}</td>
+                                <td class="stats">${team.lost}</td>
+                                <td class="points">${team.points}</td>
+                            </tr>
+                        `;
+                    }).join("");
+
+                    allStandings += `
+                        <div class="league-group">
+                            <div class="league-header">${league.name}</div>
+                            <div class="league-content">
+                                <table class="standings-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Team</th>
+                                            <th>MP</th>
+                                            <th>W</th>
+                                            <th>D</th>
+                                            <th>L</th>
+                                            <th>Pts</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tableRows}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                `;
-            } catch (err) {
-                console.error(`Error fetching ${league.name}:`, err);
-                allTables += `
-                    <div class="sport-group">
-                        <h4>${league.name}</h4>
-                        <div class="sport-item">⚠️ Failed to load data</div>
-                    </div>`;
+                    `;
+
+                    // Respectful delay between requests
+                    await this.delay(300);
+
+                } catch (err) {
+                    console.error(`Error fetching ${league.name}:`, err);
+                    allStandings += this.createLeagueError(league.name, `Error: ${err.message}`);
+                }
             }
+
+            this.container.innerHTML = allStandings || '<div class="error">Unable to load standings</div>';
+            this.updateTimestamp();
         }
 
-        container.innerHTML = allTables;
+        showApiKeyMessage() {
+            this.container.innerHTML = `
+                <div class="api-info">
+                    <p><strong>🔑 API Key Required</strong></p>
+                    <p>Get your free API key from <a href="https://www.football-data.org/" target="_blank">football-data.org</a></p>
+                    <p>Then replace 'YOUR_API_KEY' in the JavaScript code</p>
+                    <p><small>Free tier: 10 requests/minute • Perfect for football standings</small></p>
+                </div>
+            `;
+        }
+
+        createLeagueError(leagueName, message) {
+            return `
+                <div class="league-group">
+                    <div class="league-header">${leagueName}</div>
+                    <div class="league-content">
+                        <div class="error">⚠️ ${message}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        updateTimestamp() {
+            this.updatedElement.textContent =
+                `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        startAutoRefresh() {
+            // Refresh every 10 minutes
+            setInterval(() => {
+                this.fetchStandings();
+            }, 600000);
+        }
+
+        init() {
+            this.fetchStandings();
+            this.startAutoRefresh();
+        }
     }
 
-    // Initial + refresh every 1 min
-    fetchSportsData();
-    setInterval(fetchSportsData, 60000);
+    // Initialize when page loads
+    const standingsManager = new FootballStandingsManager();
+
+    document.addEventListener('DOMContentLoaded', () => {
+        standingsManager.init();
+    });
+
 </script>
 
 <script src="../js/viewer-login.js"></script>
