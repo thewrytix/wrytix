@@ -428,6 +428,11 @@
 
     }
 
+    .top-left a{
+        font-size: var(--font-size-xl); /* Slightly smaller text */
+
+    }
+
     #forex-rates {
         display: flex;
         justify-content: flex-end;
