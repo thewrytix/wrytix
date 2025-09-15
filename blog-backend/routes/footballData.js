@@ -1,22 +1,34 @@
 const express = require("express");
 const router = express.Router();
-const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9d";
+const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9";
 
 let fetch;
 (async () => {
     fetch = (await import("node-fetch")).default;
 })();
 
+// In-memory cache
+const cache = {};       // { leagueId: data }
+const cacheTime = {};   // { leagueId: timestamp }
+
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
+
 // GET /standings/:leagueId
 router.get("/:leagueId", async (req, res) => {
+    const leagueId = req.params.leagueId;
+    const now = Date.now();
+
+    // Serve from cache if available and not expired
+    if (cache[leagueId] && (now - cacheTime[leagueId]) < CACHE_DURATION) {
+        return res.json(cache[leagueId]);
+    }
+
+    // Ensure fetch is loaded
+    if (!fetch) {
+        return res.status(500).json({ error: "Fetch not loaded yet" });
+    }
+
     try {
-        const leagueId = req.params.leagueId;
-
-        // Ensure fetch is loaded
-        if (!fetch) {
-            return res.status(500).json({ error: "Fetch not loaded yet" });
-        }
-
         const response = await fetch(
             `https://api.football-data.org/v4/competitions/${leagueId}/standings`,
             {
@@ -33,6 +45,11 @@ router.get("/:leagueId", async (req, res) => {
         }
 
         const data = await response.json();
+
+        // Cache the result
+        cache[leagueId] = data;
+        cacheTime[leagueId] = now;
+
         res.json(data);
     } catch (err) {
         console.error("Standings fetch error:", err);
