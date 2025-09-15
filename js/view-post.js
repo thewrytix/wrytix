@@ -58,6 +58,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         <!-- Sidebar -->
         <aside class="sidebar">
+        
+        <div class="sidebar-section ad-sidebar">
+                <div class="ad-slider-wrapper" id="adSliderWrapper">
+                    <div class="ad-slider" id="adSlider">
+                        <p>Loading ads...</p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="sidebar-section" id="related-posts">
                 <h3>Related Posts </h3>
                 <ul id="related-list"></ul>
