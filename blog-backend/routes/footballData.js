@@ -1,59 +1,65 @@
 const express = require("express");
 const router = express.Router();
+const fetch = (...args) => import("node-fetch").then(mod => mod.default(...args));
+
 const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9";
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
 
-let fetch;
-(async () => {
-    fetch = (await import("node-fetch")).default;
-})();
-
-// In-memory cache per league
-// Structure: { leagueId: { data: ..., timestamp: ... } }
+// In-memory cache object for all leagues
 const cache = {};
-const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
+
+// Helper: safely parse JSON
+async function safeJson(res) {
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return await res.json();
+    } else {
+        const text = await res.text();
+        console.error("⚠️ Non-JSON response from Football API:", text);
+        return null;
+    }
+}
 
 // GET /standings/:leagueId
 router.get("/:leagueId", async (req, res) => {
     const leagueId = req.params.leagueId;
     const now = Date.now();
 
-    // Serve from cache if available and not expired
-    if (cache[leagueId] && (now - cache[leagueId].timestamp < CACHE_DURATION)) {
+    // Serve from cache if valid
+    if (cache[leagueId] && now - cache[leagueId].timestamp < CACHE_DURATION) {
         return res.json(cache[leagueId].data);
-    }
-
-    // Ensure fetch is loaded
-    if (!fetch) {
-        return res.status(500).json({ error: "Fetch not loaded yet" });
     }
 
     try {
         const response = await fetch(
             `https://api.football-data.org/v4/competitions/${leagueId}/standings`,
             {
-                headers: {
-                    "X-Auth-Token": API_KEY,
-                },
+                headers: { "X-Auth-Token": API_KEY },
             }
         );
 
-        if (!response.ok) {
+        const data = await safeJson(response);
+
+        if (!response.ok || !data) {
             return res
-                .status(response.status)
-                .json({ error: `Football API error: ${response.statusText}` });
+                .status(response.status || 500)
+                .json({ error: `Football API error: ${response.statusText || "No data"}` });
         }
 
-        const data = await response.json();
-
-        // Cache the result
+        // Cache the fresh data
         cache[leagueId] = {
             data,
-            timestamp: now
+            timestamp: now,
         };
 
         res.json(data);
     } catch (err) {
-        console.error("Standings fetch error:", err);
+        console.error(`Standings fetch error for ${leagueId}:`, err);
+        // If cached data exists, serve it even if API fails
+        if (cache[leagueId]) {
+            console.warn(`Serving cached data for ${leagueId} due to API failure`);
+            return res.json(cache[leagueId].data);
+        }
         res.status(500).json({ error: err.message });
     }
 });
