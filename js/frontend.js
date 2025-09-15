@@ -611,7 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadSidebarAds() {
     // Get category from the ad container, default to "business"
     const adContainer = document.getElementById("adSlider");
-    const category = adContainer?.dataset.category || "view-post";
+    const category = adContainer?.dataset.category || "homepage";
 
     try {
         const res = await fetch("https://wrytix.onrender.com/ads");
