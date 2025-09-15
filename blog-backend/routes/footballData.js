@@ -1,13 +1,21 @@
 const express = require("express");
-const fetch = import("node-fetch");
 const router = express.Router();
+const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9d";
 
-const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9d"; // football-data.org key
+let fetch;
+(async () => {
+    fetch = (await import("node-fetch")).default;
+})();
 
 // GET /standings/:leagueId
 router.get("/:leagueId", async (req, res) => {
     try {
         const leagueId = req.params.leagueId;
+
+        // Ensure fetch is loaded
+        if (!fetch) {
+            return res.status(500).json({ error: "Fetch not loaded yet" });
+        }
 
         const response = await fetch(
             `https://api.football-data.org/v4/competitions/${leagueId}/standings`,
