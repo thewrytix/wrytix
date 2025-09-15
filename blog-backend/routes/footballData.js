@@ -7,10 +7,9 @@ let fetch;
     fetch = (await import("node-fetch")).default;
 })();
 
-// In-memory cache
-const cache = {};       // { leagueId: data }
-const cacheTime = {};   // { leagueId: timestamp }
-
+// In-memory cache per league
+// Structure: { leagueId: { data: ..., timestamp: ... } }
+const cache = {};
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 
 // GET /standings/:leagueId
@@ -19,8 +18,8 @@ router.get("/:leagueId", async (req, res) => {
     const now = Date.now();
 
     // Serve from cache if available and not expired
-    if (cache[leagueId] && (now - cacheTime[leagueId]) < CACHE_DURATION) {
-        return res.json(cache[leagueId]);
+    if (cache[leagueId] && (now - cache[leagueId].timestamp < CACHE_DURATION)) {
+        return res.json(cache[leagueId].data);
     }
 
     // Ensure fetch is loaded
@@ -47,8 +46,10 @@ router.get("/:leagueId", async (req, res) => {
         const data = await response.json();
 
         // Cache the result
-        cache[leagueId] = data;
-        cacheTime[leagueId] = now;
+        cache[leagueId] = {
+            data,
+            timestamp: now
+        };
 
         res.json(data);
     } catch (err) {
