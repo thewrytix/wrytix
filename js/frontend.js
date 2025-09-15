@@ -154,15 +154,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch("https://wrytix.onrender.com/api/forex");
             const data = await response.json();
 
-            document.getElementById("usd-rate").textContent = `💵 USD/GHC: ${data.USD.toFixed(2)}`;
-            document.getElementById("eur-rate").textContent = `💶 EUR/GHC: ${data.EUR.toFixed(2)}`;
-            document.getElementById("gbp-rate").textContent = `💷 GBP/GHC: ${data.GBP.toFixed(2)}`;
+            const usdEl = document.getElementById("usd-rate");
+            const eurEl = document.getElementById("eur-rate");
+            const gbpEl = document.getElementById("gbp-rate");
+
+            if (usdEl) usdEl.textContent = `💵 USD/GHC: ${data.USD.toFixed(2)}`;
+            if (eurEl) eurEl.textContent = `💶 EUR/GHC: ${data.EUR.toFixed(2)}`;
+            if (gbpEl) gbpEl.textContent = `💷 GBP/GHC: ${data.GBP.toFixed(2)}`;
+
         } catch (error) {
             console.error("Error fetching forex rates from backend:", error);
         }
     }
-
-    fetchForexRates();
 
     // Run once page loads
     document.addEventListener("DOMContentLoaded", fetchForexRates);
@@ -170,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Refresh every 5 minutes
     setInterval(fetchForexRates, 300000);
 })();
+
 
 
 // Back to the top
