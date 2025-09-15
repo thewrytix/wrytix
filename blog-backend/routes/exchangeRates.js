@@ -6,7 +6,7 @@ const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args)
 let cache = { data: null, timestamp: 0 };
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour, adjust if needed
 
-router.get('/forex', async (req, res) => {
+router.get('/api/forex', async (req, res) => {
     const now = Date.now();
 
     if (cache.data && now - cache.timestamp < CACHE_DURATION) {
