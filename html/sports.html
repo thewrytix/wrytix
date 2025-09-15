@@ -349,6 +349,8 @@
             this.updatedElement = document.getElementById("sports-updated");
             this.currentIndex = 0;
             this.standingsData = [];
+            this.touchStartX = 0;
+            this.touchEndX = 0;
         }
 
         async fetchStandings() {
@@ -424,6 +426,7 @@
 
             this.container.innerHTML = html;
             this.addDotListeners();
+            this.addSwipeListeners();
         }
 
         renderDots() {
@@ -442,6 +445,32 @@
                     this.renderLeague(this.currentIndex);
                 });
             });
+        }
+
+        addSwipeListeners() {
+            const leagueGroup = this.container.querySelector('.league-group');
+            if (!leagueGroup) return;
+
+            leagueGroup.addEventListener('touchstart', e => {
+                this.touchStartX = e.changedTouches[0].screenX;
+            });
+
+            leagueGroup.addEventListener('touchend', e => {
+                this.touchEndX = e.changedTouches[0].screenX;
+                this.handleSwipe();
+            });
+        }
+
+        handleSwipe() {
+            const deltaX = this.touchEndX - this.touchStartX;
+            if (Math.abs(deltaX) > 50) { // swipe threshold
+                if (deltaX < 0) { // swipe left
+                    this.currentIndex = (this.currentIndex + 1) % this.leagues.length;
+                } else { // swipe right
+                    this.currentIndex = (this.currentIndex - 1 + this.leagues.length) % this.leagues.length;
+                }
+                this.renderLeague(this.currentIndex);
+            }
         }
 
         createLeagueError(name, message) {
@@ -467,8 +496,10 @@
         }
     }
 
-    const standingsManager = new FootballStandingsManager();
-    document.addEventListener('DOMContentLoaded', () => standingsManager.init());
+    document.addEventListener('DOMContentLoaded', () => {
+        const standingsManager = new FootballStandingsManager();
+        standingsManager.init();
+    });
 
 </script>
 
