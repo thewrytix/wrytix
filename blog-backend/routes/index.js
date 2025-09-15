@@ -22,6 +22,6 @@ router.use(adRoutes);
 router.use(commentRoutes);
 router.use(adminRoutes); // /files/:id becomes top-level
 router.use(marketDataRoutes);
-router.use(footballDataRoutes);
+router.use('/standings', footballDataRoutes);
 
 module.exports = router;
