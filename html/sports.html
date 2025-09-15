@@ -337,7 +337,7 @@
             for (const league of this.leagues) {
                 try {
                     const response = await fetch(
-                        `https://wrytix.onrender.com/standings/${league.id}`
+                        `https://wrytix.onrender.com/:leagueId}`
                     );
 
                     if (!response.ok) {
