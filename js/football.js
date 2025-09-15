@@ -47,7 +47,7 @@ class FootballStandingsManager {
         if (!standings.length) {
             html += this.createLeagueError(league.name, data.error || 'No data available');
         } else {
-            const tableRows = standings.slice(0, 10).map((team, i) => `
+            const tableRows = standings.slice(0, 20).map((team, i) => `
                 <tr ${i < 4 ? 'style="background: #f0f8f0;"' : ''}>
                     <td class="position">${team.position}</td>
                     <td class="team-name">
