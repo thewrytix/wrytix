@@ -429,7 +429,7 @@
     }
 
     .top-left a{
-        font-size: var(--font-size-xl); /* Slightly smaller text */
+        font-size: var(--font-size-lg); /* Slightly smaller text */
 
     }
 
