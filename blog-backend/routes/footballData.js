@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const fetch = (...args) => import("node-fetch").then(mod => mod.default(...args));
 
-const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9d";
+const API_KEY = "30924e040f3b4bbea4219464d1c8e788";
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
 
 // In-memory cache object for all leagues
