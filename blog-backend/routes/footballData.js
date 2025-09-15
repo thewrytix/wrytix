@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = require("node-fetch");
+const fetch = import("node-fetch");
 const router = express.Router();
 
 const API_KEY = "6f9bb75e7cd942f49e24fb72185bbd9d"; // football-data.org key
