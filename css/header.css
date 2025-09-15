@@ -29,6 +29,10 @@
 
 }
 
+.top-left a{
+    font-size: var(--font-size-md);
+}
+
 .top-right {
     max-width: 35%; /* Limit width */
     justify-content: flex-end;
