@@ -397,8 +397,11 @@ img {
     color: var(--neutral-color);
     background: var(--secondary-color);
     margin-bottom: 10px;
+    border-radius: 5px  5px 1px 1px ;
     position: relative;
+    padding: 6px;
 }
+
 
 
 .sidebar-section ul {
