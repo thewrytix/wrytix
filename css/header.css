@@ -420,6 +420,9 @@
         margin-left: auto;
     }
 
+    .top-left #date-time {
+        display: none;
+    }
     .top-right {
         display: none;
 
