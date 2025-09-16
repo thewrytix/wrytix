@@ -178,6 +178,10 @@
     color: var(--neutral-color);
 }
 
+.main-nav a img{
+    width: 45px;
+}
+
 .main-nav .nav-links {
     display: flex;
     gap: 20px;
