@@ -180,7 +180,7 @@ loadSidebarAds();
 (function () {
     const app = {
         refreshInterval: 60000,
-        prevPrices: {},
+        prevPrices: {}, 
 
         init() {
             this.fetchMarketData();

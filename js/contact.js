@@ -23,7 +23,7 @@ form.addEventListener('submit', async function (e) {
 
 // Ads Show
 async function loadSidebarAds() {
-    const articleCategory = document.querySelector("article")?.dataset.category || "business";
+    const articleCategory = document.querySelector("article")?.dataset.category || "contact";
     try {
         const res = await fetch("https://wrytix.onrender.com/ads");
         const ads = await res.json();
