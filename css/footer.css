@@ -28,8 +28,9 @@ footer {
 .footer-logo {
     max-width: 150px;
     margin-bottom: 15px;
-    color: var(--neutral-color);
+    width: 45px;
 }
+
 
 /* Social icons under logo */
 .footer-logo-social .social-icons {
