@@ -9,13 +9,9 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
-.about-section h1{
-    color: var(--primary-color);
-}
-.about-section h2 {
-    color: #333;
+.about-section h2{
+    color: var(--text-color);
     margin-top: 1.5rem;
-
 }
 
 .about-section p {
