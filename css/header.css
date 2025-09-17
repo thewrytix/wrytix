@@ -234,6 +234,10 @@
     font-weight: var(--font-weight-bold);
 }
 
+.main-nav .viewer span{
+    text-transform: capitalize;
+}
+
 .main-nav .login-modal{
     display: none;
     position: fixed;
