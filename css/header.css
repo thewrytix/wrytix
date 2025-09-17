@@ -431,7 +431,7 @@
         display: inline-flex;
         justify-content: space-between;
         align-items: center;
-        gap: 4rem;
+        gap: 6rem;
         max-width: 25%;
         margin-left: auto;
     }
