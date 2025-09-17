@@ -18,7 +18,7 @@ const router = express.Router();
 
 
 router.use(authRoutes);
-router.use('/posts', postRoutes);
+router.use(postRoutes);
 router.use(userRoutes);
 router.use(adRoutes);
 router.use(commentRoutes);
