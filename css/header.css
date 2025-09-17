@@ -178,8 +178,19 @@
     color: var(--neutral-color);
 }
 
+.main-nav a{
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
 .main-nav a img{
     width: 45px;
+}
+
+.main-nav a span{
+    color: var(--neutral-color);
 }
 
 .main-nav .nav-links {
