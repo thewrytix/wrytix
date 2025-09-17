@@ -32,10 +32,6 @@ const createComment = async (req, res) => {
             { upsert: true }
         );
 
-        await logAction(username, 'comment-created', slug, {
-            commentLength: comment.length
-        });
-
         res.status(201).json({ message: 'Comment saved', comment: newComment });
     } catch (err) {
         console.error("Error writing comments:", err);
