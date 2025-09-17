@@ -429,8 +429,9 @@
 
     .top-left {
         display: inline-flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
+        gap: 4rem;
         max-width: 25%;
         margin-left: auto;
     }
