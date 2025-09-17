@@ -24,13 +24,23 @@ footer {
     min-width: 220px;
 }
 
-/* Logo image */
-.footer-logo {
-    max-width: 150px;
-    margin-bottom: 15px;
+
+.footer-logo-social a{
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-lg);
+}
+
+.footer-logo-social  a img{
     width: 45px;
 }
 
+.footer-logo-social a span{
+    color: var(--neutral-color);
+}
 
 /* Social icons under logo */
 .footer-logo-social .social-icons {
