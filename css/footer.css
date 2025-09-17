@@ -40,6 +40,7 @@ footer {
 
 .footer-logo-social a span{
     color: var(--neutral-color);
+    text-transform: uppercase;
 }
 
 /* Social icons under logo */
