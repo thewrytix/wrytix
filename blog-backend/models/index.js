@@ -135,6 +135,18 @@ const LogSchema = new Schema({
     requestedBy: { type: String },
 });
 
+
+// Category Schema
+const CategorySchema = new Schema({
+    id: { type: String, required: true, unique: true }, // UUID or custom ID
+    name: { type: String, required: true, unique: true }, // category name
+    editor: { type: String, required: true }, // editor ID or username
+    authors: { type: [String], default: [] }, // list of author IDs or usernames
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date },
+});
+
+
 module.exports = {
     User: mongoose.model('User', UserSchema),
     Post: mongoose.model('Post', PostSchema),
@@ -144,4 +156,5 @@ module.exports = {
     PendingDeletion: mongoose.model('PendingDeletion', PendingDeletionSchema),
     PostSubmission: mongoose.model('PostSubmission', PostSubmissionSchema),
     Log: mongoose.model('Log', LogSchema),
+    Category: mongoose.model('Category', CategorySchema) // ✅ new Category model
 };
