@@ -149,7 +149,7 @@
 
     async function fetchCategories(){
         try {
-            const res = await fetch(`${API_BASE}/categories`, { credentials: 'include' });
+            const res = await fetch(`${API_BASE}/category`, { credentials: 'include' });
             if (!res.ok) throw new Error();
             const categories = await res.json();
             renderCategories(categories);
@@ -195,7 +195,7 @@
             authors: Array.from(authorsSelect.selectedOptions).map(o => o.value)
         };
         try {
-            const url = id ? `${API_BASE}/categories/${id}` : `${API_BASE}/categories`;
+            const url = id ? `${API_BASE}/category/${id}` : `${API_BASE}/category`;
             const method = id ? 'PUT' : 'POST';
             const res = await fetch(url, {
                 method, credentials: 'include',
@@ -222,7 +222,7 @@
         const action = btn.dataset.action;
         if (action === 'edit') {
             try {
-                const res = await fetch(`${API_BASE}/categories/${id}`, { credentials: 'include' });
+                const res = await fetch(`${API_BASE}/category/${id}`, { credentials: 'include' });
                 if (!res.ok) throw new Error();
                 const cat = await res.json();
                 categoryId.value = cat.id;
@@ -240,7 +240,7 @@
         } else if (action === 'delete') {
             if (!confirm('Are you sure you want to delete this category?')) return;
             try {
-                const res = await fetch(`${API_BASE}/categories/${id}`, { method: 'DELETE', credentials: 'include' });
+                const res = await fetch(`${API_BASE}/category/${id}`, { method: 'DELETE', credentials: 'include' });
                 if (!res.ok) throw new Error();
                 showSuccess('Category deleted');
                 fetchCategories();
