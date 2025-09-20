@@ -27,7 +27,7 @@ app.get('/health', (req, res) => {
 // Ping endpoint
 app.get('/ping', (req, res) => {
     logAction(req.session?.user?.username, 'ping', 'admin');
-    res.json({ message: 'Backend is alive!' });
+    res.json({ message: 'Backend is alive!!!' });
 });
 
 // Start server after DB connection
