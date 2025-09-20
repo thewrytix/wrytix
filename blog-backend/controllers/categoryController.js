@@ -12,7 +12,6 @@ module.exports = {
                 const authors = users.filter(u => (cat.authors || []).includes(u._id.toString()));
                 return {
                     ...cat,
-                    id: cat._id,
                     editorName: editor ? editor.fullname || editor.username : 'N/A',
                     authors: authors.map(a => ({ id: a._id, name: a.fullname || a.username }))
                 };
@@ -27,7 +26,8 @@ module.exports = {
 
     getById: async (req, res) => {
         try {
-            const cat = await Category.findById(req.params.id).lean();
+            // Use findOne with custom id field instead of findById
+            const cat = await Category.findOne({ id: req.params.id }).lean();
             if (!cat) {
                 return res.status(404).json({ error: 'Category not found' });
             }
@@ -36,7 +36,6 @@ module.exports = {
             const authors = users.filter(u => (cat.authors || []).includes(u._id.toString()));
             res.json({
                 ...cat,
-                id: cat._id,
                 editorName: editor ? editor.fullname || editor.username : 'N/A',
                 authors: authors.map(a => ({ id: a._id, name: a.fullname || a.username }))
             });
@@ -65,15 +64,19 @@ module.exports = {
                 }
             }
 
+            // Generate a custom ID (you may want to use UUID or a different method)
+            const customId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+
             const newCat = await Category.create({
+                id: customId, // Set the custom string ID
                 name: name.trim(),
                 editor,
                 authors: authors || [],
                 updatedAt: new Date()
             });
 
-            logAction(req.user?._id || 'unknown', 'create_category', `Created category ${newCat._id}`);
-            res.status(201).json({ ...newCat.toObject(), id: newCat._id });
+            logAction(req.user?._id || 'unknown', 'create_category', `Created category ${newCat.id}`);
+            res.status(201).json(newCat.toObject());
         } catch (err) {
             console.error('Error creating category:', err);
             res.status(500).json({ error: 'Failed to create category', details: err.message });
@@ -99,8 +102,9 @@ module.exports = {
                 }
             }
 
-            const updated = await Category.findByIdAndUpdate(
-                req.params.id,
+            // Use findOneAndUpdate with custom id field
+            const updated = await Category.findOneAndUpdate(
+                { id: req.params.id }, // Query by custom id field
                 { name: name.trim(), editor, authors: authors || [], updatedAt: new Date() },
                 { new: true, runValidators: true }
             ).lean();
@@ -110,7 +114,7 @@ module.exports = {
             }
 
             logAction(req.user?._id || 'unknown', 'update_category', `Updated category ${req.params.id}`);
-            res.json({ ...updated, id: updated._id });
+            res.json(updated);
         } catch (err) {
             console.error('Error updating category:', err);
             res.status(500).json({ error: 'Failed to update category', details: err.message });
@@ -119,12 +123,13 @@ module.exports = {
 
     remove: async (req, res) => {
         try {
-            const deleted = await Category.findByIdAndDelete(req.params.id);
+            // Use findOneAndDelete with custom id field
+            const deleted = await Category.findOneAndDelete({ id: req.params.id });
             if (!deleted) {
                 return res.status(404).json({ error: 'Category not found' });
             }
             logAction(req.user?._id || 'unknown', 'delete_category', `Deleted category ${req.params.id}`);
-            res.json({ message: 'Category deleted', deleted: { ...deleted.toObject(), id: deleted._id } });
+            res.json({ message: 'Category deleted', deleted: deleted.toObject() });
         } catch (err) {
             console.error('Error deleting category:', err);
             res.status(500).json({ error: 'Failed to delete category', details: err.message });
