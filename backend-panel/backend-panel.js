@@ -42,6 +42,8 @@
             '/backend-panel/admin-panel/post-management/post-dashboard',
             '/backend-panel/admin-panel/post-management/posts-list.html',
             '/backend-panel/admin-panel/post-management/posts-list',
+            '/backend-panel/admin-panel/post-management/manage-category.html',
+            '/backend-panel/admin-panel/post-management/manage-category',
             '/backend-panel/admin-panel/post-management/add-post.html',
             '/backend-panel/admin-panel/post-management/add-post',
             '/backend-panel/admin-panel/post-management/edit-post.html',
