@@ -49,20 +49,36 @@ const createAd = async (req, res) => {
 };
 
 const getAds = async (req, res) => {
+    console.log('=== getAds function called ===');
+    console.log('req exists:', !!req);
+    console.log('res exists:', !!res);
+    console.log('Ad model available:', !!Ad);
+
     try {
+        console.log('About to call readAds...');
         const ads = await readAds();
+        console.log('readAds completed successfully');
+        console.log('Ads returned:', Array.isArray(ads) ? ads.length : 'Not an array');
+        console.log('First ad (if exists):', ads[0] ? ads[0].id : 'No ads found');
+
         if (res) {
+            console.log('Sending JSON response...');
             res.json(ads);
+            console.log('Response sent successfully');
         } else {
-            // Called from interval - no response, just return data
+            console.log('No res object - returning ads directly');
             return ads;
         }
     } catch (e) {
-        console.error('Error fetching ads:', e);
+        console.error('=== ERROR in getAds ===');
+        console.error('Error type:', e.constructor.name);
+        console.error('Error message:', e.message);
+        console.error('Error stack:', e.stack);
+
         if (res) {
-            res.status(500).json({ error: 'Failed to fetch ads' });
+            console.log('Sending error response...');
+            res.status(500).json({ error: 'Failed to fetch ads', details: e.message });
         } else {
-            // For interval, just log - don't throw
             console.error('Ad auto-refresh failed:', e);
         }
     }

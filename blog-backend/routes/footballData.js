@@ -40,7 +40,7 @@ router.get("/:leagueId", async (req, res) => {
 
         const data = await safeJson(response);
 
-        console.log(`Football API response for ${leagueId}:`, data);
+
 
 
         if (!response.ok || !data) {

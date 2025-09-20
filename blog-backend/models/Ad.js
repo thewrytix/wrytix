@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+console.log('=== Loading Ad model ===');
+console.log('Mongoose available:', !!mongoose);
+
 const AdSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     type: { type: String, enum: ['image', 'video', 'embed', 'text'], required: true },
@@ -17,4 +20,26 @@ const AdSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Ad', AdSchema);
+console.log('AdSchema created successfully');
+
+try {
+    const AdModel = mongoose.model('Ad', AdSchema);
+    console.log('Ad model created successfully');
+    console.log('Ad model type:', typeof AdModel);
+    module.exports = AdModel;
+} catch (error) {
+    console.error('=== ERROR creating Ad model ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+
+    // Try the safe pattern if direct creation fails
+    console.log('Trying safe pattern...');
+    try {
+        const SafeAdModel = mongoose.models.Ad || mongoose.model('Ad', AdSchema);
+        console.log('Safe Ad model created successfully');
+        module.exports = SafeAdModel;
+    } catch (safeError) {
+        console.error('Safe pattern also failed:', safeError.message);
+        module.exports = null;
+    }
+}
