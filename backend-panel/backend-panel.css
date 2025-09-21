@@ -435,7 +435,7 @@ form select:focus {
 }
 
 form button {
-    background-color: var(--primary-color);
+    background-color: var(--status-green);
     border: none;
     padding: 12px 24px;
     color: var(--neutral-color);
