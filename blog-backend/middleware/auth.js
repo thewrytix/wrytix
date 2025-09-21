@@ -1,3 +1,4 @@
+const { Role } = require('../models'); // Add this import
 const { logAction } = require('../utils/logger');
 
 const verifySession = (req, res, next) => {
@@ -55,4 +56,149 @@ const requireEditorOrAdmin = (req, res, next) => {
     return res.status(403).json({ error: 'Forbidden' });
 };
 
-module.exports = { verifySession, requireRole, requireAdmin, requireLogin, requireEditorOrAdmin };
+// Add missing requireHierarchyLevel function
+const requireHierarchyLevel = (minLevel) => async (req, res, next) => {
+    const user = req.session?.user;
+    if (!user) {
+        await logAction('anonymous', 'access-denied', req.path, {
+            reason: 'No session',
+            ip: req.ip
+        });
+        return res.status(401).json({ message: 'Unauthorized: No session found' });
+    }
+
+    if (!Role) {
+        console.error('Role model is undefined');
+        await logAction(user.username, 'access-denied', req.path, {
+            reason: 'Role model undefined',
+            userRole: user.role
+        });
+        return res.status(500).json({ message: 'Server error: Role model unavailable' });
+    }
+
+    try {
+        const role = await Role.findOne({ name: user.role }).lean();
+        if (!role || role.hierarchyLevel < minLevel) {
+            await logAction(user.username, 'access-denied', req.path, {
+                reason: 'Insufficient hierarchy level',
+                requiredLevel: minLevel,
+                userRole: user.role,
+                userLevel: role?.hierarchyLevel
+            });
+            return res.status(403).json({ message: 'Forbidden: Insufficient role level' });
+        }
+        req.user = user;
+        next();
+    } catch (err) {
+        console.error('Error in requireHierarchyLevel:', err);
+        await logAction(user.username, 'access-denied', req.path, {
+            reason: 'Error checking hierarchy level',
+            error: err.message,
+            userRole: user.role
+        });
+        return res.status(500).json({ message: 'Server error: Failed to check hierarchy level' });
+    }
+};
+
+const requireSuperAdmin = async (req, res, next) => {
+    const user = req.session?.user;
+    if (!user) {
+        await logAction('anonymous', 'access-denied', req.path, {
+            reason: 'No session',
+            ip: req.ip
+        });
+        return res.status(401).json({ message: 'Unauthorized: No session found' });
+    }
+
+    try {
+        const role = await Role.findOne({ name: user.role }).lean();
+        if (!role || role.hierarchyLevel < 7) {
+            await logAction(user.username, 'access-denied', req.path, {
+                reason: 'Not super administrator',
+                userRole: user.role,
+                requiredLevel: 7
+            });
+            return res.status(403).json({ message: 'Forbidden: Super Administrator access required' });
+        }
+        req.user = user;
+        next();
+    } catch (err) {
+        console.error('Error in requireSuperAdmin:', err);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Track-specific middleware
+const requireContentRole = (minLevel) => async (req, res, next) => {
+    const user = req.session?.user;
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const userRole = await Role.findOne({ name: user.role });
+    if (!userRole) {
+        return res.status(403).json({ message: 'Invalid role' });
+    }
+
+    // Content track or platform track users
+    const hasAccess = userRole.track === 'content' ||
+        userRole.track === 'platform' ||
+        userRole.hierarchyLevel >= 5;
+
+    if (!hasAccess || userRole.hierarchyLevel < minLevel) {
+        await logAction(user.username, 'access-denied', req.path, {
+            reason: 'Insufficient content track access',
+            userRole: user.role,
+            requiredLevel: minLevel
+        });
+        return res.status(403).json({
+            message: `Access denied: Requires content track access at level ${minLevel}`
+        });
+    }
+
+    req.user = user;
+    next();
+};
+
+const requireAdRole = (minLevel) => async (req, res, next) => {
+    const user = req.session?.user;
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const userRole = await Role.findOne({ name: user.role });
+    if (!userRole) {
+        return res.status(403).json({ message: 'Invalid role' });
+    }
+
+    // Advertising track or platform track users
+    const hasAccess = userRole.track === 'advertising' ||
+        userRole.track === 'platform' ||
+        userRole.hierarchyLevel >= 5;
+
+    if (!hasAccess || userRole.hierarchyLevel < minLevel) {
+        await logAction(user.username, 'access-denied', req.path, {
+            reason: 'Insufficient advertising track access',
+            userRole: user.role,
+            requiredLevel: minLevel
+        });
+        return res.status(403).json({
+            message: `Access denied: Requires advertising track access at level ${minLevel}`
+        });
+    }
+
+    req.user = user;
+    next();
+};
+
+module.exports = {
+    verifySession,
+    requireRole,
+    requireAdmin,
+    requireLogin,
+    requireEditorOrAdmin,
+    requireHierarchyLevel,  // Add this
+    requireSuperAdmin,
+    requireContentRole,
+    requireAdRole           // Complete this
+};
