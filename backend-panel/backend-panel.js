@@ -24,6 +24,8 @@
             '/backend-panel/admin-panel/user-management/user-dashboard',
             '/backend-panel/admin-panel/user-management/users-list.html',
             '/backend-panel/admin-panel/user-management/users-list',
+            '/backend-panel/admin-panel/user-management/manage-roles.html',
+            '/backend-panel/admin-panel/user-management/manage-roles',
             '/backend-panel/admin-panel/user-management/add-user.html',
             '/backend-panel/admin-panel/user-management/add-user',
             '/backend-panel/admin-panel/user-management/delete-user.html',
