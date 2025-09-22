@@ -20,6 +20,7 @@ const readCategories = async () => {
     }
 };
 
+
 const create = async (req, res) => {
     try {
         const { name, editor, authors } = req.body;
