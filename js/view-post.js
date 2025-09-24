@@ -165,25 +165,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function setupShareFeatures() {
-        // Share toggle functionality
-        const shareToggle = document.querySelector('.share-toggle');
-        if (shareToggle) {
-            shareToggle.addEventListener('click', function() {
-                const shareHidden = document.querySelector('.share-hidden');
-                shareHidden.classList.toggle('hidden');
-                shareHidden.classList.toggle('active');
-            });
-        }
-
-        // Copy URL functionality
-        const copyButton = document.querySelector('.copy-url');
-        if (copyButton) {
-            copyButton.addEventListener('click', function() {
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    alert('Link copied to clipboard!');
-                });
-            });
-        }
+        // Share functionality is now handled by post-share-icons.js
+        // This function can be empty or removed entirely
+        console.log("Share features will be initialized by post-share-icons.js");
     }
 
     function setupCommentSystem() {

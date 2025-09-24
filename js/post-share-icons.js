@@ -1,102 +1,62 @@
-// Function to wait for elements to exist
-function waitForElements(selectors, timeout = 5000) {
-    return new Promise((resolve, reject) => {
-        const startTime = Date.now();
+// Function to wait for elements to be available
+function waitForShareElements() {
+    return new Promise((resolve) => {
+        const checkElements = () => {
+            const shareToggle = document.querySelector(".share-toggle");
+            const shareHidden = document.querySelector(".share-hidden");
+            const copyBtn = document.querySelector(".copy-url");
 
-        function checkElements() {
-            const elements = {};
-            let allFound = true;
-
-            for (const [key, selector] of Object.entries(selectors)) {
-                elements[key] = document.querySelector(selector);
-                if (!elements[key]) {
-                    allFound = false;
-                    break;
-                }
-            }
-
-            if (allFound) {
-                resolve(elements);
-            } else if (Date.now() - startTime > timeout) {
-                reject(new Error('Elements not found within timeout'));
+            if (shareToggle && shareHidden && copyBtn) {
+                resolve({ shareToggle, shareHidden, copyBtn });
             } else {
+                // Check again after 100ms
                 setTimeout(checkElements, 100);
             }
-        }
-
+        };
         checkElements();
     });
 }
 
-// Wait for DOM and then for dynamic elements
-document.addEventListener("DOMContentLoaded", function () {
-    // Wait for the share elements to be created dynamically
-    waitForElements({
-        shareToggle: '.share-toggle',
-        shareHidden: '.share-hidden',
-        copyBtn: '.copy-url'
-    }).then(elements => {
-        const { shareToggle, shareHidden, copyBtn } = elements;
+// Initialize share functionality when DOM is ready
+document.addEventListener("DOMContentLoaded", async function () {
+    // Wait for the share elements to be created by view-post.js
+    const { shareToggle, shareHidden, copyBtn } = await waitForShareElements();
 
-        // Toggle the hidden share options
-        shareToggle.addEventListener("click", function () {
-            shareHidden.classList.toggle("active");
-            shareHidden.classList.remove("hidden"); // Ensure hidden class is removed
-        });
-
-        // Copy current page URL to clipboard
-        copyBtn.addEventListener("click", function () {
-            const url = window.location.href;
-
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(url).then(() => {
-                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = '<i class="fas fa-link"></i>';
-                    }, 1500);
-                }).catch(err => {
-                    console.error("Failed to copy: ", err);
-                    fallbackCopy(url, copyBtn);
-                });
-            } else {
-                fallbackCopy(url, copyBtn);
-            }
-        });
-
-        // Setup social share links
-        setupSocialShareLinks();
-
-    }).catch(err => {
-        console.error("Share elements not found:", err);
+    // Toggle the hidden share options
+    shareToggle.addEventListener("click", function () {
+        shareHidden.classList.toggle("active");
+        // Remove hidden class to show the elements
+        shareHidden.classList.remove("hidden");
     });
+
+    // Copy current page URL to clipboard
+    copyBtn.addEventListener("click", function () {
+        const url = window.location.href;
+
+        // Check if clipboard API is available (HTTPS required)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url).then(() => {
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+                }, 1500);
+            }).catch(err => {
+                console.error("Failed to copy: ", err);
+                // Fallback if clipboard fails
+                fallbackCopyText(url, copyBtn);
+            });
+        } else {
+            // Fallback for non-HTTPS or unsupported browsers
+            fallbackCopyText(url, copyBtn);
+        }
+    });
+
+    // Setup social media share links
+    setupSocialShareLinks();
 });
 
-function setupSocialShareLinks() {
-    // Wait a bit more for title to be set
-    setTimeout(() => {
-        const pageUrl = encodeURIComponent(window.location.href);
-        const pageTitle = encodeURIComponent(document.title);
-
-        const shareLinks = {
-            '.share-facebook': `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`,
-            '.share-twitter': `https://twitter.com/intent/tweet?url=${pageUrl}&text=${pageTitle}`,
-            '.share-linkedin': `https://www.linkedin.com/shareArticle?mini=true&url=${pageUrl}&title=${pageTitle}`,
-            '.share-whatsapp': `https://api.whatsapp.com/send?text=${pageTitle}%20${pageUrl}`,
-            '.share-telegram': `https://t.me/share/url?url=${pageUrl}&text=${pageTitle}`,
-            '.share-reddit': `https://www.reddit.com/submit?url=${pageUrl}&title=${pageTitle}`,
-            '.share-pinterest': `https://pinterest.com/pin/create/button/?url=${pageUrl}&description=${pageTitle}`
-        };
-
-        Object.entries(shareLinks).forEach(([selector, href]) => {
-            const element = document.querySelector(selector);
-            if (element) {
-                element.href = href;
-            }
-        });
-    }, 500);
-}
-
-function fallbackCopy(text, button) {
+// Fallback copy function for non-HTTPS sites
+function fallbackCopyText(text, button) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
@@ -112,9 +72,57 @@ function fallbackCopy(text, button) {
         setTimeout(() => {
             button.innerHTML = '<i class="fas fa-link"></i>';
         }, 1500);
+        alert('Link copied to clipboard!');
     } catch (err) {
         console.error('Fallback copy failed:', err);
+        alert('Could not copy link. Please copy manually: ' + text);
     }
 
     document.body.removeChild(textArea);
+}
+
+// Setup social media share links
+function setupSocialShareLinks() {
+    // Wait a bit for the page title to be set
+    setTimeout(() => {
+        const pageUrl = encodeURIComponent(window.location.href);
+        const pageTitle = encodeURIComponent(document.title);
+
+        // Update share links
+        const facebookShare = document.querySelector(".share-facebook");
+        if (facebookShare) {
+            facebookShare.href = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+        }
+
+        const twitterShare = document.querySelector(".share-twitter");
+        if (twitterShare) {
+            twitterShare.href = `https://twitter.com/intent/tweet?url=${pageUrl}&text=${pageTitle}`;
+        }
+
+        const linkedinShare = document.querySelector(".share-linkedin");
+        if (linkedinShare) {
+            linkedinShare.href = `https://www.linkedin.com/shareArticle?mini=true&url=${pageUrl}&title=${pageTitle}`;
+        }
+
+        const whatsappShare = document.querySelector(".share-whatsapp");
+        if (whatsappShare) {
+            whatsappShare.href = `https://api.whatsapp.com/send?text=${pageTitle}%20${pageUrl}`;
+        }
+
+        const telegramShare = document.querySelector(".share-telegram");
+        if (telegramShare) {
+            telegramShare.href = `https://t.me/share/url?url=${pageUrl}&text=${pageTitle}`;
+        }
+
+        const redditShare = document.querySelector(".share-reddit");
+        if (redditShare) {
+            redditShare.href = `https://www.reddit.com/submit?url=${pageUrl}&title=${pageTitle}`;
+        }
+
+        const pinterestShare = document.querySelector(".share-pinterest");
+        if (pinterestShare) {
+            pinterestShare.href = `https://pinterest.com/pin/create/button/?url=${pageUrl}&description=${pageTitle}`;
+        }
+
+    }, 1000); // Wait 1 second for title to be set
 }
