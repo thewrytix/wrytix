@@ -1,50 +1,120 @@
+// Function to wait for elements to exist
+function waitForElements(selectors, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
 
-document.addEventListener("DOMContentLoaded", function () {
-    const shareToggle = document.querySelector(".share-toggle");
-    const shareHidden = document.querySelector(".share-hidden");
-    const copyBtn = document.querySelector(".copy-url");
+        function checkElements() {
+            const elements = {};
+            let allFound = true;
 
-    // Toggle the hidden share options
-    shareToggle.addEventListener("click", function () {
-        shareHidden.classList.toggle("active");
+            for (const [key, selector] of Object.entries(selectors)) {
+                elements[key] = document.querySelector(selector);
+                if (!elements[key]) {
+                    allFound = false;
+                    break;
+                }
+            }
+
+            if (allFound) {
+                resolve(elements);
+            } else if (Date.now() - startTime > timeout) {
+                reject(new Error('Elements not found within timeout'));
+            } else {
+                setTimeout(checkElements, 100);
+            }
+        }
+
+        checkElements();
     });
+}
 
-    // Copy current page URL to clipboard
-    copyBtn.addEventListener("click", function () {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
-                copyBtn.innerHTML = '<i class="fas fa-link"></i>';
-            }, 1500);
-        }).catch(err => {
-            console.error("Failed to copy: ", err);
+// Wait for DOM and then for dynamic elements
+document.addEventListener("DOMContentLoaded", function () {
+    // Wait for the share elements to be created dynamically
+    waitForElements({
+        shareToggle: '.share-toggle',
+        shareHidden: '.share-hidden',
+        copyBtn: '.copy-url'
+    }).then(elements => {
+        const { shareToggle, shareHidden, copyBtn } = elements;
+
+        // Toggle the hidden share options
+        shareToggle.addEventListener("click", function () {
+            shareHidden.classList.toggle("active");
+            shareHidden.classList.remove("hidden"); // Ensure hidden class is removed
         });
+
+        // Copy current page URL to clipboard
+        copyBtn.addEventListener("click", function () {
+            const url = window.location.href;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-link"></i>';
+                    }, 1500);
+                }).catch(err => {
+                    console.error("Failed to copy: ", err);
+                    fallbackCopy(url, copyBtn);
+                });
+            } else {
+                fallbackCopy(url, copyBtn);
+            }
+        });
+
+        // Setup social share links
+        setupSocialShareLinks();
+
+    }).catch(err => {
+        console.error("Share elements not found:", err);
     });
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    const pageUrl = encodeURIComponent(window.location.href);
-    const pageTitle = encodeURIComponent(document.title);
+function setupSocialShareLinks() {
+    // Wait a bit more for title to be set
+    setTimeout(() => {
+        const pageUrl = encodeURIComponent(window.location.href);
+        const pageTitle = encodeURIComponent(document.title);
 
-    document.querySelector(".share-facebook").href =
-        `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+        const shareLinks = {
+            '.share-facebook': `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`,
+            '.share-twitter': `https://twitter.com/intent/tweet?url=${pageUrl}&text=${pageTitle}`,
+            '.share-linkedin': `https://www.linkedin.com/shareArticle?mini=true&url=${pageUrl}&title=${pageTitle}`,
+            '.share-whatsapp': `https://api.whatsapp.com/send?text=${pageTitle}%20${pageUrl}`,
+            '.share-telegram': `https://t.me/share/url?url=${pageUrl}&text=${pageTitle}`,
+            '.share-reddit': `https://www.reddit.com/submit?url=${pageUrl}&title=${pageTitle}`,
+            '.share-pinterest': `https://pinterest.com/pin/create/button/?url=${pageUrl}&description=${pageTitle}`
+        };
 
-    document.querySelector(".share-twitter").href =
-        `https://twitter.com/intent/tweet?url=${pageUrl}&text=${pageTitle}`;
+        Object.entries(shareLinks).forEach(([selector, href]) => {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.href = href;
+            }
+        });
+    }, 500);
+}
 
-    document.querySelector(".share-linkedin").href =
-        `https://www.linkedin.com/shareArticle?mini=true&url=${pageUrl}&title=${pageTitle}`;
+function fallbackCopy(text, button) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
 
-    document.querySelector(".share-whatsapp").href =
-        `https://api.whatsapp.com/send?text=${pageTitle}%20${pageUrl}`;
+    try {
+        document.execCommand('copy');
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            button.innerHTML = '<i class="fas fa-link"></i>';
+        }, 1500);
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+    }
 
-    document.querySelector(".share-telegram").href =
-        `https://t.me/share/url?url=${pageUrl}&text=${pageTitle}`;
-
-    document.querySelector(".share-reddit").href =
-        `https://www.reddit.com/submit?url=${pageUrl}&title=${pageTitle}`;
-
-    document.querySelector(".share-pinterest").href =
-        `https://pinterest.com/pin/create/button/?url=${pageUrl}&description=${pageTitle}`;
-});
+    document.body.removeChild(textArea);
+}
