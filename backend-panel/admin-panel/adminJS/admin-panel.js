@@ -4,7 +4,7 @@ async function verifyAndSetSession(requiredRole = 'admin') {
     const loggedIn = sessionStorage.getItem("loggedIn");
 
     if (loggedIn !== "true" || !userData) {
-        window.location.href = '../login.html';
+        window.location.href = '../../login.html';
         return null;
     }
 
