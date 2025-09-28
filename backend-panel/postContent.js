@@ -200,7 +200,7 @@ function makeImagesResizable() {
             input.click();
         };
 
-        // Delete button
+        //  Delete button
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = '🗑';
         deleteBtn.style.cssText = 'background:#fff;border:none;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:12px;';
