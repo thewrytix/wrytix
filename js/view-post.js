@@ -102,10 +102,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (post.thumbnail) {
             document.getElementById("post-thumbnail").src = post.thumbnail;
-            // Ensure absolute URL for social previews if relative
-            if (post.thumbnail.startsWith('/') || post.thumbnail.startsWith('http') === false) {
-                document.getElementById("post-thumbnail").src = `https://wrytix.onrender.com${post.thumbnail}`;
-            }
         }
 
         document.getElementById("post-content").innerHTML = post.content;
@@ -119,50 +115,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             sourceEl.textContent = "N/A";
         }
-
-        // NEW: Dynamically set Open Graph meta tags for social sharing
-        function updateOGTags(post) {
-            const ogTags = [
-                { property: 'og:title', content: post.title },
-                { property: 'og:description', content: post.content ? post.content.substring(0, 160).replace(/<[^>]*>/g, '') : 'Read the latest news on Wrytix.' }, // Strip HTML, limit to ~160 chars
-                { property: 'og:image', content: post.thumbnail || '' },
-                { property: 'og:url', content: window.location.href },
-                { property: 'og:type', content: 'article' },
-                { property: 'og:site_name', content: 'Wrytix' },
-                // Optional: Author and publish date for richer previews
-                { property: 'article:author', content: post.author || 'Wrytix' },
-                { property: 'article:published_time', content: post.schedule || new Date().toISOString() }
-            ];
-
-            ogTags.forEach(tag => {
-                let meta = document.querySelector(`meta[property="${tag.property}"]`);
-                if (!meta) {
-                    meta = document.createElement('meta');
-                    meta.setAttribute('property', tag.property);
-                    document.head.appendChild(meta);
-                }
-                meta.setAttribute('content', tag.content);
-            });
-
-            // Also set Twitter Card tags (fallback for X/Twitter)
-            let twitterMeta = document.querySelector('meta[name="twitter:card"]');
-            if (!twitterMeta) {
-                twitterMeta = document.createElement('meta');
-                twitterMeta.setAttribute('name', 'twitter:card');
-                twitterMeta.setAttribute('content', 'summary_large_image');
-                document.head.appendChild(twitterMeta);
-            }
-            // Update Twitter image if needed
-            let twitterImage = document.querySelector('meta[name="twitter:image"]');
-            if (!twitterImage) {
-                twitterImage = document.createElement('meta');
-                twitterImage.setAttribute('name', 'twitter:image');
-                document.head.appendChild(twitterImage);
-            }
-            twitterImage.setAttribute('content', post.thumbnail || '');
-        }
-
-        updateOGTags(post);
 
         // Step 3: Render breadcrumbs
         const breadcrumbsContainer = document.getElementById("breadcrumbs");
