@@ -100,55 +100,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             ? new Date(post.schedule).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
             : "N/A";
 
-        let thumbnailUrl = post.thumbnail || '';
-        if (thumbnailUrl && !thumbnailUrl.startsWith('http')) {
-            thumbnailUrl = `https://wrytix.onrender.com${thumbnailUrl.startsWith('/') ? '' : '/'}${thumbnailUrl}`;
-        }
         if (post.thumbnail) {
-            document.getElementById("post-thumbnail").src = thumbnailUrl;
+            document.getElementById("post-thumbnail").src = post.thumbnail;
         }
 
         document.getElementById("post-content").innerHTML = post.content;
-
-        // NEW: Dynamically set Open Graph meta tags for social sharing
-        const descriptionText = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : 'Read the latest news on Wrytix.';
-        const ogTags = [
-            { property: 'og:title', content: post.title },
-            { property: 'og:description', content: descriptionText },
-            { property: 'og:image', content: thumbnailUrl },
-            { property: 'og:url', content: window.location.href },
-            { property: 'og:type', content: 'article' },
-            { property: 'og:site_name', content: 'Wrytix' },
-            { property: 'article:author', content: post.author || 'Wrytix' },
-            { property: 'article:published_time', content: post.schedule || new Date().toISOString() }
-        ];
-
-        ogTags.forEach(tag => {
-            let meta = document.querySelector(`meta[property="${tag.property}"]`);
-            if (!meta) {
-                meta = document.createElement('meta');
-                meta.setAttribute('property', tag.property);
-                document.head.appendChild(meta);
-            }
-            meta.setAttribute('content', tag.content);
-        });
-
-        // Twitter Card tags
-        let twitterCard = document.querySelector('meta[name="twitter:card"]');
-        if (!twitterCard) {
-            twitterCard = document.createElement('meta');
-            twitterCard.setAttribute('name', 'twitter:card');
-            twitterCard.setAttribute('content', 'summary_large_image');
-            document.head.appendChild(twitterCard);
-        }
-
-        let twitterImage = document.querySelector('meta[name="twitter:image"]');
-        if (!twitterImage) {
-            twitterImage = document.createElement('meta');
-            twitterImage.setAttribute('name', 'twitter:image');
-            document.head.appendChild(twitterImage);
-        }
-        twitterImage.setAttribute('content', thumbnailUrl);
 
         // source
         const sourceEl = document.getElementById("post-source");
@@ -206,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     } catch (error) {
         console.error("Error loading post:", error);
         document.getElementById("post-title").textContent = "Failed to load post";
-        document.getElementById("post-content").innerHTML = `<p>Unable to retrieve post content. (Check console for details: ${error.message})</p>`;
+        document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
     }
 
     function setupShareFeatures() {
