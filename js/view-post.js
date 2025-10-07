@@ -106,46 +106,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         document.getElementById("post-content").innerHTML = post.content;
 
-        // NEW: Dynamically set Open Graph meta tags for social sharing
-        const descriptionText = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : 'Read the latest news on Wrytix.';
-        const ogTags = [
-            { property: 'og:title', content: post.title },
-            { property: 'og:description', content: descriptionText },
-            { property: 'og:image', content: post.thumbnail || '' },
-            { property: 'og:url', content: window.location.href },
-            { property: 'og:type', content: 'article' },
-            { property: 'og:site_name', content: 'Wrytix' },
-            { property: 'article:author', content: post.author || 'Wrytix' },
-            { property: 'article:published_time', content: post.schedule || new Date().toISOString() }
-        ];
-
-        ogTags.forEach(tag => {
-            let meta = document.querySelector(`meta[property="${tag.property}"]`);
-            if (!meta) {
-                meta = document.createElement('meta');
-                meta.setAttribute('property', tag.property);
-                document.head.appendChild(meta);
-            }
-            meta.setAttribute('content', tag.content);
-        });
-
-        // Twitter Card tags
-        let twitterCard = document.querySelector('meta[name="twitter:card"]');
-        if (!twitterCard) {
-            twitterCard = document.createElement('meta');
-            twitterCard.setAttribute('name', 'twitter:card');
-            twitterCard.setAttribute('content', 'summary_large_image');
-            document.head.appendChild(twitterCard);
-        }
-
-        let twitterImage = document.querySelector('meta[name="twitter:image"]');
-        if (!twitterImage) {
-            twitterImage = document.createElement('meta');
-            twitterImage.setAttribute('name', 'twitter:image');
-            document.head.appendChild(twitterImage);
-        }
-        twitterImage.setAttribute('content', post.thumbnail || '');
-
         // source
         const sourceEl = document.getElementById("post-source");
         if (post.source && post.source.startsWith('http')) {
