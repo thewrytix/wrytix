@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <a href="#" class="share-telegram" title="Share on Telegram" target="_blank"><i class="fab fa-telegram-plane"></i></a>
                             <a href="#" class="share-reddit" title="Share on Reddit" target="_blank"><i class="fab fa-reddit-alien"></i></a>
                             <a href="#" class="share-pinterest" title="Share on Pinterest" target="_blank"><i class="fab fa-pinterest-p"></i></a>
+                            <a href="#" class="share-instagram" title="Share on Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
                         </div>
                     </div>
 
