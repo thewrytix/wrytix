@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Inject template into target container
     const targetContainer = document.querySelector('.main-content');
-    targetContainer.innerHTML = template;
+    targetContainer.innerHTML = blogTemplate;
 
     if (!slug) {
         document.getElementById("post-title").textContent = "No post selected.";
@@ -100,13 +100,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             ? new Date(post.schedule).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
             : "N/A";
 
-        let thumbnailUrl = '';
         if (post.thumbnail) {
-            thumbnailUrl = post.thumbnail;
-            if (!thumbnailUrl.startsWith('http')) {
-                thumbnailUrl = `https://wrytix.onrender.com${thumbnailUrl.startsWith('/') ? '' : '/'}${thumbnailUrl}`;
-            }
-            document.getElementById("post-thumbnail").src = thumbnailUrl;
+            document.getElementById("post-thumbnail").src = post.thumbnail;
         }
 
         document.getElementById("post-content").innerHTML = post.content;
@@ -120,50 +115,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             sourceEl.textContent = "N/A";
         }
-
-        // NEW: Dynamically set Open Graph meta tags for social sharing
-        const descriptionText = post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) : 'Read the latest news on Wrytix.';
-        function updateOGTags() {
-            const ogTags = [
-                { prop: 'og:title', content: post.title },
-                { prop: 'og:description', content: descriptionText },
-                { prop: 'og:image', content: thumbnailUrl },
-                { prop: 'og:url', content: window.location.href },
-                { prop: 'og:type', content: 'article' },
-                { prop: 'og:site_name', content: 'Wrytix' },
-                { prop: 'article:author', content: post.author || 'Wrytix' },
-                { prop: 'article:published_time', content: post.schedule || new Date().toISOString() }
-            ];
-
-            ogTags.forEach(tag => {
-                let meta = document.querySelector(`meta[property="${tag.prop}"]`);
-                if (!meta) {
-                    meta = document.createElement('meta');
-                    meta.setAttribute('property', tag.prop);
-                    document.head.appendChild(meta);
-                }
-                meta.setAttribute('content', tag.content);
-            });
-
-            // Twitter Card tags
-            let twitterCard = document.querySelector('meta[name="twitter:card"]');
-            if (!twitterCard) {
-                twitterCard = document.createElement('meta');
-                twitterCard.setAttribute('name', 'twitter:card');
-                twitterCard.setAttribute('content', 'summary_large_image');
-                document.head.appendChild(twitterCard);
-            }
-
-            let twitterImage = document.querySelector('meta[name="twitter:image"]');
-            if (!twitterImage) {
-                twitterImage = document.createElement('meta');
-                twitterImage.setAttribute('name', 'twitter:image');
-                document.head.appendChild(twitterImage);
-            }
-            twitterImage.setAttribute('content', thumbnailUrl);
-        }
-
-        updateOGTags();
 
         // Step 3: Render breadcrumbs
         const breadcrumbsContainer = document.getElementById("breadcrumbs");
