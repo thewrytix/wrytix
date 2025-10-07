@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Loading...</title>
+    <!-- SEO meta placeholders -->
+    <meta name="description" content="Loading post details...">
+    <meta property="og:title" content="Loading...">
+    <meta property="og:description" content="Loading post details...">
+    <meta property="og:image" content="">
+    <meta property="og:url" content="">
+    <meta name="twitter:card" content="summary_large_image">
+
     <link rel="icon" sizes="32x32" href="../images/favicon-32.svg">
     <link rel="stylesheet" href="../css/frontend.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -170,7 +178,81 @@
 <div id="backToTop">
     <span ><i class="fa-solid fa-angle-up"></i></span> </div>
 
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get("slug");
 
+        const targetContainer = document.querySelector(".main-content");
+        if (!targetContainer) return;
+        targetContainer.innerHTML = `<p>Loading post...</p>`;
+
+        if (!slug) {
+            document.title = "Post not found";
+            targetContainer.innerHTML = `<h2>No post selected.</h2>`;
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
+            if (!res.ok) throw new Error("Post not found");
+            const post = await res.json();
+
+            // Render post
+            document.title = post.title;
+            targetContainer.innerHTML = `
+        <article>
+          <h1>${post.title}</h1>
+          <p><strong>By ${post.author || "Unknown"} | ${
+                post.schedule
+                    ? new Date(post.schedule).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                    })
+                    : "N/A"
+            }</strong></p>
+          ${
+                post.thumbnail
+                    ? `<img src="${post.thumbnail}" alt="${post.title}" style="width:100%; max-height:400px; object-fit:cover; border-radius:8px;">`
+                    : ""
+            }
+          <div>${post.content}</div>
+        </article>
+      `;
+
+            // ✅ Dynamic SEO Meta Update
+            const metaTags = {
+                title: post.title,
+                description:
+                    post.content.replace(/<[^>]+>/g, "").slice(0, 160) ||
+                    "Wrytix news post",
+                image: post.thumbnail || "https://wry-tix.com/default-thumb.jpg",
+                url: `https://wry-tix.com/posts/view-post.html?slug=${slug}`,
+            };
+
+            document
+                .querySelector('meta[name="description"]')
+                ?.setAttribute("content", metaTags.description);
+            document
+                .querySelector('meta[property="og:title"]')
+                ?.setAttribute("content", metaTags.title);
+            document
+                .querySelector('meta[property="og:description"]')
+                ?.setAttribute("content", metaTags.description);
+            document
+                .querySelector('meta[property="og:image"]')
+                ?.setAttribute("content", metaTags.image);
+            document
+                .querySelector('meta[property="og:url"]')
+                ?.setAttribute("content", metaTags.url);
+
+        } catch (err) {
+            console.error("Error loading post:", err);
+            targetContainer.innerHTML = `<h2>Failed to load post.</h2>`;
+        }
+    });
+</script>
 <script src="/js/view-post.js"></script>
 <script src="/js/comments.js"></script>
 <script src="../js/viewer-login.js"></script>
