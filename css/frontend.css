@@ -771,7 +771,7 @@ img {
         font-size: var(--font-size-xxl);
     }
 
-    .top-left{
+    .top-left a{
         display: none;
     }
 }
