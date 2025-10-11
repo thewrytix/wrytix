@@ -770,6 +770,10 @@ img {
     .hero-text h1 {
         font-size: var(--font-size-xxl);
     }
+
+    .top-left{
+        display: none;
+    }
 }
 
 
