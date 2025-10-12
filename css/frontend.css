@@ -679,7 +679,9 @@ img {
 
 /* Responsive Layout */
 @media (max-width: 1024px) {
-
+    .top-left .header-social-icons{
+        display: none;
+    }
     .main-content {
         flex-direction: column;
     }
@@ -740,9 +742,7 @@ img {
         display: none;
     }
 
-    .top-left .header-social-icons{
-        display: none;
-    }
+
 
     .featured-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
