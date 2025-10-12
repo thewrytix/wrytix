@@ -736,6 +736,14 @@ img {
 
 @media (max-width: 786px) {
 
+    .top-left a{
+        display: none;
+    }
+
+    .top-left .header-social-icons{
+        display: none;
+    }
+
     .featured-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
@@ -771,9 +779,7 @@ img {
         font-size: var(--font-size-xxl);
     }
 
-    .top-left a{
-        display: none;
-    }
+
 }
 
 
