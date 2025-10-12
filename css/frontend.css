@@ -679,7 +679,7 @@ img {
 
 /* Responsive Layout */
 @media (max-width: 1024px) {
-    .top-left .header-social-icons{
+    .header-social-icons{
         display: none;
     }
     .main-content {
