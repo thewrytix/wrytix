@@ -8,11 +8,13 @@ const PostSchema = new mongoose.Schema({
     category: { type: String, required: true }, // Add category
     thumbnail: { type: String, required: true }, // Add for base64 thumbnail
     content: { type: String, required: true }, // Make content required
-    source: { type: String, required: true }, // Add source
-    featured: { type: Boolean, default: false }, // Add featured
+    excerpt: { type: String, maxlength: 200 }, // NEW: Optional summary for meta descriptions
+    source: { type: String, required: true }, 
+    featured: { type: Boolean, default: false }, //
     schedule: { type: Date },
     submittedBy: { type: String },
     createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date }, // NEW: Add this to match your pre-save hook
     isPublished: { type: Boolean, default: false },
     approvedBy: { type: String },
     approvedAt: { type: Date },
@@ -26,4 +28,3 @@ PostSchema.pre('save', function(next) {
 });
 
 module.exports = mongoose.model('Post', PostSchema);
-

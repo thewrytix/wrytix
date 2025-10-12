@@ -29,9 +29,11 @@ const PostSchema = new Schema({
     thumbnail: { type: String }, // Add for base64 thumbnail
     content: { type: String, required: true }, // Make content required
     source: { type: String }, // Add source
+    excerpt: { type: String, maxlength: 200 }, // NEW: Optional summary for meta descriptions
     featured: { type: Boolean, default: false }, // Add featured
     schedule: { type: Date },
     createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date }, // NEW: Add this to match your pre-save hook
     submittedBy: { type: String },
     isPublished: { type: Boolean, default: false },
     approvedBy: { type: String },
@@ -39,6 +41,8 @@ const PostSchema = new Schema({
     views: { type: Number, default: 0 },
     lastViewed: { type: Date },
 });
+
+
 
 const AdSchema = new Schema({
     id: { type: String, required: true, unique: true },
