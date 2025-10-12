@@ -92,6 +92,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!res.ok) throw new Error("Post not found");
         const post = await res.json();
 
+        // NEW: Generate description (for meta tags; use excerpt if available, else truncate content)
+        let desc = post.excerpt || '';
+        if (!desc) {
+            // Strip HTML tags and truncate to ~160 chars
+            desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
+        }
+
         // Step 2: Render the post
         document.title = post.title;
         document.getElementById("post-title").textContent = post.title;
@@ -105,6 +112,44 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         document.getElementById("post-content").innerHTML = post.content;
+
+        // NEW INSERTION: Update meta tags for browser (safe fallback; server already does this for crawlers)
+        if (document.querySelector('meta[property="og:title"]')) {
+            document.querySelector('meta[property="og:title"]').setAttribute('content', post.title);
+        }
+        document.querySelector('meta[name="description"]').setAttribute('content', desc);
+        document.querySelector('meta[property="og:description"]').setAttribute('content', desc);
+        document.querySelector('meta[property="og:image"]').setAttribute('content', post.thumbnail || '');
+        document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
+        document.querySelector('meta[name="twitter:card"]').setAttribute('content', 'summary_large_image');
+        // Optional Twitter extras (if not added server-side)
+        let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+        if (!twitterTitle) {
+            const meta = document.createElement('meta');
+            meta.name = 'twitter:title';
+            meta.content = post.title;
+            document.head.appendChild(meta);
+        } else {
+            twitterTitle.setAttribute('content', post.title);
+        }
+        let twitterDesc = document.querySelector('meta[name="twitter:description"]');
+        if (!twitterDesc) {
+            const meta = document.createElement('meta');
+            meta.name = 'twitter:description';
+            meta.content = desc;
+            document.head.appendChild(meta);
+        } else {
+            twitterDesc.setAttribute('content', desc);
+        }
+        let twitterImg = document.querySelector('meta[name="twitter:image"]');
+        if (!twitterImg) {
+            const meta = document.createElement('meta');
+            meta.name = 'twitter:image';
+            meta.content = post.thumbnail || '';
+            document.head.appendChild(meta);
+        } else {
+            twitterImg.setAttribute('content', post.thumbnail || '');
+        }
 
         // source
         const sourceEl = document.getElementById("post-source");
