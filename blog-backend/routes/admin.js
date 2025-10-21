@@ -20,7 +20,7 @@ const { getFileById } = require('../utils/fileHelpers');
 const router = express.Router();
 
 router.get('/headline', getHeadline);
-router.put('/headline', updateHeadline);
+router.put('/headline', requireAdmin, updateHeadline);
 router.post('/approve-user', requireAdmin, approveUser);
 router.post('/pendingUsers/:id/approve', requireAdmin, approveUserById);
 router.post('/pendingDeletions', verifySession, createPendingDeletion);
@@ -28,10 +28,10 @@ router.get('/pendingDeletions', verifySession, getPendingDeletions);
 router.post('/pendingDeletions/:id/approve', requireAdmin, approveDeletion);
 router.post('/pendingDeletions/:id/reject', requireAdmin, rejectDeletion);
 router.delete('/pendingDeletions/:id', cancelDeletion);
-router.get('/logs', getLogs);
-router.delete('/logs', clearLogs);
+router.get('/logs', requireAdmin, getLogs);
+router.delete('/logs', requireAdmin, clearLogs);
 
-router.get('/files/:id', cors(corsOptions), getFileById);
+router.get('/files/:id', requireAdmin, cors(corsOptions), getFileById);
 
 router.get('/debug/timecheck', async (req, res) => {
     try {
