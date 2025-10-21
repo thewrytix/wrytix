@@ -15,19 +15,19 @@ const {
     updatePostSubmission,
     deletePostSubmission
 } = require('../controllers/postController');
-const { requireRole, requireEditorOrAdmin } = require('../middleware/auth');
+const { requireRole} = require('../middleware/auth');
 const { Post } = require('../models'); // Add this: Import Post model directly
 
 const router = express.Router();
 
 // Your existing API routes...
 router.get('/posts', getPosts);
-router.get('/posts/all', getAllPosts);
+router.get('/posts/all', requireRole(['author', 'editor', 'admin']), getAllPosts);
 router.get('/posts/:slug', getPostBySlug);
 router.post('/posts/:slug/view', incrementPostView);
-router.post('/posts', createPost);
-router.put('/posts/:slug', updatePost);
-router.delete('/posts/:slug', deletePost);
+router.post('/posts', requireRole(['editor', 'admin']), createPost);
+router.put('/posts/:slug', requireRole(['editor', 'admin']), updatePost);
+router.delete('/posts/:slug', requireRole(['editor', 'admin']), deletePost);
 router.post('/postSubmissions', requireRole(['author']), createPostSubmission);
 router.get('/postSubmissions', requireRole(['author', 'editor', 'admin']), getPostSubmissions);
 router.get('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), getPostSubmissionById);
