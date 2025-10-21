@@ -5,13 +5,13 @@ const { upload } = require('../config/middleware');
 
 const router = express.Router();
 
-router.get('/users', getUsers);
-router.get('/users/:id', getUserById);
+router.get('/users', requireAdmin, getUsers);
+router.get('/users/:id', requireAdmin, getUserById);
 router.post('/users', requireAdmin, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), createUser);
 router.put('/users/:id', requireAdmin, upload.none(), updateUser);
 router.delete('/users/:id', requireAdmin, deleteUser);
-router.get('/pendingUsers', getPendingUsers);
-router.get('/pendingUsers/:id', getPendingUserById);
+router.get('/pendingUsers', requireAdmin, getPendingUsers);
+router.get('/pendingUsers/:id', requireAdmin, getPendingUserById);
 router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), createPendingUser);
 router.delete('/pendingUsers/:id', requireAdmin, deletePendingUser);
 
