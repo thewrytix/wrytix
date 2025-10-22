@@ -241,7 +241,9 @@
             async () => {try {
               for (const box of checkboxes) {
                 const slug = box.dataset.id;
-                await fetch(`https://wrytix.onrender.com/posts/${slug}`, { method: 'DELETE' });
+                await fetch(`https://wrytix.onrender.com/posts/${slug}`, {
+                  method: 'DELETE',
+                  credentials: 'include'});
               }
               showSuccess('✅ Selected posts deleted.');
               await loadPosts();
