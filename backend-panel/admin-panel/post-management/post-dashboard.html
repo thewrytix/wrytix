@@ -148,7 +148,9 @@
     async function loadDashboardStats() {
         try {
             // Fetch posts from backend (replace with your actual endpoint)
-            const response = await fetch('https://wrytix.onrender.com/posts/all');
+            const response = await fetch('https://wrytix.onrender.com/posts/all', {
+                credentials: 'include'
+            });
             const posts = await response.json();
 
             const now = new Date();
