@@ -372,7 +372,10 @@
     document.getElementById("deletePostBtn").addEventListener("click", () => {
         if (!confirm("Delete this post?")) return;
 
-        fetch(`${BASE_URL}/posts/${slug}`, { method: "DELETE" })
+        fetch(`${BASE_URL}/posts/${slug}`, {
+            method: "DELETE",
+            credentials: 'include'
+        })
             .then(() => {
                 showSuccess("🗑️ Post deleted!");
                 setTimeout(() => location.href = "posts-list.html", 1500);
