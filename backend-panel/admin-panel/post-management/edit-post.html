@@ -357,7 +357,8 @@
         fetch(`${BASE_URL}/posts/${slug}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updated)
+            body: JSON.stringify(updated),
+            credentials: 'include'
         })
             .then(r => {
                 if (!r.ok) throw new Error("Failed to update post.");
