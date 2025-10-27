@@ -8,70 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="../backend-panelCSS/formatting_toolbar.css" />
     <style>
-        .formatting-toolbar {
-            margin-bottom: 10px;
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .formatting-toolbar button {
-            padding: var(--spacing-sm);
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            height: 30px;
-            display: flex;
-            text-align: center;
-        }
-
-        .formatting-toolbar button i {
-            display: flex;
-            justify-content: center;
-            text-align: center;
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-        }
-
-        form select {
-            padding: 5px 7px;
-        }
-
-        .formatting-toolbar select {
-            width: 80px;
-            height: 30px;
-            background-color: var(--primary-color);
-            color: var(--neutral-color);
-            border: 2px solid var(--border-color);
-            text-align: center;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-content: center;
-        }
-
-        .formatting-toolbar select option {
-            color: var(--neutral-color);
-            display: flex;
-            justify-content: center;
-            align-content: center;
-            margin-bottom: 3px;
-        }
-
-        .formatting-toolbar label {
-            display: flex;
-        }
-
-        .formatting-toolbar input[type="color"] {
-            cursor: pointer;
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            height: 30px;
-        }
 
         .editor-area {
             border: 1px solid var(--border-color);
@@ -93,41 +29,6 @@
             border: 1px solid #999;
             padding: 8px;
             text-align: left;
-        }
-
-        .resizable-container {
-            display: inline-block;
-            resize: both;
-            overflow: auto;
-            max-width: 100%;
-            border: 1px dashed #888;
-            padding: 4px;
-            margin: 6px 0;
-            cursor: nwse-resize;
-        }
-
-        .resizable-wrapper {
-            position: relative;
-            display: inline-block;
-            border: 1px dashed #888;
-            padding: 0;
-            margin: 6px 0;
-            max-width: 100%;
-            overflow: visible;
-        }
-
-        .resizer {
-            box-sizing: border-box;
-        }
-
-        .resizable-wrapper .resizer,
-        .resizable-wrapper div[style*="position: absolute"] {
-            display: none;
-        }
-
-        .resizable-wrapper.active .resizer,
-        .resizable-wrapper.active div[style*="position: absolute"] {
-            display: block !important;
         }
 
     </style>
