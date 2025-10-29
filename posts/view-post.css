@@ -205,6 +205,7 @@ article strong {
 
 /*------ Comment Section Styles ------*/
 .comment-box {
+    display: none;
     margin-top: 3rem;
     border-top: 1px solid var(--border-color);
     color: var(--text-color);
