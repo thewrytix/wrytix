@@ -8,5 +8,8 @@
     "multer": "^2.0.1",
     "node-fetch": "^3.3.2",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.1"
   }
 }
