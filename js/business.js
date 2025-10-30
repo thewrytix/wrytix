@@ -9,19 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
     async function fetchNewsPosts() {
         try {
             const response = await fetch('https://wrytix.onrender.com/posts');
-            const data = await response.json();
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
+            const data = await response.json();
             allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "business")
+                .filter(post => post.category?.toLowerCase() === "business")
                 .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
 
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch business posts:", error);
-            newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
+            // Show UI feedback only
+            newsContainer.innerHTML = `<p>⚠️ Unable to load news. Please try again later.</p>`;
+
+            // Log only in local dev, not production
+            if (window.location.hostname === "localhost") {
+                console.error("Failed to fetch business posts:", error);
+            }
         }
     }
+
 
     function renderPage(page) {
         newsContainer.innerHTML = "";
