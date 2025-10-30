@@ -163,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (gbpEl) gbpEl.textContent = `💷 GBP/GHC: ${data.GBP.toFixed(2)}`;
 
         } catch (error) {
-
+            console.error("Error fetching forex rates from backend:", error);
         }
     }
 
@@ -268,7 +268,7 @@ async function fetchPostsFromAPI() {
             views: post.views || 0
         }));
     } catch (error) {
-
+        console.error("Error fetching posts:", error);
         return [];
     }
 }
@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 this.renderAll();
             } catch (error) {
-
+                console.error("Failed to fetch posts:", error);
             }
         },
 
