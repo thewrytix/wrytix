@@ -1,15 +1,37 @@
 import { defineConfig } from 'vite';
+import {login} from "./blog-backend/controllers/authController";
 
 export default defineConfig({
+    root: '.', // use current directory as root
     build: {
-        outDir: 'dist',        // where production files go
-        minify: 'terser',      // compress & obfuscate
-        terserOptions: {
-            compress: true,
-            mangle: true,        // rename variables/functions
-            format: {
-                comments: false,   // remove comments
+        outDir: 'dist', // where build files go
+        rollupOptions: {
+            input: {
+                main: './js/main.js', // main entry point (fixed path)
+                frontend: './js/frontend.js',
+                featured: './js/featured.js',
+                comments: './js/comments.js',
+                about: './js/about.js',
+                contact: './js/contact.js',
+                foreign: './js/foreign.js',
+                news: './js/news.js',
+                sports: './js/sports',
+                lifestyle: './js/lifestyle.js',
+                technology: './js/technology.js',
+                business: './js/business.js',
+                marquee: './js/marquee.js',
+                viewPosts: './js/view-post.js',
+                viewerLogin: './js/viewer-login.js',
+                gtag: './js/gtag.js',
+                football: './js/football.js',
+                postShareIcons: './js/post-share-icons.js',
+                homepageAd: './js/homepage-ad.js',
             },
+            output: {
+                entryFileNames: 'assets/[name].[hash].js',
+                chunkFileNames: 'assets/[name].[hash].js',
+                assetFileNames: 'assets/[name].[hash].[ext]'
+            }
         },
     },
 });

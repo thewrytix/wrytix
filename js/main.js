@@ -2,7 +2,7 @@ import './frontend';
 import './homepage-ad';
 import './comments';
 import './sports';
-import './aboutus';
+import './about';
 import './contact';
 import './lifestyle';
 import './marquee';
