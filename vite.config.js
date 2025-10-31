@@ -1,13 +1,11 @@
 import { defineConfig } from 'vite';
-import {login} from "./blog-backend/controllers/authController";
 
 export default defineConfig({
-    root: '.', // use current directory as root
+    root: '.',
     build: {
-        outDir: 'dist', // where build files go
+        outDir: 'dist',
         rollupOptions: {
             input: {
-                main: './js/main.js', // main entry point (fixed path)
                 frontend: './js/frontend.js',
                 featured: './js/featured.js',
                 comments: './js/comments.js',
@@ -15,7 +13,7 @@ export default defineConfig({
                 contact: './js/contact.js',
                 foreign: './js/foreign.js',
                 news: './js/news.js',
-                sports: './js/sports',
+                sports: './js/sports.js',  // added missing .js
                 lifestyle: './js/lifestyle.js',
                 technology: './js/technology.js',
                 business: './js/business.js',
@@ -30,8 +28,8 @@ export default defineConfig({
             output: {
                 entryFileNames: 'assets/[name].[hash].js',
                 chunkFileNames: 'assets/[name].[hash].js',
-                assetFileNames: 'assets/[name].[hash].[ext]'
-            }
+                assetFileNames: 'assets/[name].[hash].[ext]',
+            },
         },
     },
 });

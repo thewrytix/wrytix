@@ -206,6 +206,7 @@ img {
 
 
 .featured-section-h2{
+    display: none;
     font-size: var(--font-size-xxl);
     color: var(--secondary-color);
     margin-bottom: var(--spacing-md);
