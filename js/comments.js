@@ -15,6 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!slug) return;
 
+    // ✅ Escape HTML to prevent XSS
+    function escapeHTML(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     const timeAgo = (time) => {
         const now = new Date();
         const seconds = Math.floor((now - time) / 1000);
@@ -35,9 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const div = document.createElement("div");
             div.className = "comment";
             div.innerHTML = `
-                <strong>${username}</strong>
+                <strong>${escapeHTML(username)}</strong>
                 <em data-timestamp="${timestamp}">${timeAgo(new Date(timestamp))}</em>
-                <p>${comment}</p>
+                <p>${escapeHTML(comment)}</p>
             `;
             commentsContainer.appendChild(div);
         });
@@ -86,15 +96,34 @@ document.addEventListener("DOMContentLoaded", () => {
         const comment = textarea.value.trim();
         const timestamp = new Date().toISOString();
 
-        if (!comment) return;
+        // ✅ Validation checks
+        if (!comment) {
+            alert("Please enter a comment before submitting.");
+            return;
+        }
+
+        if (comment.length > 500) {
+            alert("Comment too long. Maximum 500 characters allowed.");
+            return;
+        }
+
+        // ✅ Prevent obvious malicious patterns
+        const badPattern = /<script|onerror|onload|javascript:/i;
+        if (badPattern.test(comment)) {
+            alert("Invalid content detected in comment.");
+            return;
+        }
 
         try {
             const res = await fetch("https://wrytix.onrender.com/comments", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ slug, username, comment, timestamp })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    slug,
+                    username: escapeHTML(username),
+                    comment: escapeHTML(comment),
+                    timestamp
+                })
             });
 
             if (res.ok) {
@@ -102,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 textarea.value = "";
                 await fetchComments();
             } else {
-                alert("Failed to post comment");
+                alert("Failed to post comment.");
             }
         } catch (err) {
             console.error("Error posting comment:", err);
