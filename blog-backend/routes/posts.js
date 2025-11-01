@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs'); // Add this for reading the template file
+const escapeHtml = require('../utils/escapeHtml');
+const staticGenerator = require('../utils/staticGenerator');
 const {
     getPosts,
     getAllPosts,
@@ -57,7 +59,12 @@ router.get('/posts/view-post.html', async (req, res) => {
         const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 
         // Read the template file - fix the path
-        const templatePath = path.join(__dirname, '..', 'public', 'posts', 'view-post.html'); // Adjust path as needed
+        const templatePath = path.join(__dirname, '../public/posts/view-post.html'); //path.join(__dirname, '..', 'public', 'posts', 'view-post.html'); // Adjust path as needed
+        if (!fs.existsSync(templatePath)) {
+            console.error("❌ Template file missing:", templatePath);
+            return res.status(500).send('<h1>Template missing</h1>');
+        }
+
         let html = fs.readFileSync(templatePath, 'utf8');
 
         // Replace ALL meta tags properly
@@ -93,12 +100,13 @@ router.get('/posts/view-post.html', async (req, res) => {
 // Routes to manage static posts
 router.post('/generate-all-static', async (req, res) => {
     try {
-        const staticGenerator = require('../utils/staticGenerator');
+        await staticGenerator.generateAllStaticPosts();
         res.json({ message: 'All static posts generated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 router.post('/generate-static/:slug', async (req, res) => {
     try {
@@ -118,17 +126,7 @@ router.post('/generate-static/:slug', async (req, res) => {
     }
 });
 
-// Add this helper function
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+
 
 
 module.exports = router;

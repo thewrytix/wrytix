@@ -3,21 +3,11 @@ const { logAction } = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
+const escapeHtml = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator'); // Add this
 
 
-// Helper function to escape HTML
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+
 
 // Update createPost function
 const createPost = async (req, res) => {
