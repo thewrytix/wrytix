@@ -111,7 +111,7 @@ router.post('/generate-static/:slug', async (req, res) => {
         res.json({
             message: 'Static post generated',
             file: filePath,
-            url: `https://wrytix.netlify.app/posts/${post.slug}.html`
+            url: `https://wry-tix/posts/${post.slug}.html`
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
