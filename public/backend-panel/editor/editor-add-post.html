@@ -3,52 +3,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Edit Post -  Wrytix  Admin</title>
+    <title>Add Post - Wrytix Admin</title>
+    <link rel="icon" sizes="32x32" href="../../images/favicon-32.svg">
     <link rel="stylesheet" href="../backend-panelCSS/backend-panel.css" />
-    <link rel="icon" sizes="32x32" href="../../public/images/favicon-32.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="../backend-panelCSS/formatting_toolbar.css" />
-    <style>
-
-        .editor-area {
-            border: 1px solid var(--border-color);
-            min-height: 200px;
-            padding: 1.5em;
-            border-radius: 4px;
-            background: var(--neutral-color);
-            overflow-x: auto;
-            resize: vertical;
-        }
-
-        .editor-area table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .editor-area th,
-        .editor-area td {
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-        }
-
-    </style>
 </head>
 <body>
 <div class="admin-container">
-    <<aside class="admin-sidebar">
-    <h2>Editor Panel</h2>
-    <nav>
-        <ul>
-            <li><a href="editor-dashboard.html" >Dashboard</a></li>
-            <li><a href="editor-add-post.html">Add New Post</a></li>
-            <li><a href="editor-posts.html" class="active">Manage Posts</a></li>
-            <li><a href="editor-posts-approval.html">Post Approval Requests</a></li>
-            <li><a href="editor-add-user.html">Add User</a></li>
+    <aside class="admin-sidebar">
+        <h2>Editor Panel</h2>
+        <nav>
+            <ul>
+                <li><a href="editor-dashboard.html" >Dashboard</a></li>
+                <li><a href="editor-add-post.html" class="active">Add New Post</a></li>
+                <li><a href="editor-posts.html">Manage Posts</a></li>
+                <li><a href="editor-posts-approval.html">Post Approval Requests</a></li>
+                <li><a href="editor-add-user.html">Add User</a></li>
 
-        </ul>
-    </nav>
-</aside>
+            </ul>
+        </nav>
+    </aside>
 
     <main class="admin-main">
         <div class="top-bar">
@@ -60,19 +35,19 @@
             </div>
         </div>
 
-        <h1>Edit Post</h1>
-        <form id="editPostForm">
-            <label for="editPostTitle">Title</label>
-            <input type="text" id="editPostTitle" name="editPostTitle" required />
+        <h1>Add New Post</h1>
+        <form id="addPostForm">
+            <label for="postTitle">Title</label>
+            <input type="text" id="postTitle" name="postTitle" required />
 
-            <label for="editPostSlug">Slug</label>
-            <input type="text" id="editPostSlug" disabled />
+            <label for="postSlug">Slug</label>
+            <input type="text" id="postSlug" name="postSlug" required />
 
-            <label for="editPostAuthor">Author</label>
-            <input type="text" id="editPostAuthor" required />
+            <label for="postAuthor">Author</label>
+            <input type="text" id="postAuthor" name="postAuthor" required />
 
-            <label for="editPostCategory">Category</label>
-            <select id="editPostCategory" required>
+            <label for="postCategory">Category</label>
+            <select id="postCategory" name="postCategory" required>
                 <option value="" disabled selected>Select a category</option>
                 <option value="news">News</option>
                 <option value="business">Business</option>
@@ -82,9 +57,16 @@
                 <option value="lifestyle">Lifestyle</option>
             </select>
 
-            <label for="editPostContent">Content</label>
+            <label for="postThumbnail">Thumbnail Image</label>
+            <input type="file" id="postThumbnail" accept="image/*" />
+            <div id="thumbnailPreviewContainer" style="display:none;">
+                <p>Thumbnail Preview:</p>
+                <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc;" />
+            </div>
+
+            <label>Content</label>
             <div class="formatting-toolbar">
-                <button type="button" title="Undo" onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                <button type="button" title="Undo"onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
                 <button type="button" title="Redo" onclick="formatText('redo')"><i class="fa-solid fa-rotate-right"></i></button>
                 <button type="button" title="Bold" onclick="formatText('bold')"><i class="fa-solid fa-bold"></i></button>
                 <button type="button" title="Italic" onclick="formatText('italic')"><i class="fa-solid fa-italic"></i></button>
@@ -95,7 +77,7 @@
                 <button type="button" title="Bullets" onclick="formatText('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
                 <button type="button" title="Numbers" onclick="formatText('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
                 <select onchange="applyHeading(this)" title="Select Header">
-                    <option value="">Header</option>
+                    <option value="" >Header</option>
                     <option value="h2">H2</option>
                     <option value="h3">H3</option>
                     <option value="h4">H4</option>
@@ -108,34 +90,26 @@
                 <button type="button" title="Align justify" onclick="formatText('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
                 <input type="file" id="imageUploader" accept="image/*" style="display:none" />
             </div>
-            <div id="editPostContent" contenteditable="true" class="editor-area"></div>
+            <div id="postContent" contenteditable="true" class="rich-editor" required></div>
 
+            <input type="hidden" name="postContentHidden" id="postContentHidden" />
 
-            <label for="editPostSource">Source</label>
-            <input type="text" id="editPostSource" placeholder="e.g. https://..." />
+            <label for="postSource">Source</label>
+            <input type="text" id="postSource" name="postSource" />
 
-            <label><input type="checkbox" id="editPostFeatured"> Mark as Featured Post</label>
+            <label><input type="checkbox" id="postFeatured" /> Mark as Featured</label>
 
-            <label for="postThumbnail">Thumbnail</label>
-            <input type="file" id="postThumbnail" accept="image/*" />
-            <div id="thumbnailPreviewContainer" style="margin-top: 10px; display: none;">
-                <p>Thumbnail Preview:</p>
-                <img id="thumbnailPreview" src="" alt="Thumbnail Preview" style="max-width: 200px; border: 1px solid #ccc; border-radius: 4px;" />
-                <button type="button" id="removeThumbnailBtn" style="margin-top: 5px;">Remove Thumbnail</button>
-            </div>
+            <label for="postSchedule">Schedule Publish</label>
+            <input type="datetime-local" id="postSchedule" name="postSchedule" />
 
-            <label for="editPostSchedule">Schedule</label>
-            <input type="datetime-local" id="editPostSchedule" />
-
-            <button type="button" id="previewBtn">Preview</button>
-            <button type="submit">Update Post</button>
-            <button type="button" id="deletePostBtn" style="margin-top:10px; background:red;color:white;">Delete Post</button>
+            <button type="button" id="previewBtn">Preview Post</button>
+            <button type="submit">Add Post</button>
         </form>
-        <p id="updateStatus"></p>
+        <p id="statusMsg"></p>
     </main>
 </div>
-
-<script src="js/editor-edit-post.js"></script>
+<script src="js/editor-add-post.js"></script>
+<script src="../backend-panelJS/postContent.js"></script>
 <script src="js/editor-panel.js"></script>
 <script src="../backend-panelJS/backend-panel.js"></script>
 </body>

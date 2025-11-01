@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Add Post - Wrytix Admin</title>
-    <link rel="icon" sizes="32x32" href="../../public/images/favicon-32.svg">
+    <title>Submit Post - Wrytix Author</title>
     <link rel="stylesheet" href="../backend-panelCSS/backend-panel.css" />
+    <link rel="icon" sizes="32x32" href="../../images/favicon-32.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="../backend-panelCSS/formatting_toolbar.css" />
 </head>
 <body>
 <div class="admin-container">
     <aside class="admin-sidebar">
-        <h2>Editor Panel</h2>
+        <h2>Author Panel</h2>
         <nav>
             <ul>
-                <li><a href="editor-dashboard.html" >Dashboard</a></li>
-                <li><a href="editor-add-post.html" class="active">Add New Post</a></li>
-                <li><a href="editor-posts.html">Manage Posts</a></li>
-                <li><a href="editor-posts-approval.html">Post Approval Requests</a></li>
-                <li><a href="editor-add-user.html">Add User</a></li>
-
+                <li><a href="author-dashboard.html" >Author Dashboard</a></li>
+                <li><a href="author-add-post.html" class="active">Submit New Post</a></li>
+                <li><a href="author-posts.html">My Posts</a></li>
             </ul>
         </nav>
     </aside>
@@ -35,19 +32,19 @@
             </div>
         </div>
 
-        <h1>Add New Post</h1>
-        <form id="addPostForm">
+        <h1>Submit New Post</h1>
+        <form id="submitPostForm">
             <label for="postTitle">Title</label>
-            <input type="text" id="postTitle" name="postTitle" required />
+            <input type="text" id="postTitle" required />
 
             <label for="postSlug">Slug</label>
-            <input type="text" id="postSlug" name="postSlug" required />
+            <input type="text" id="postSlug" required />
 
             <label for="postAuthor">Author</label>
-            <input type="text" id="postAuthor" name="postAuthor" required />
+            <input type="text" id="postAuthor" placeholder="e.g., Arthur Mensah" required />
 
             <label for="postCategory">Category</label>
-            <select id="postCategory" name="postCategory" required>
+            <select id="postCategory" required>
                 <option value="" disabled selected>Select a category</option>
                 <option value="news">News</option>
                 <option value="business">Business</option>
@@ -57,14 +54,13 @@
                 <option value="lifestyle">Lifestyle</option>
             </select>
 
-            <label for="postThumbnail">Thumbnail Image</label>
+            <label for="postThumbnail">Thumbnail</label>
             <input type="file" id="postThumbnail" accept="image/*" />
-            <div id="thumbnailPreviewContainer" style="display:none;">
-                <p>Thumbnail Preview:</p>
-                <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc;" />
+            <div id="thumbnailPreviewContainer" style="margin-top:10px; display:none;">
+                <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc; border-radius:4px;" />
             </div>
 
-            <label>Content</label>
+            <label for="postContent">Content</label>
             <div class="formatting-toolbar">
                 <button type="button" title="Undo"onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
                 <button type="button" title="Redo" onclick="formatText('redo')"><i class="fa-solid fa-rotate-right"></i></button>
@@ -90,27 +86,29 @@
                 <button type="button" title="Align justify" onclick="formatText('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
                 <input type="file" id="imageUploader" accept="image/*" style="display:none" />
             </div>
+
             <div id="postContent" contenteditable="true" class="rich-editor" required></div>
 
-            <input type="hidden" name="postContentHidden" id="postContentHidden" />
-
             <label for="postSource">Source</label>
-            <input type="text" id="postSource" name="postSource" />
+            <input type="text" id="postSource" placeholder="Optional source link or reference" />
 
-            <label><input type="checkbox" id="postFeatured" /> Mark as Featured</label>
+            <label>
+                <input type="checkbox" id="postFeatured" />
+                Mark as Featured
+            </label>
 
-            <label for="postSchedule">Schedule Publish</label>
-            <input type="datetime-local" id="postSchedule" name="postSchedule" />
+            <label for="postSchedule">Schedule Date & Time</label>
+            <input type="datetime-local" id="postSchedule" />
 
             <button type="button" id="previewBtn">Preview Post</button>
-            <button type="submit">Add Post</button>
+            <button type="submit">Submit Post</button>
         </form>
         <p id="statusMsg"></p>
     </main>
 </div>
-<script src="js/editor-add-post.js"></script>
 <script src="../backend-panelJS/postContent.js"></script>
-<script src="js/editor-panel.js"></script>
+<script src="js/author-add-post.js"></script>
+<script src="js/author-panel.js"></script>
 <script src="../backend-panelJS/backend-panel.js"></script>
 </body>
 </html>
