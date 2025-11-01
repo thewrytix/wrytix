@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (breadcrumbsContainer) {
             const category = post.category || "Uncategorized";
             breadcrumbsContainer.innerHTML = `
-                            <a href="../../index.html">Home</a>
+                            <a href="../index.html">Home</a>
                             <span>›</span>
                             <a href="../html/${category.toLowerCase()}.html">${category}</a>
                             <span>›</span>
