@@ -35,53 +35,53 @@ router.put('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), u
 router.delete('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), deletePostSubmission);
 
 // NEW: Dynamic rendering for post view page
-router.get('/view-post.html', async (req, res) => {
+
+router.get('/posts/view-post.html', async (req, res) => {
     const slug = req.query.slug;
     if (!slug) {
         return res.status(400).send('<h1>Post slug required in URL (?slug=your-slug)</h1>');
     }
 
     try {
-        // Fetch post (reuse your controller logic, but capture the post object)
         const post = await Post.findOne({ slug }).lean();
         if (!post) {
             return res.status(404).send('<h1>Post not found</h1>');
         }
 
-        // Generate description (use excerpt if exists, else truncate content)
+        // Generate description
         let desc = post.excerpt || '';
         if (!desc) {
-            // Strip HTML tags and truncate
             desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
         }
 
-        // Full absolute URL for sharing
         const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 
-        // Read the static template file
-        const templatePath = path.join(__dirname, '..', 'posts', 'view-post.html'); // Adjust path if needed (e.g., to public/posts/)
+        // Read the template file - fix the path
+        const templatePath = path.join(__dirname, '..', 'public', 'posts', 'view-post.html'); // Adjust path as needed
         let html = fs.readFileSync(templatePath, 'utf8');
 
-        // Replace placeholders in <head>
+        // Replace ALL meta tags properly
         html = html
-            .replace('<title>Loading...</title>', `<title>${post.title}</title>`)
-            .replace('content="Loading post details..."', `content="${desc}"`) // <meta name="description">
-            .replace('content="Loading..."', `content="${post.title}"`) // og:title
-            .replace('content="Loading post details..."', `content="${desc}"`) // og:description (note: same placeholder text, so it replaces both)
-            .replace('content=""', `content="${post.thumbnail || ''}"`) // og:image (replaces the empty one)
-            .replace('content=""', `content="${fullUrl}"`) // og:url (replaces the empty one; assumes next empty is this)
-            .replace('content=""', 'content="summary_large_image"'); // twitter:card (last empty)
+            .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(post.title)}</title>`)
+            .replace(/<meta name="description" content="[^"]*"\/>/, `<meta name="description" content="${escapeHtml(desc)}" />`)
+            .replace(/<meta property="og:title" content="[^"]*"\/>/, `<meta property="og:title" content="${escapeHtml(post.title)}" />`)
+            .replace(/<meta property="og:description" content="[^"]*"\/>/, `<meta property="og:description" content="${escapeHtml(desc)}" />`)
+            .replace(/<meta property="og:image" content="[^"]*"\/>/, `<meta property="og:image" content="${post.thumbnail || ''}" />`)
+            .replace(/<meta property="og:url" content="[^"]*"\/>/, `<meta property="og:url" content="${fullUrl}" />`)
+            .replace(/<meta name="twitter:card" content="[^"]*"\/>/, `<meta name="twitter:card" content="summary_large_image" />`);
 
-        // Add missing Twitter metas (insert before </head>)
+        // Add Twitter meta tags
         const twitterMetas = `
-            <meta name="twitter:title" content="${post.title}" />
-            <meta name="twitter:description" content="${desc}" />
+            <meta name="twitter:title" content="${escapeHtml(post.title)}" />
+            <meta name="twitter:description" content="${escapeHtml(desc)}" />
             <meta name="twitter:image" content="${post.thumbnail || ''}" />
         `;
+
+        // Insert before closing head tag
         html = html.replace('</head>', `${twitterMetas}</head>`);
 
-        // Optional: Increment view here too (since crawler might hit it, but usually JS does it)
-        await incrementPostView({ params: { slug } }, { status: () => {}, json: () => {} }); // Mock res to avoid sending JSON
+        // Also update the canonical URL if you have one
+        html = html.replace(/<link rel="canonical" href="[^"]*"\/>/, `<link rel="canonical" href="${fullUrl}" />`);
 
         res.send(html);
     } catch (err) {
@@ -90,7 +90,45 @@ router.get('/view-post.html', async (req, res) => {
     }
 });
 
-// Remove or comment out the old static route if present:
-// router.get('/:slug.html', (req, res) => { ... });
+// Routes to manage static posts
+router.post('/generate-all-static', async (req, res) => {
+    try {
+        await staticGenerator.generateAllStaticPosts();
+        res.json({ message: 'All static posts generated successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/generate-static/:slug', async (req, res) => {
+    try {
+        const post = await Post.findOne({ slug: req.params.slug }).lean();
+        if (!post) {
+            return res.status(404).json({ error: 'Post not found' });
+        }
+
+        const filePath = await staticGenerator.generateStaticPost(post);
+        res.json({
+            message: 'Static post generated',
+            file: filePath,
+            url: `https://wrytix.netlify.app/posts/${post.slug}.html`
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add this helper function
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
 
 module.exports = router;

@@ -5,7 +5,9 @@ const multer = require('multer');
 
 const storage = multer.memoryStorage();
 const upload = multer({
-    storage: multer.memoryStorage(),
+
+
+    storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
         if (file.fieldname === 'avatar') {
@@ -30,8 +32,23 @@ const corsOptions = {
 
 const setupMiddleware = (app) => {
     // Enable preflight requests - FIXED: Use '/:catchAll' for Express 5 wildcard
-    app.options('/:catchAll', cors(corsOptions));
+    //app.options('/:catchAll', cors(corsOptions));
+    app.use(helmet());
+    app.use((req, res, next) => {
+        res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+        next();
+    });
 
+    app.use(
+        helmet.contentSecurityPolicy({
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "https://wry-tix.com", "https://www.wry-tix.com"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "https://wrytix.onrender.com"],
+            },
+        })
+    );
     app.use(cors(corsOptions));
 
     app.get("/", (req, res) => {
@@ -39,7 +56,7 @@ const setupMiddleware = (app) => {
     });
 
     app.set('trust proxy', 1);
-    app.use(helmet());
+
     app.use(express.json({ limit: '50mb' }));
     app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -47,6 +64,7 @@ const setupMiddleware = (app) => {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
         next();
     });
+
 
     return { upload };
 };

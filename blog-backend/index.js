@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path'); // Add this line
 const { connectDB } = require('./config/database');
 const { setupMiddleware } = require('./config/middleware');
 const setupSession = require('./config/session');
@@ -11,6 +12,12 @@ const PORT = process.env.PORT || 3000;
 // Setup middleware and session
 setupMiddleware(app);
 setupSession(app);
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static post pages from the posts directory
+app.use('/posts', express.static(path.join(__dirname, 'public', 'posts')));
 
 // Setup routes
 app.use(routes);
