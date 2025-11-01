@@ -128,7 +128,7 @@ img {
 
 /* Hero section  Quick links pages/*/
 .hero-section {
-    background: url('images/tech-hero-bg.jpg') center/cover no-repeat;
+    background: url('../images/tech-hero-bg.jpg') center/cover no-repeat;
     color: var(--neutral-color);
     text-align: center;
     padding: 80px 20px;
