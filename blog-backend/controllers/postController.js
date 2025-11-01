@@ -290,6 +290,5 @@ module.exports = {
     getPostSubmissions,
     getPostSubmissionById,
     updatePostSubmission,
-    deletePostSubmission,
-    generateStaticPostPage
+    deletePostSubmission
 };
