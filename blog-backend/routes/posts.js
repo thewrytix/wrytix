@@ -93,7 +93,7 @@ router.get('/posts/view-post.html', async (req, res) => {
 // Routes to manage static posts
 router.post('/generate-all-static', async (req, res) => {
     try {
-        await staticGenerator.generateAllStaticPosts();
+        const staticGenerator = require('../utils/staticGenerator');
         res.json({ message: 'All static posts generated successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
