@@ -1,6 +1,14 @@
-// Enhanced Comments Script Using Backend (JSON API)
+// Enhanced Comments Script Using Backend (JSON API) - SECURE VERSION
 document.addEventListener("DOMContentLoaded", () => {
+    // Check if SecurityUtils is available
+    if (typeof SecurityUtils === 'undefined') {
+        console.error('SecurityUtils not loaded! Comments system disabled.');
+        return;
+    }
+
     const commentBox = document.querySelector(".comment-box");
+    if (!commentBox) return;
+
     const nameInput = commentBox.querySelector("#username");
     const textarea = commentBox.querySelector("#commentText");
     const button = commentBox.querySelector(".comment-button");
@@ -13,16 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("slug");
 
-    if (!slug) return;
-
-    // ✅ Escape HTML to prevent XSS
-    function escapeHTML(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    if (!slug) {
+        console.log('No slug found in URL');
+        return;
     }
 
     const timeAgo = (time) => {
@@ -41,14 +42,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayComments = () => {
         commentsContainer.innerHTML = "";
         const toDisplay = allComments.slice(0, visibleCount);
+
         toDisplay.forEach(({ username, comment, timestamp }) => {
             const div = document.createElement("div");
             div.className = "comment";
-            div.innerHTML = `
-                <strong>${escapeHTML(username)}</strong>
-                <em data-timestamp="${timestamp}">${timeAgo(new Date(timestamp))}</em>
-                <p>${escapeHTML(comment)}</p>
-            `;
+
+            // ✅ SECURE: Use SecurityUtils for all dynamic content
+            div.innerHTML = SecurityUtils.safeFormat(
+                '<strong>{0}</strong><em data-timestamp="{1}">{2}</em><p>{3}</p>',
+                username,
+                timestamp,
+                timeAgo(new Date(timestamp)),
+                comment
+            );
+
             commentsContainer.appendChild(div);
         });
 
@@ -64,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
             commentBox.appendChild(loadMore);
         }
 
+        // Comments header
         const header = commentBox.querySelector(".comments-header") || document.createElement("h4");
         header.className = "comments-header";
         header.textContent = `${allComments.length} Comment${allComments.length !== 1 ? "s" : ""}`;
@@ -81,22 +89,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`https://wrytix.onrender.com/comments?slug=${slug}`);
+            const res = await fetch(`https://wrytix.onrender.com/comments?slug=${encodeURIComponent(slug)}`);
+            if (!res.ok) throw new Error('Failed to fetch comments');
+
             const data = await res.json();
             allComments = data.reverse();
             visibleCount = Math.min(COMMENTS_PER_LOAD, allComments.length);
             displayComments();
         } catch (err) {
             console.error("Failed to fetch comments:", err);
+            commentsContainer.innerHTML = '<p class="error">Unable to load comments.</p>';
         }
     };
 
     const postComment = async () => {
-        const username = nameInput.value.trim() || "Anonymous";
-        const comment = textarea.value.trim();
+        const rawUsername = nameInput.value.trim() || "Anonymous";
+        const rawComment = textarea.value.trim();
         const timestamp = new Date().toISOString();
 
-        // ✅ Validation checks
+        // ✅ SECURE: Sanitize input first
+        const username = SecurityUtils.sanitizeInput(rawUsername, { maxLength: 50 });
+        const comment = SecurityUtils.sanitizeInput(rawComment, { maxLength: 500 });
+
+        // Validation checks
         if (!comment) {
             alert("Please enter a comment before submitting.");
             return;
@@ -107,21 +122,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // ✅ Prevent obvious malicious patterns
-        const badPattern = /<script|onerror|onload|javascript:/i;
-        if (badPattern.test(comment)) {
-            alert("Invalid content detected in comment.");
-            return;
-        }
-
         try {
             const res = await fetch("https://wrytix.onrender.com/comments", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    slug,
-                    username: escapeHTML(username),
-                    comment: escapeHTML(comment),
+                    slug: SecurityUtils.escapeHtml(slug),
+                    username: username, // Already sanitized, don't escape again
+                    comment: comment,   // Already sanitized, don't escape again
                     timestamp
                 })
             });
@@ -131,14 +139,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 textarea.value = "";
                 await fetchComments();
             } else {
-                alert("Failed to post comment.");
+                alert("Failed to post comment. Please try again.");
             }
         } catch (err) {
             console.error("Error posting comment:", err);
+            alert("Network error. Please check your connection and try again.");
         }
     };
 
-    button.addEventListener("click", postComment);
+    // Event listeners
+    if (button) {
+        button.addEventListener("click", postComment);
+    }
+
+    // Allow Enter key to submit comment (but Shift+Enter for new line)
+    if (textarea) {
+        textarea.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                postComment();
+            }
+        });
+    }
+
+    // Initialize
     fetchComments();
-    setInterval(updateTimestamps, 10000);
+    setInterval(updateTimestamps, 30000); // Update every 30 seconds instead of 10
 });
