@@ -135,3 +135,28 @@ element.setAttribute('href', safeUrl);
 // 3. Safe string formatting
 const message = SecurityUtils.safeFormat('Hello {0}, you have {1} messages', userName, count);
 */
+
+
+//Quick Reference - Common Use Cases:
+
+/*
+// 1. Setting innerHTML safely
+element.innerHTML = SecurityUtils.escapeHtml(userContent);
+
+// 2. Setting attributes safely
+element.setAttribute('href', SecurityUtils.sanitizeUrl(userUrl));
+
+// 3. Sanitizing form input
+const safeInput = SecurityUtils.sanitizeInput(rawInput, { maxLength: 100 });
+
+// 4. Safe string formatting
+const message = SecurityUtils.safeFormat('Hello {0}', userName);
+
+// 5. Creating safe HTML templates
+const html = SecurityUtils.safeFormat(
+    '<div class="{0}"><h2>{1}</h2><p>{2}</p></div>',
+    cssClass, title, content
+);
+
+
+ */
