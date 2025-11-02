@@ -115,6 +115,35 @@ const SecurityUtils = {
                 ? SecurityUtils.escapeHtml(args[number])
                 : match;
         });
+    },
+
+    /**
+     * Escape HTML but preserve line breaks
+     */
+    escapeHtmlWithLines: function(text) {
+        if (text == null) return '';
+        if (typeof text !== 'string') return String(text);
+
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/\//g, '&#x2F;')
+            .replace(/\n/g, '<br>')  // Convert newlines to <br> tags
+            .replace(/\r/g, '');     // Remove carriage returns
+    },
+
+    /**
+     * Safe format with line breaks
+     */
+    safeFormatWithLines: function(template, ...args) {
+        return template.replace(/{(\d+)}/g, function(match, number) {
+            return typeof args[number] !== 'undefined'
+                ? SecurityUtils.escapeHtmlWithLines(args[number])
+                : match;
+        });
     }
 };
 
