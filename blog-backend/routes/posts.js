@@ -98,7 +98,7 @@ router.get('/posts/view-post.html', async (req, res) => {
 });
 
 // Routes to manage static posts
-/*
+
 router.post('/generate-all-static', async (req, res) => {
     try {
         await staticGenerator.generateAllStaticPosts();
@@ -127,7 +127,7 @@ router.post('/generate-static/:slug', async (req, res) => {
     }
 });
 
-*/
+
 
 
 module.exports = router;
