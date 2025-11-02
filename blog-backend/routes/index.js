@@ -1,5 +1,7 @@
 const express = require('express');
 const authRoutes = require('./auth');
+console.log('Auth routes loaded:', authRoutes);
+console.log('Auth routes stack:', authRoutes.stack); // This shows the actual routes
 const postRoutes = require('./posts');
 const userRoutes = require('./users');
 const adRoutes = require('./ads');
@@ -18,7 +20,6 @@ const router = express.Router();
 
 
 router.use(authRoutes);
-console.log('Auth routes mounted – checking /signup:');
 router.use(postRoutes);
 router.use(userRoutes);
 router.use(categoryRoutes);

@@ -11,8 +11,8 @@ const router = express.Router();
 router.options('/check-username', cors(corsOptions));
 router.options('/check-email', cors(corsOptions));
 
+router.post('/signup', signup);
 router.post('/login', login);
-router.post('/signup', signup); // Fresh addition
 router.post('/logout', logout);
 router.get('/auth/check', checkAuth);
 router.get('/verify-session', verifySession);
