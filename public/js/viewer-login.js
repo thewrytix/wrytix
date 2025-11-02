@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com'; // Swap for prod, e.g., 'https://your-wrytix-api.com/api'
+    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
 
     let currentUser = null;
 
@@ -30,24 +30,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/auth/check`, {
+            const res = await fetch(`${API_BASE}/auth/check`, { // Matches your /auth/check
                 method: 'GET',
                 credentials: 'include'
             });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.username) {
-                    currentUser = data; // { username, fullName, role }
-                }
+            const rawText = await res.text();
+            console.log('CheckAuth raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            const data = JSON.parse(rawText);
+            if (data.username) {
+                currentUser = data;
             }
         } catch (err) {
             console.error('Auth check failed:', err);
         } finally {
-            updateViewerUI(); // Always finalize UI state
+            updateViewerUI();
         }
     }
 
-    // Loading/Error helpers (dynamic elements)
+    // Loading/Error helpers
     function showLoading(modal, show = true) {
         let loadingEl = modal.querySelector('.loading');
         if (!loadingEl) {
@@ -70,9 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         errorEl.textContent = message;
         errorEl.style.display = 'block';
-        if (isSuccess) {
-            setTimeout(() => { errorEl.style.display = 'none'; }, 3000); // Auto-hide success
-        }
+        if (isSuccess) setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
     }
 
     // Login handler
@@ -91,15 +90,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/login`, {
+            const res = await fetch(`${API_BASE}/login`, { // Flat /login
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usernameOrEmail, password }),
                 credentials: 'include'
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Login failed');
-            await checkAuthOnLoad(); // Pull fresh session data, update UI
+            const rawText = await res.text();
+            console.log('Login raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+            if (!res.ok) {
+                let data;
+                try { data = JSON.parse(rawText); } catch {}
+                throw new Error(data?.error || `Login failed (Status ${res.status})`);
+            }
+            const data = JSON.parse(rawText);
+            await checkAuthOnLoad();
             loginModal.style.display = 'none';
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
@@ -138,15 +143,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/signup`, {
+            const res = await fetch(`${API_BASE}/signup`, { // Flat /signup
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fullname, username, email, password }),
                 credentials: 'include'
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Signup failed');
-            // Success: Switch to login modal with green msg
+            const rawText = await res.text();
+            console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+            if (!res.ok) {
+                let data;
+                try { data = JSON.parse(rawText); } catch {}
+                throw new Error(data?.error || `Signup failed (Status ${res.status})`);
+            }
+            const data = JSON.parse(rawText);
             signupModal.style.display = 'none';
             loginModal.style.display = 'flex';
             document.getElementById('signupForm').reset();
@@ -159,11 +169,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Modal toggles (your originals, auth-aware)
+    // Modal toggles (unchanged)
     loginBtn.addEventListener("click", () => {
-        if (!currentUser) {
-            loginModal.style.display = "flex";
-        }
+        if (!currentUser) loginModal.style.display = "flex";
     });
 
     document.getElementById("switch-to-signup").addEventListener("click", (e) => {
@@ -190,16 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === signupModal) signupModal.style.display = "none";
     });
 
-    // Profile dropdown events
+    // Profile dropdown events (unchanged)
     profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
     });
 
     document.addEventListener('click', (e) => {
-        if (!profileBtn.contains(e.target)) {
-            profileMenu.style.display = 'none';
-        }
+        if (!profileBtn.contains(e.target)) profileMenu.style.display = 'none';
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -209,40 +215,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('viewProfile').addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Opening profile...'); // TODO: Wire to profile modal or route
+        console.log('Opening profile...');
         profileMenu.style.display = 'none';
     });
 
     document.getElementById('viewSettings').addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Opening settings...'); // TODO: Wire to settings
+        console.log('Opening settings...');
         profileMenu.style.display = 'none';
     });
 
-    // Forgot password stub (optional: wire to reset flow)
+    // Forgot password stub
     document.getElementById('forgot-password').addEventListener('click', (e) => {
         e.preventDefault();
-        alert('Forgot password? Coming soon—check your email for reset link!');
+        alert('Forgot password? Coming soon!');
     });
 
     // Form submit listeners
     loginModal.querySelector('form').addEventListener('submit', handleLogin);
     document.getElementById('signupForm').addEventListener('submit', handleSignup);
 
-    // Init: Check auth, set UI state
+    // Init
     checkAuthOnLoad();
 });
 
-// Global logout function
+// Global logout
 function logout() {
-    const API_BASE = 'https://wrytix.onrender.com'; // Match above
-    fetch(`${API_BASE}/logout`, {
+    fetch(`${API_BASE}/logout`, { // Flat /logout
         method: 'POST',
         credentials: 'include'
     })
-        .then(() => {
+        .then((res) => res.text())
+        .then((rawText) => {
+            console.log('Logout raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
             currentUser = null;
-            updateViewerUI(); // Swap back to login btn seamlessly
+            updateViewerUI();
         })
         .catch(console.error);
 }
