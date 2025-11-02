@@ -1,8 +1,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs'); // Add this for reading the template file
-//const escapeHtml = require('../utils/escapeHtml');
-const staticGenerator = require('../utils/staticGenerator');
+const escapeHtml = require('..//utils/escapeHtml');
+const staticGenerator = require('..//utils/staticGenerator');
 const {
     getPosts,
     getAllPosts,
