@@ -171,9 +171,29 @@
         </div>
 
 
-        <!-- User Icon -->
-        <div class="viewer">
-            <a id="loginBtn" class="loginBtn"><span>Login / Sign Up</span><i class="fa-solid fa-user"></i></a>
+        <!-- Top-Bar with Seamless Auth (Viewer/Profile Swap) -->
+        <div class="top-bar">
+            <!-- Unified viewer/profile container: Morphs based on auth state -->
+            <div class="viewer" id="viewerContainer">
+                <!-- Guest state: Login trigger -->
+                <a id="loginBtn" class="loginBtn" style="display: block;">
+                    <span>Login / Sign Up</span><i class="fa-solid fa-user"></i>
+                </a>
+
+                <!-- Logged-in state: Profile dropdown -->
+                <div class="profile-dropdown" id="profileDropdown" style="display: none;">
+                    <button class="profile-btn" id="profileBtn">
+                        <span id="profileText">Loading...</span>
+                        <i class="fa-solid fa-user" id="profileIcon"></i>
+                    </button>
+                    <div class="profile-menu" id="profileMenu">
+                        <a href="#profile" id="viewProfile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+                        <a href="#settings" id="viewSettings"><i class="fa-solid fa-gear"></i> Settings</a>
+                        <hr>
+                        <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Login Modal -->
@@ -183,7 +203,7 @@
                 <h2>User Login</h2>
                 <form>
                     <label for="email"></label>
-                    <input type="email" id="email" placeholder="Username" required />
+                    <input type="email" id="email" placeholder="Email or Username" required />
                     <label for="password"></label>
                     <input type="password" id="password" placeholder="Password" required />
                     <button type="submit">Login</button>
@@ -203,6 +223,8 @@
                 <span class="close">&times;</span>
                 <h2>Create Account</h2>
                 <form id="signupForm">
+                    <label for="signup-fullname"></label>
+                    <input type="text" id="signup-fullname" placeholder="Full Name" required />
                     <label for="signup-username"></label>
                     <input type="text" id="signup-username" placeholder="Username" required />
                     <label for="signup-email"></label>
