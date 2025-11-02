@@ -47,14 +47,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const div = document.createElement("div");
             div.className = "comment";
 
-            // ✅ SECURE: Use safeFormatWithLines to preserve line breaks in comments
-            div.innerHTML = SecurityUtils.safeFormatWithLines(
-                '<strong>{0}</strong><em data-timestamp="{1}">{2}</em><p>{3}</p>',
-                username,
-                timestamp,
-                timeAgo(new Date(timestamp)),
-                comment
-            );
+            // ✅ SECURE: Use safeFormat for username/timestamp, safeFormatWithLines for comment
+            div.innerHTML = `
+                <strong>${SecurityUtils.escapeHtml(username)}</strong>
+                <em data-timestamp="${timestamp}">${timeAgo(new Date(timestamp))}</em>
+                <p>${SecurityUtils.escapeHtmlWithLines(comment)}</p>
+            `;
 
             commentsContainer.appendChild(div);
         });
@@ -107,16 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const rawComment = textarea.value.trim();
         const timestamp = new Date().toISOString();
 
-        // ✅ SECURE: Sanitize input first (but preserve line breaks for comments)
+        // ✅ SECURE: Sanitize input first
         const username = SecurityUtils.sanitizeInput(rawUsername, { maxLength: 50 });
-
-        // For comments, we want to preserve line breaks but still sanitize
-        let comment = SecurityUtils.sanitizeInput(rawComment, { maxLength: 500 });
-        // Convert line breaks to a temporary marker before sanitization
-        comment = comment.replace(/\n/g, '[NEWLINE]');
-        comment = SecurityUtils.sanitizeInput(comment, { maxLength: 500 });
-        // Convert back to actual line breaks (they'll be converted to <br> in display)
-        comment = comment.replace(/\[NEWLINE\]/g, '\n');
+        const comment = SecurityUtils.sanitizeInput(rawComment, { maxLength: 500 });
 
         // Validation checks
         if (!comment) {
@@ -135,8 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     slug: SecurityUtils.escapeHtml(slug),
-                    username: username,
-                    comment: comment, // Store with actual line breaks
+                    username: username, // Already sanitized, don't escape again
+                    comment: comment,   // Already sanitized, don't escape again
                     timestamp
                 })
             });
