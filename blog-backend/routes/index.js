@@ -18,6 +18,7 @@ const router = express.Router();
 
 
 router.use(authRoutes);
+console.log('Auth routes mounted – checking /signup:');
 router.use(postRoutes);
 router.use(userRoutes);
 router.use(categoryRoutes);
