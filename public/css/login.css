@@ -1,0 +1,286 @@
+/*---Auth Panel (Building on Original: Added Profile Dropdown, Top-Bar Integration, Fullname Input, Success Msgs)---*/
+
+/* Original Viewer/Login Btn Styles (Kept intact, adapted for top-bar/main-nav) */
+.main-nav .viewer {
+    margin: 4px;
+    cursor: pointer;
+}
+
+.main-nav .viewer .loginBtn {
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+}
+
+.main-nav .viewer i,
+.main-nav .viewer span {
+    color: var(--neutral-color);
+    font-weight: var(--font-weight-bold);
+}
+
+.main-nav .viewer span {
+    text-transform: capitalize;
+}
+
+/* New: Profile Btn (Mirrors loginBtn for seamless feel) */
+.main-nav .viewer .profile-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+    background: none;
+    border: none;
+    color: var(--neutral-color);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    width: 100%; /* Full width for consistency */
+}
+
+.main-nav .viewer .profile-btn:hover {
+    background: #f0f0f0;
+    color: var(--primary-color);
+}
+
+.main-nav .viewer .profile-btn i {
+    font-size: 18px;
+}
+
+/* New: Profile Dropdown (Light extension, fits original aesthetic) */
+.main-nav .viewer .profile-dropdown {
+    position: relative;
+}
+
+.main-nav .viewer .profile-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 160px;
+    display: none;
+    overflow: hidden;
+    z-index: 1001;
+    animation: slideIn 0.3s ease; /* Reuse original animation */
+}
+
+.main-nav .viewer .profile-menu a,
+.main-nav .viewer .profile-menu button {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background 0.2s;
+    font-size: 1rem;
+    border-radius: 0; /* No border-radius on items */
+}
+
+.main-nav .viewer .profile-menu a:hover,
+.main-nav .viewer .profile-menu button:hover {
+    background: rgba(59, 130, 246, 0.1); /* Subtle primary tint */
+    color: var(--primary-color);
+}
+
+.main-nav .viewer .profile-menu hr {
+    margin: 0;
+    border: none;
+    border-top: 1px solid #d1d5db;
+}
+
+.main-nav .viewer .profile-menu button i,
+.main-nav .viewer .profile-menu a i {
+    margin-right: 8px;
+    color: var(--neutral-color);
+}
+
+/* Original Modal Styles (Kept intact, generalized for both login/signup) */
+.main-nav .login-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.main-nav .login-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.main-nav .login-content .close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--text-color);
+}
+
+.main-nav .login-modal .close:hover {
+    color: var(--primary-color);
+}
+
+.main-nav .login-modal h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.main-nav .login-modal form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%; /* Ensure full width */
+}
+
+.login-modal input {
+    position: relative;
+    padding: 0.8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+    width: 100%;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box; /* Added for padding consistency */
+}
+
+.login-modal input:focus {
+    border-color: #3b82f6;
+    outline: none; /* Clean focus */
+}
+
+.login-modal input.invalid {
+    border-color: #ef4444;
+}
+
+.login-modal button {
+    width: 120px;
+    height: 45px;
+    cursor: pointer;
+    font-size: 1rem;
+    border: 5px solid var(--neutral-color);
+    color: var(--neutral-color);
+    background-color: var(--secondary-color);
+    border-radius: 6px; /* Consistent with inputs */
+    transition: all 0.3s ease; /* Smooth hover */
+}
+
+.login-modal button:hover {
+    border-radius: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.login-modal button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* New: Error/Success Messages (Builds on .error for green success) */
+.login-modal .error {
+    transition: color 0.3s ease, opacity 0.3s ease;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Switch & Forgot Links (Original + hover polish) */
+.main-nav .login-modal .switch-form,
+.main-nav .login-modal .forgot-password {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.main-nav .login-modal .switch-form a,
+.main-nav .login-modal .forgot-password a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: var(--font-weight-bold);
+}
+
+.main-nav .login-modal .switch-form a:hover,
+.main-nav .login-modal .forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* Loading State (New: Subtle spinner if you add one, else text) */
+.login-modal .loading {
+    font-size: 0.9rem;
+    color: #3b82f6;
+    text-align: center;
+    width: 100%;
+}
+
+/* Responsive (New: Mobile-friendly for top-bar & modals) */
+@media (max-width: 480px) {
+    .main-nav .viewer {
+        margin: 2px;
+    }
+
+    .main-nav .viewer .loginBtn,
+    .main-nav .viewer .profile-btn {
+        gap: 0.5em;
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    .main-nav .login-content {
+        width: 95%;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .main-nav .login-modal h2 {
+        font-size: 1.5rem;
+    }
+
+    .main-nav .viewer .profile-menu {
+        min-width: 140px;
+        right: -20px; /* Adjust for small screens */
+    }
+}
