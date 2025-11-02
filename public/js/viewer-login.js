@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com/user'; // Swap for prod, e.g., 'https://your-wrytix-api.com/api'
+    const API_BASE = 'https://wrytix.onrender.com'; // Swap for prod, e.g., 'https://your-wrytix-api.com/api'
 
     let currentUser = null;
 
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
+            const res = await fetch(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usernameOrEmail, password }),
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/auth/signup`, {
+            const res = await fetch(`${API_BASE}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fullname, username, email, password }),
@@ -235,8 +235,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Global logout function
 function logout() {
-    const API_BASE = 'http://localhost:5000/api'; // Match above
-    fetch(`${API_BASE}/auth/logout`, {
+    const API_BASE = 'https://wrytix.onrender.com'; // Match above
+    fetch(`${API_BASE}/logout`, {
         method: 'POST',
         credentials: 'include'
     })
