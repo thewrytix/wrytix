@@ -294,6 +294,14 @@ article strong {
     display: block;
 }
 
+.comment p {
+    margin: 8px 0 0 0;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-line; /* This preserves line breaks */
+    color: #444;
+}
+
 .load-more-comments {
     display: block;
     margin: 15px auto 0;
