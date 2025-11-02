@@ -3,34 +3,79 @@ const { User } = require('../models');
 const { logAction } = require('../utils/logger');
 
 const login = async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, status: 'active' }).lean();
+    const { usernameOrEmail, password } = req.body; // Frontend sends 'email' but we map to usernameOrEmail
+    let query = { status: 'active' };
+    if (usernameOrEmail.includes('@')) {
+        query.email = usernameOrEmail; // Login by email
+    } else {
+        query.username = usernameOrEmail; // Or by username
+    }
+
+    const user = await User.findOne(query).lean();
 
     if (!user) {
-        await logAction(username, 'login-failed', username, { reason: 'User not found' });
-        return res.status(401).json({ error: 'Invalid username or password' });
+        await logAction(usernameOrEmail || 'unknown', 'login-failed', 'system', { reason: 'User not found' });
+        return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     bcrypt.compare(password, user.password, (err, result) => {
         if (err || !result) {
-            logAction(username, 'login-failed', username, { reason: 'Invalid password' });
-            return res.status(401).json({ error: 'Invalid username or password' });
+            logAction(user.username, 'login-failed', user.username, { reason: 'Invalid password' });
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         req.session.user = {
             id: user.id,
             username: user.username,
+            fullName: user.fullname, // Assuming schema 'fullname'—swap if camelCase
             role: user.role,
         };
 
-        logAction(username, 'login-success', username);
+        logAction(user.username, 'login-success', user.username);
         res.json({ message: 'Login successful', user: req.session.user });
     });
 };
 
+const signup = async (req, res) => {
+    console.log('Signup route HIT with body:', req.body); // Confirms route reached
+    try {
+        const { fullname, username, email, password } = req.body;
+        if (!fullname || !username || !email || !password) {
+            return res.status(400).json({ error: 'All fields required' });
+        }
+
+        // Check uniqueness (your middleware could hook here too)
+        const existingUser = await User.findOne({ $or: [{ username }, { email }, { fullname }] });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username, full name, or email already taken' });
+        }
+
+        // Hash and save (pre-save hook handles hash if you added it)
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({
+            fullname,
+            username,
+            email,
+            password: hashedPassword,
+            role: 'viewer',
+            status: 'active' // Or 'pending' if you want verification
+        });
+        await user.save();
+
+        // Auto-login? Nah, just create—frontend can login after
+        logAction(username, 'signup-success', username);
+        res.status(201).json({ message: 'Account created successfully', user: { id: user.id, username: user.username, fullName: user.fullname, role: user.role } });
+    } catch (err) {
+        logAction(username || 'unknown', 'signup-failed', 'system', { reason: err.message });
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 const logout = (req, res) => {
     const username = req.session.user?.username || 'anonymous';
-    req.session.destroy();
+    req.session.destroy((err) => {
+        if (err) console.error('Session destroy error:', err);
+    });
     logAction(username, 'logout', 'system');
     res.json({ message: 'Logged out' });
 };
@@ -60,4 +105,4 @@ const verifySession = (req, res) => {
     });
 };
 
-module.exports = { login, logout, checkAuth, verifySession };
+module.exports = { login, logout, checkAuth, verifySession, signup };
