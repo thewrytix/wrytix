@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs'); // Add this for reading the template file
-const escapeHtml = require('../utils/escapeHtml');
+//const escapeHtml = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator');
 const {
     getPosts,
@@ -98,6 +98,7 @@ router.get('/posts/view-post.html', async (req, res) => {
 });
 
 // Routes to manage static posts
+/*
 router.post('/generate-all-static', async (req, res) => {
     try {
         await staticGenerator.generateAllStaticPosts();
@@ -126,7 +127,7 @@ router.post('/generate-static/:slug', async (req, res) => {
     }
 });
 
-
+*/
 
 
 module.exports = router;
