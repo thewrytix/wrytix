@@ -2,6 +2,12 @@ const bcrypt = require('bcrypt');
 const { User } = require('../models');
 const { logAction } = require('../utils/logger');
 
+console.log('🔍 AUTH CONTROLLER IMPORTS:');
+console.log('bcrypt:', typeof bcrypt);
+console.log('User model:', typeof User);
+console.log('logAction:', typeof logAction);
+
+
 const login = async (req, res) => {
     const { usernameOrEmail, password } = req.body; // Frontend sends 'email' but we map to usernameOrEmail
     let query = { status: 'active' };
