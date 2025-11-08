@@ -78,11 +78,7 @@
     border-radius: 0; /* No border-radius on items */
 }
 
-.main-nav .viewer .profile-menu a:hover,
-.main-nav .viewer .profile-menu button:hover {
-    background: rgba(59, 130, 246, 0.1); /* Subtle primary tint */
-    color: var(--primary-color);
-}
+
 
 .main-nav .viewer .profile-menu hr {
     margin: 0;
@@ -93,7 +89,7 @@
 .main-nav .viewer .profile-menu button i,
 .main-nav .viewer .profile-menu a i {
     margin-right: 8px;
-    color: var(--neutral-color);
+    color: var(--primary-color);
 }
 
 /* Original Modal Styles (Kept intact, generalized for both login/signup) */
