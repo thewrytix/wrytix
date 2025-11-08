@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             // Replace with your actual API endpoint
             const [featuredRes, categoriesRes, sidebarRes] = await Promise.all([
-                fetch('https://wrytix.onrender.com/posts"')
+                fetch('https://wrytix.onrender.com/posts')
 
             ]);
 
