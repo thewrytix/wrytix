@@ -55,7 +55,7 @@ const login = async (req, res) => {
         res.json({ message: 'Login successful', user: req.session.user });
 
     } catch (err) {
-        console.error('💥 LOGIN CATCH BLOCK ERROR:', err);
+       
         res.status(500).json({ error: 'Server error: ' + err.message });
     }
 };
