@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
+    const API_BASE = 'https://wrytix.onrender.com/auth'; // Root, flat mount
 
     let currentUser = null;
 
