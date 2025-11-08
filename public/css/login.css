@@ -36,10 +36,6 @@
     width: 100%; /* Full width for consistency */
 }
 
-.main-nav .viewer .profile-btn:hover {
-    background: #f0f0f0;
-    color: var(--primary-color);
-}
 
 .main-nav .viewer .profile-btn i {
     font-size: 18px;
@@ -204,9 +200,6 @@
 
 .login-modal button:hover {
     border-radius: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
 }
 
 .login-modal button:disabled {
@@ -229,7 +222,7 @@
 .main-nav .login-modal .forgot-password {
     margin-top: 1rem;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: var(--font-size-md);
 }
 
 .main-nav .login-modal .switch-form a,
