@@ -78,6 +78,7 @@ const signup = async (req, res) => {
 
         console.log('🔍 Step 6: Creating user object...');
         const user = new User({
+            id: new mongoose.Types.ObjectId().toString(),
             fullname,
             username,
             email,
