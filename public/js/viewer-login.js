@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/auth/check`, { // Matches your /auth/check
+            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
                 method: 'GET',
                 credentials: 'include'
             });
