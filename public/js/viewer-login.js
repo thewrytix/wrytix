@@ -30,12 +30,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
+            const res = await fetch(`${API_BASE}/auth/check`, { // Matches your /auth/check
                 method: 'GET',
                 credentials: 'include'
             });
             const rawText = await res.text();
-            console.log('CheckAuth raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
             if (!res.ok) throw new Error(`Status ${res.status}`);
             const data = JSON.parse(rawText);
             if (data.username) {
@@ -97,7 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 credentials: 'include'
             });
             const rawText = await res.text();
-            console.log('Login raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
             if (!res.ok) {
                 let data;
                 try { data = JSON.parse(rawText); } catch {}
