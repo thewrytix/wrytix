@@ -1,15 +1,11 @@
-/*---Auth Panel (Building on Original: Added Profile Dropdown, Top-Bar Integration, Fullname Input, Success Msgs)---*/
-
-/* Original Viewer/Login Btn Styles (Kept intact, adapted for top-bar/main-nav) */
 .main-nav .viewer {
     margin: 4px;
     cursor: pointer;
 }
 
-.main-nav .viewer .loginBtn {
-    display: flex;
-    justify-content: space-between;
-    gap: 1em;
+
+.main-nav .viewer .loginBtn i {
+    margin-left: 8px;
 }
 
 .main-nav .viewer i,

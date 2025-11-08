@@ -54,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: 'include'
         })
             .then((response) => {
-                console.log('Logout response status:', response.status);
                 currentUser = null;
                 updateViewerUI();
 
