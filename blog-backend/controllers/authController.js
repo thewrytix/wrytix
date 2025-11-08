@@ -38,26 +38,39 @@ const login = async (req, res) => {
 
 const signup = async (req, res) => {
     console.log('🚨 SIGNUP FUNCTION EXECUTING - START');
-    console.log('🎯 SIGNUP REQUEST RECEIVED');
-    console.log('📦 Headers:', req.headers);
     console.log('📦 Body:', req.body);
 
-    // Extract variables here so they're available in catch block
     const { fullname, username, email, password } = req.body;
 
     try {
+        console.log('✅ Step 1: Entered try block');
+
+        console.log('🔍 Step 2: Validating input...');
         if (!fullname || !username || !email || !password) {
+            console.log('❌ Missing fields');
             return res.status(400).json({ error: 'All fields required' });
         }
+        console.log('✅ Input validation passed');
 
-        // Check uniqueness
+        console.log('🔍 Step 3: Checking User model...');
+        console.log('User model type:', typeof User);
+        console.log('User model:', User);
+
+        console.log('🔍 Step 4: Checking for existing user...');
         const existingUser = await User.findOne({ $or: [{ username }, { email }, { fullname }] });
+        console.log('✅ Existing user check completed');
+
         if (existingUser) {
+            console.log('❌ User already exists');
             return res.status(400).json({ error: 'Username, full name, or email already taken' });
         }
+        console.log('✅ No existing user found');
 
-        // Hash and save
+        console.log('🔍 Step 5: Hashing password...');
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('✅ Password hashed');
+
+        console.log('🔍 Step 6: Creating user object...');
         const user = new User({
             fullname,
             username,
@@ -66,9 +79,12 @@ const signup = async (req, res) => {
             role: 'viewer',
             status: 'active'
         });
-        await user.save();
+        console.log('✅ User object created');
 
-        logAction(username, 'signup-success', username);
+        console.log('🔍 Step 7: Saving user...');
+        await user.save();
+        console.log('✅ USER SAVED SUCCESSFULLY');
+
         res.status(201).json({
             message: 'Account created successfully',
             user: {
@@ -78,10 +94,13 @@ const signup = async (req, res) => {
                 role: user.role
             }
         });
+
     } catch (err) {
-        // Now username is available in the catch block
-        logAction(username || 'unknown', 'signup-failed', 'system', { reason: err.message });
-        res.status(500).json({ error: 'Server error' });
+        console.error('💥 CATCH BLOCK ERROR:');
+        console.error('💥 Error message:', err.message);
+        console.error('💥 Error stack:', err.stack);
+        console.error('💥 Error name:', err.name);
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 };
 
