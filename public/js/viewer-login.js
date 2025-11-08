@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com/auth'; // Root, flat mount
+    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
 
     let currentUser = null;
 
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/auth/check`, { // Matches your /auth/check
+            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
                 method: 'GET',
                 credentials: 'include'
             });

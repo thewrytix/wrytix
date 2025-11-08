@@ -14,7 +14,7 @@ router.options('/check-email', cors(corsOptions));
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/logout', logout);
-router.get('/auth/check', checkAuth);
+router.get('/check', checkAuth);
 router.get('/verify-session', verifySession);
 router.get('/check-username', cors(corsOptions), checkUsername);
 router.get('/check-email', cors(corsOptions), checkEmail);
