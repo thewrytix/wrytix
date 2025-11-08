@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
+const mongoose = require('mongoose');
 const { logAction } = require('../utils/logger');
+
 
 console.log('🔍 AUTH CONTROLLER IMPORTS:');
 console.log('bcrypt:', typeof bcrypt);
