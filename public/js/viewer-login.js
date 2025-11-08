@@ -239,6 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkAuthOnLoad();
 });
 
+
 // Global logout
 function logout() {
     fetch(`${API_BASE}/logout`, { // Flat /logout
