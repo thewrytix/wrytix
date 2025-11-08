@@ -49,17 +49,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Global logout
     function logout() {
-        fetch(`${API_BASE}/logout`, { // Flat /logout
+        fetch(`${API_BASE}/logout`, {
             method: 'POST',
             credentials: 'include'
         })
-            .then((res) => res.text())
-            .then((rawText) => {
-                console.log('Logout raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+            .then((response) => {
+                console.log('Logout response status:', response.status);
                 currentUser = null;
                 updateViewerUI();
+
+                // Optional: Clear any stored data
+                localStorage.removeItem('authToken');
+                sessionStorage.removeItem('user');
             })
-            .catch(console.error);
+            .catch((error) => {
+                console.error('Logout error:', error);
+                // Still update UI even if logout request fails
+                currentUser = null;
+                updateViewerUI();
+            });
     }
 
     // Loading/Error helpers
