@@ -47,6 +47,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Global logout
+    function logout() {
+        fetch(`${API_BASE}/logout`, { // Flat /logout
+            method: 'POST',
+            credentials: 'include'
+        })
+            .then((res) => res.text())
+            .then((rawText) => {
+                console.log('Logout raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+                currentUser = null;
+                updateViewerUI();
+            })
+            .catch(console.error);
+    }
+
     // Loading/Error helpers
     function showLoading(modal, show = true) {
         let loadingEl = modal.querySelector('.loading');
@@ -238,17 +253,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// Global logout
-function logout() {
-    fetch(`${API_BASE}/logout`, { // Flat /logout
-        method: 'POST',
-        credentials: 'include'
-    })
-        .then((res) => res.text())
-        .then((rawText) => {
-            console.log('Logout raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
-            currentUser = null;
-            updateViewerUI();
-        })
-        .catch(console.error);
-}
