@@ -127,7 +127,9 @@ router.post('/generate-static/:slug', async (req, res) => {
     }
 });
 
-
+// Add debug logging
+console.log('🔍 escapeHtml loaded:', typeof escapeHtml);
+console.log('🔍 Test escape:', escapeHtml('<test>"hello"</test>'));
 
 
 module.exports = router;
