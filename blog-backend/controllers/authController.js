@@ -37,7 +37,10 @@ const login = async (req, res) => {
 };
 
 const signup = async (req, res) => {
-    console.log('Signup route HIT with body:', req.body);
+    console.log('🚨 SIGNUP FUNCTION EXECUTING - START');
+    console.log('🎯 SIGNUP REQUEST RECEIVED');
+    console.log('📦 Headers:', req.headers);
+    console.log('📦 Body:', req.body);
 
     // Extract variables here so they're available in catch block
     const { fullname, username, email, password } = req.body;
