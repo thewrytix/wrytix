@@ -11,37 +11,59 @@ console.log('logAction:', typeof logAction);
 
 
 const login = async (req, res) => {
-    const { usernameOrEmail, password } = req.body; // Frontend sends 'email' but we map to usernameOrEmail
-    let query = { status: 'active' };
-    if (usernameOrEmail.includes('@')) {
-        query.email = usernameOrEmail; // Login by email
-    } else {
-        query.username = usernameOrEmail; // Or by username
-    }
+    console.log('🚨 LOGIN REQUEST BODY:', req.body);
+    try {
+        // Handle both field names for compatibility
+        const usernameOrEmail = req.body.usernameOrEmail || req.body.username;
+        const password = req.body.password;
 
-    const user = await User.findOne(query).lean();
+        console.log('🔍 Processed credentials:', { usernameOrEmail, password });
 
-    if (!user) {
-        await logAction(usernameOrEmail || 'unknown', 'login-failed', 'system', { reason: 'User not found' });
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
+        if (!usernameOrEmail || !password) {
+            console.log('❌ Missing credentials');
+            return res.status(400).json({ error: 'Username/email and password required' });
+        }
 
-    bcrypt.compare(password, user.password, (err, result) => {
-        if (err || !result) {
+        let query = { status: 'active' };
+        if (usernameOrEmail.includes('@')) {
+            query.email = usernameOrEmail;
+        } else {
+            query.username = usernameOrEmail;
+        }
+
+        console.log('🔍 Finding user with query:', query);
+        const user = await User.findOne(query).lean();
+
+        if (!user) {
+            console.log('❌ User not found');
+            await logAction(usernameOrEmail || 'unknown', 'login-failed', 'system', { reason: 'User not found' });
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        console.log('🔍 User found, checking password...');
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            console.log('❌ Invalid password');
             logAction(user.username, 'login-failed', user.username, { reason: 'Invalid password' });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        console.log('✅ Login successful for user:', user.username);
         req.session.user = {
             id: user.id,
             username: user.username,
-            fullName: user.fullname, // Assuming schema 'fullname'—swap if camelCase
+            fullName: user.fullname,
             role: user.role,
         };
 
         logAction(user.username, 'login-success', user.username);
         res.json({ message: 'Login successful', user: req.session.user });
-    });
+
+    } catch (err) {
+        console.error('💥 LOGIN CATCH BLOCK ERROR:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
 };
 
 const signup = async (req, res) => {
