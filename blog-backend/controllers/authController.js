@@ -37,20 +37,23 @@ const login = async (req, res) => {
 };
 
 const signup = async (req, res) => {
-    console.log('Signup route HIT with body:', req.body); // Confirms route reached
+    console.log('Signup route HIT with body:', req.body);
+
+    // Extract variables here so they're available in catch block
+    const { fullname, username, email, password } = req.body;
+
     try {
-        const { fullname, username, email, password } = req.body;
         if (!fullname || !username || !email || !password) {
             return res.status(400).json({ error: 'All fields required' });
         }
 
-        // Check uniqueness (your middleware could hook here too)
+        // Check uniqueness
         const existingUser = await User.findOne({ $or: [{ username }, { email }, { fullname }] });
         if (existingUser) {
             return res.status(400).json({ error: 'Username, full name, or email already taken' });
         }
 
-        // Hash and save (pre-save hook handles hash if you added it)
+        // Hash and save
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
             fullname,
@@ -58,14 +61,22 @@ const signup = async (req, res) => {
             email,
             password: hashedPassword,
             role: 'viewer',
-            status: 'active' // Or 'pending' if you want verification
+            status: 'active'
         });
         await user.save();
 
-        // Auto-login? Nah, just create—frontend can login after
         logAction(username, 'signup-success', username);
-        res.status(201).json({ message: 'Account created successfully', user: { id: user.id, username: user.username, fullName: user.fullname, role: user.role } });
+        res.status(201).json({
+            message: 'Account created successfully',
+            user: {
+                id: user.id,
+                username: user.username,
+                fullName: user.fullname,
+                role: user.role
+            }
+        });
     } catch (err) {
+        // Now username is available in the catch block
         logAction(username || 'unknown', 'signup-failed', 'system', { reason: err.message });
         res.status(500).json({ error: 'Server error' });
     }
