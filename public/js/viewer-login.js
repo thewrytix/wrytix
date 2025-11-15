@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
             profileDropdown.style.display = 'block';
             const profileText = document.getElementById('profileText');
             const profileIcon = document.getElementById('profileIcon');
-            profileText.textContent = SecurityUtils.safeFormat('Hi, {0}!', currentUser.username);
+            profileText.textContent = SecurityUtils.safeFormat('Hi, {0}!', currentUser.fullname);
             profileIcon.className = 'fa-solid fa-user-circle';
         } else {
             loginBtn.style.display = 'block';
@@ -35,8 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (fullname.length > 50) {
             return 'Full name must be less than 50 characters';
         }
-        if (!/^[a-zA-Z\s\-']+$/.test(fullname)) {
-            return 'Full name can only contain letters, spaces, hyphens, and apostrophes';
+        // Allow letters, spaces, hyphens, apostrophes, periods, and accented characters
+        if (!/^[a-zA-ZÀ-ÿ\s\-'.]+$/.test(fullname)) {
+            return 'Full name contains invalid characters';
         }
         return null;
     }
