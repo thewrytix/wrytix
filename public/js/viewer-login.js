@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
+    const API_BASE = 'https://wrytix.onrender.com';
 
     let currentUser = null;
 
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
             profileDropdown.style.display = 'block';
             const profileText = document.getElementById('profileText');
             const profileIcon = document.getElementById('profileIcon');
-            profileText.textContent = `Hi, ${currentUser.username}!`;
+            profileText.textContent = SecurityUtils.safeFormat('Hi, {0}!', currentUser.username);
             profileIcon.className = 'fa-solid fa-user-circle';
         } else {
             loginBtn.style.display = 'block';
@@ -27,10 +27,65 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Check session on load (populates currentUser)
+    // Input validation functions
+    function validateFullName(fullname) {
+        if (!fullname || fullname.trim().length < 2) {
+            return 'Full name must be at least 2 characters';
+        }
+        if (fullname.length > 50) {
+            return 'Full name must be less than 50 characters';
+        }
+        if (!/^[a-zA-Z\s\-']+$/.test(fullname)) {
+            return 'Full name can only contain letters, spaces, hyphens, and apostrophes';
+        }
+        return null;
+    }
+
+    function validateUsername(username) {
+        if (!username || username.length < 3) {
+            return 'Username must be at least 3 characters';
+        }
+        if (username.length > 20) {
+            return 'Username must be less than 20 characters';
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            return 'Username can only contain letters, numbers, and underscores';
+        }
+        return null;
+    }
+
+    function validateEmail(email) {
+        if (!email) {
+            return 'Email is required';
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return 'Please enter a valid email address';
+        }
+        if (email.length > 100) {
+            return 'Email must be less than 100 characters';
+        }
+        return null;
+    }
+
+    function validatePassword(password) {
+        if (!password || password.length < 6) {
+            return 'Password must be at least 6 characters';
+        }
+        if (password.length > 128) {
+            return 'Password must be less than 128 characters';
+        }
+        // Basic password strength check
+        if (password.length < 8) {
+            return 'For better security, use at least 8 characters';
+        }
+        return null;
+    }
+
+    // Check session on load
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
+            const res = await fetch(`${API_BASE}/check`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -56,14 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((response) => {
                 currentUser = null;
                 updateViewerUI();
-
-                // Optional: Clear any stored data
                 localStorage.removeItem('authToken');
                 sessionStorage.removeItem('user');
             })
             .catch((error) => {
                 console.error('Logout error:', error);
-                // Still update UI even if logout request fails
                 currentUser = null;
                 updateViewerUI();
             });
@@ -90,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorEl.style.cssText = `color: ${isSuccess ? 'green' : 'red'}; margin-top: 10px; text-align: center; display: none;`;
             modal.querySelector('form').appendChild(errorEl);
         }
-        errorEl.textContent = message;
+        errorEl.textContent = SecurityUtils.escapeHtml(message);
         errorEl.style.display = 'block';
         if (isSuccess) setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
     }
@@ -98,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Login handler
     async function handleLogin(e) {
         e.preventDefault();
-        const usernameOrEmail = document.getElementById('email').value;
+        const usernameOrEmail = SecurityUtils.sanitizeInput(document.getElementById('email').value, { maxLength: 100 });
         const password = document.getElementById('password').value;
 
         if (!usernameOrEmail || !password) {
@@ -111,10 +163,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/login`, { // Flat /login
+            const res = await fetch(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usernameOrEmail, password }),
+                body: JSON.stringify({
+                    usernameOrEmail: SecurityUtils.escapeHtml(usernameOrEmail),
+                    password: password
+                }),
                 credentials: 'include'
             });
             const rawText = await res.text();
@@ -136,25 +191,44 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Signup handler
+    // SANITIZED Signup handler
     async function handleSignup(e) {
         e.preventDefault();
-        const fullname = document.getElementById('signup-fullname').value.trim();
-        const username = document.getElementById('signup-username').value.trim();
-        const email = document.getElementById('signup-email').value.trim();
+
+        // Sanitize and validate all inputs
+        const fullname = SecurityUtils.sanitizeInput(document.getElementById('signup-fullname').value.trim(), { maxLength: 50 });
+        const username = SecurityUtils.sanitizeInput(document.getElementById('signup-username').value.trim(), { maxLength: 20 });
+        const email = SecurityUtils.sanitizeInput(document.getElementById('signup-email').value.trim(), { maxLength: 100 });
         const password = document.getElementById('signup-password').value;
         const confirm = document.getElementById('signup-confirm').value;
 
-        if (!fullname || !username || !email || !password || !confirm) {
-            showError(signupModal, 'Please fill all fields');
+        // Validate all fields
+        const fullnameError = validateFullName(fullname);
+        if (fullnameError) {
+            showError(signupModal, fullnameError);
             return;
         }
+
+        const usernameError = validateUsername(username);
+        if (usernameError) {
+            showError(signupModal, usernameError);
+            return;
+        }
+
+        const emailError = validateEmail(email);
+        if (emailError) {
+            showError(signupModal, emailError);
+            return;
+        }
+
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            showError(signupModal, passwordError);
+            return;
+        }
+
         if (password !== confirm) {
             showError(signupModal, 'Passwords do not match');
-            return;
-        }
-        if (password.length < 6) {
-            showError(signupModal, 'Password must be at least 6 characters');
             return;
         }
 
@@ -163,19 +237,27 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/signup`, { // Flat /signup
+            const res = await fetch(`${API_BASE}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fullname, username, email, password }),
+                body: JSON.stringify({
+                    fullname: SecurityUtils.escapeHtml(fullname),
+                    username: SecurityUtils.escapeHtml(username),
+                    email: SecurityUtils.escapeHtml(email),
+                    password: password
+                }),
                 credentials: 'include'
             });
+
             const rawText = await res.text();
-            console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status); // Temp debug
+            console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status);
+
             if (!res.ok) {
                 let data;
                 try { data = JSON.parse(rawText); } catch {}
                 throw new Error(data?.error || `Signup failed (Status ${res.status})`);
             }
+
             const data = JSON.parse(rawText);
             signupModal.style.display = 'none';
             loginModal.style.display = 'flex';
@@ -189,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Modal toggles (unchanged)
+    // Modal toggles
     loginBtn.addEventListener("click", () => {
         if (!currentUser) loginModal.style.display = "flex";
     });
@@ -218,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === signupModal) signupModal.style.display = "none";
     });
 
-    // Profile dropdown events (unchanged)
+    // Profile dropdown events
     profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
@@ -258,5 +340,3 @@ document.addEventListener("DOMContentLoaded", () => {
     // Init
     checkAuthOnLoad();
 });
-
-
