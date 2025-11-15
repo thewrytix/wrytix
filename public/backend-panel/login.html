@@ -67,7 +67,14 @@
                     }
                 }, 1200);
             } else {
-                showError('Invalid username or password.');
+                // ONLY show suspension message for backend users
+                if (res.status === 403 && data.error?.includes('suspended')) {
+                    showError('Account suspended. Please contact administrator.');
+                } else if (res.status === 403 && data.error?.includes('inactive')) {
+                    showError('Account inactive. Please contact administrator.');
+                } else {
+                    showError('Invalid username or password.');
+                }
             }
         } catch (err) {
             console.error('Login failed:', err);
