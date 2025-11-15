@@ -12,7 +12,6 @@ const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
 
 const login = async (req, res) => {
     try {
-        // Handle both field names for compatibility
         const usernameOrEmail = req.body.usernameOrEmail || req.body.username;
         const password = req.body.password;
         const clientIP = req.ip || req.connection.remoteAddress;
@@ -23,7 +22,9 @@ const login = async (req, res) => {
 
         // Check if IP is locked
         const ipKey = `ip:${clientIP}`;
-        if (failedAttempts.get(ipKey) >= MAX_ATTEMPTS) {
+        const ipAttempts = failedAttempts.get(ipKey) || 0;
+
+        if (ipAttempts >= MAX_ATTEMPTS) {
             return res.status(429).json({
                 error: 'Too many failed attempts. Please try again in 15 minutes.'
             });
@@ -40,8 +41,7 @@ const login = async (req, res) => {
 
         if (!user) {
             // Increment failed attempts for this IP
-            const attempts = failedAttempts.get(ipKey) || 0;
-            failedAttempts.set(ipKey, attempts + 1);
+            failedAttempts.set(ipKey, ipAttempts + 1);
 
             // Set expiration for IP lockout
             setTimeout(() => {
@@ -50,11 +50,14 @@ const login = async (req, res) => {
 
             await logAction(usernameOrEmail || 'unknown', 'login-failed', 'system', {
                 reason: 'User not found',
-                attempts: attempts + 1,
+                attempts: ipAttempts + 1,
                 ip: clientIP
             });
 
-            return res.status(401).json({ error: 'Invalid credentials' });
+            const remainingAttempts = MAX_ATTEMPTS - (ipAttempts + 1);
+            return res.status(401).json({
+                error: `Invalid credentials. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining` : 'Too many attempts'}`
+            });
         }
 
         // Check if this specific account is locked
@@ -74,7 +77,6 @@ const login = async (req, res) => {
 
         if (!isPasswordValid) {
             // Increment failed attempts for both IP and account
-            const ipAttempts = failedAttempts.get(ipKey) || 0;
             failedAttempts.set(ipKey, ipAttempts + 1);
 
             const userAttempts = failedAttempts.get(accountKey) || 0;
@@ -105,8 +107,11 @@ const login = async (req, res) => {
                 locked: newUserAttempts >= MAX_ATTEMPTS
             });
 
-            // Return remaining attempts
-            const remainingAttempts = MAX_ATTEMPTS - newUserAttempts;
+            // Return remaining attempts - use the LOWER of IP or account attempts
+            const remainingFromIP = MAX_ATTEMPTS - (ipAttempts + 1);
+            const remainingFromAccount = MAX_ATTEMPTS - newUserAttempts;
+            const remainingAttempts = Math.min(remainingFromIP, remainingFromAccount);
+
             return res.status(401).json({
                 error: `Invalid credentials. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining` : 'Account locked'}`
             });
