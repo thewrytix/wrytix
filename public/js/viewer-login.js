@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com';
+    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
 
     let currentUser = null;
 
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
             profileDropdown.style.display = 'block';
             const profileText = document.getElementById('profileText');
             const profileIcon = document.getElementById('profileIcon');
-            // SECURITY FIX: Safe display of username
+            // SECURE: Escape username for display
             profileText.textContent = SecurityUtils.safeFormat('Hi, {0}!', currentUser.username);
             profileIcon.className = 'fa-solid fa-user-circle';
         } else {
@@ -28,10 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Check session on load
+    // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/check`, {
+            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
                 method: 'GET',
                 credentials: 'include'
             });
@@ -57,11 +57,14 @@ document.addEventListener("DOMContentLoaded", () => {
             .then((response) => {
                 currentUser = null;
                 updateViewerUI();
+
+                // Optional: Clear any stored data
                 localStorage.removeItem('authToken');
                 sessionStorage.removeItem('user');
             })
             .catch((error) => {
                 console.error('Logout error:', error);
+                // Still update UI even if logout request fails
                 currentUser = null;
                 updateViewerUI();
             });
@@ -80,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadingEl.style.display = show ? 'block' : 'none';
     }
 
+    // Secure error messages
     function showError(modal, message, isSuccess = false) {
         let errorEl = modal.querySelector('.error');
         if (!errorEl) {
@@ -88,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             errorEl.style.cssText = `color: ${isSuccess ? 'green' : 'red'}; margin-top: 10px; text-align: center; display: none;`;
             modal.querySelector('form').appendChild(errorEl);
         }
-        // SECURITY FIX: Escape error messages
+        // SECURE: Escape error messages
         errorEl.innerHTML = SecurityUtils.escapeHtml(message);
         errorEl.style.display = 'block';
         if (isSuccess) setTimeout(() => { errorEl.style.display = 'none'; }, 3000);
@@ -97,8 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Login handler
     async function handleLogin(e) {
         e.preventDefault();
-        // SECURITY FIX: Sanitize inputs
-        const usernameOrEmail = SecurityUtils.sanitizeInput(document.getElementById('email').value, { maxLength: 100 });
+        const usernameOrEmail = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
         if (!usernameOrEmail || !password) {
@@ -111,14 +114,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/login`, {
+            const res = await fetch(`${API_BASE}/login`, { // Flat /login
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // SECURITY FIX: Escape data before sending
-                body: JSON.stringify({
-                    usernameOrEmail: SecurityUtils.escapeHtml(usernameOrEmail),
-                    password: password
-                }),
+                body: JSON.stringify({ usernameOrEmail, password }),
                 credentials: 'include'
             });
             const rawText = await res.text();
@@ -140,20 +139,29 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Signup handler - MINIMAL SECURITY ADDITIONS
+    // Signup handler - SECURE VERSION
     async function handleSignup(e) {
         e.preventDefault();
-        // SECURITY FIX: Sanitize all inputs
-        const fullname = SecurityUtils.sanitizeInput(document.getElementById('signup-fullname').value.trim(), { maxLength: 50 });
-        const username = SecurityUtils.sanitizeInput(document.getElementById('signup-username').value.trim(), { maxLength: 20 });
-        const email = SecurityUtils.sanitizeInput(document.getElementById('signup-email').value.trim(), { maxLength: 100 });
+
+        // Get raw inputs (for sending to API)
+        const rawFullname = document.getElementById('signup-fullname').value.trim();
+        const rawUsername = document.getElementById('signup-username').value.trim();
+        const rawEmail = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value;
         const confirm = document.getElementById('signup-confirm').value;
 
-        if (!fullname || !username || !email || !password || !confirm) {
+        // Create sanitized versions for validation/display
+        const sanitizedFullname = SecurityUtils.sanitizeInput(rawFullname, { maxLength: 50 });
+        const sanitizedUsername = SecurityUtils.sanitizeInput(rawUsername, { maxLength: 20 });
+        const sanitizedEmail = SecurityUtils.sanitizeInput(rawEmail, { maxLength: 100 });
+
+        // Validate using SANITIZED data
+        if (!sanitizedFullname || !sanitizedUsername || !sanitizedEmail || !password || !confirm) {
             showError(signupModal, 'Please fill all fields');
             return;
         }
+
+        // Additional validation
         if (password !== confirm) {
             showError(signupModal, 'Passwords do not match');
             return;
@@ -171,22 +179,25 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(`${API_BASE}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // SECURITY FIX: Escape all user data
+                // Send RAW data to API (backend should validate)
                 body: JSON.stringify({
-                    fullname: SecurityUtils.escapeHtml(fullname),
-                    username: SecurityUtils.escapeHtml(username),
-                    email: SecurityUtils.escapeHtml(email),
-                    password: password
+                    fullname: rawFullname,
+                    username: rawUsername,
+                    email: rawEmail,
+                    password
                 }),
                 credentials: 'include'
             });
+
             const rawText = await res.text();
             console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status);
+
             if (!res.ok) {
                 let data;
                 try { data = JSON.parse(rawText); } catch {}
                 throw new Error(data?.error || `Signup failed (Status ${res.status})`);
             }
+
             const data = JSON.parse(rawText);
             signupModal.style.display = 'none';
             loginModal.style.display = 'flex';
@@ -200,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Rest of your code remains exactly the same...
+    // Modal toggles (unchanged)
     loginBtn.addEventListener("click", () => {
         if (!currentUser) loginModal.style.display = "flex";
     });
@@ -229,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.target === signupModal) signupModal.style.display = "none";
     });
 
+    // Profile dropdown events (unchanged)
     profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
@@ -255,13 +267,18 @@ document.addEventListener("DOMContentLoaded", () => {
         profileMenu.style.display = 'none';
     });
 
+    // Forgot password stub
     document.getElementById('forgot-password').addEventListener('click', (e) => {
         e.preventDefault();
         alert('Forgot password? Coming soon!');
     });
 
+    // Form submit listeners
     loginModal.querySelector('form').addEventListener('submit', handleLogin);
     document.getElementById('signupForm').addEventListener('submit', handleSignup);
 
+    // Init
     checkAuthOnLoad();
 });
+
+
