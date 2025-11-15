@@ -55,7 +55,7 @@
         </li>
       </ul>
     </nav>
-  </aside>
+     </aside>
   <main class="admin-main">
     <div class="top-bar">
       <div class="profile-dropdown">
@@ -105,47 +105,27 @@
     <div class="quick-links">
       <a href="add-user.html">➕ Add New User</a>
       <a href="user-approval-requests.html">🔔 View Approval Requests</a>
-      <a href="users-list.html">📋 View All Users</a>
+       <a href="users-list.html">📋 View All Users</a>
       <a href="delete-user.html">🗑️ Delete User</a>
-      <a href="logs.html">📜 View Logs</a>
+        <a href="logs.html">📜 View Logs</a><
     </div>
   </main>
 </div>
 <script>
   async function loadDashboardStats() {
-    try {
-      const usersRes = await fetch('https://wrytix.onrender.com/users');
-      const pendingRes = await fetch('https://wrytix.onrender.com/pendingUsers');
+    const usersRes = await fetch('https://wrytix.onrender.com/users');
+    const pendingRes = await fetch('https://wrytix.onrender.com/pendingUsers');
+    const users = await usersRes.json();
+    const pending = await pendingRes.json();
 
-      // Check if responses are OK
-      if (!usersRes.ok || !pendingRes.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const usersData = await usersRes.json();
-      const pendingData = await pendingRes.json();
-
-      // Ensure we're working with arrays
-      const users = Array.isArray(usersData) ? usersData : [];
-      const pending = Array.isArray(pendingData) ? pendingData : [];
-
-      console.log('Users data:', users); // Debug log
-      console.log('Pending data:', pending); // Debug log
-
-      // Update dashboard stats safely
-      document.getElementById('totalUsers').textContent = users.length;
-      document.getElementById('approvalCount').textContent = pending.length;
-      document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
-      document.getElementById('inactiveUsers').textContent = users.filter(u => u.status === 'inactive').length;
-      document.getElementById('viewerCount').textContent = users.filter(u => u.role === 'viewer').length;
-      document.getElementById('authorCount').textContent = users.filter(u => u.role === 'author').length;
-      document.getElementById('editorCount').textContent = users.filter(u => u.role === 'editor').length;
-      document.getElementById('adminCount').textContent = users.filter(u => u.role === 'admin').length;
-
-    } catch (error) {
-      console.error('Error loading dashboard stats:', error);
-      // You can show an error message to the user here if needed
-    }
+    document.getElementById('totalUsers').textContent = users.length;
+    document.getElementById('approvalCount').textContent = pending.length;
+    document.getElementById('activeUsers').textContent = users.filter(u => u.status === 'active').length;
+    document.getElementById('inactiveUsers').textContent = users.filter(u => u.status === 'inactive').length;
+    document.getElementById('viewerCount').textContent = users.filter(u => u.role === 'viewer').length;
+    document.getElementById('authorCount').textContent = users.filter(u => u.role === 'author').length;
+    document.getElementById('editorCount').textContent = users.filter(u => u.role === 'editor').length;
+    document.getElementById('adminCount').textContent = users.filter(u => u.role === 'admin').length;
   }
 
   loadDashboardStats();
