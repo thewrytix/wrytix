@@ -30,14 +30,35 @@ const login = async (req, res) => {
             });
         }
 
-        let query = { status: 'active' };
-        if (usernameOrEmail.includes('@')) {
-            query.email = usernameOrEmail;
-        } else {
-            query.username = usernameOrEmail;
+        // FIX: Try BOTH username and email queries to find the user
+        let user = null;
+
+        // First, try to find by username (for backend panel users)
+        user = await User.findOne({
+            username: usernameOrEmail,
+            status: 'active'
+        }).lean();
+
+        // If not found by username and input contains @, try email (for website viewers)
+        if (!user && usernameOrEmail.includes('@')) {
+            user = await User.findOne({
+                email: usernameOrEmail,
+                status: 'active'
+            }).lean();
         }
 
-        const user = await User.findOne(query).lean();
+        // If still not found, try without status filter as fallback
+        if (!user) {
+            user = await User.findOne({
+                username: usernameOrEmail
+            }).lean();
+
+            if (!user && usernameOrEmail.includes('@')) {
+                user = await User.findOne({
+                    email: usernameOrEmail
+                }).lean();
+            }
+        }
 
         if (!user) {
             // Increment failed attempts for this IP
@@ -57,6 +78,17 @@ const login = async (req, res) => {
             const remainingAttempts = MAX_ATTEMPTS - (ipAttempts + 1);
             return res.status(401).json({
                 error: `Invalid credentials. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining` : 'Too many attempts'}`
+            });
+        }
+
+        // Check if user is active
+        if (user.status !== 'active') {
+            await logAction(user.username, 'login-failed', user.username, {
+                reason: `Account is ${user.status}`,
+                ip: clientIP
+            });
+            return res.status(403).json({
+                error: `Account is ${user.status}. Please contact administrator.`
             });
         }
 
@@ -83,16 +115,34 @@ const login = async (req, res) => {
             const newUserAttempts = userAttempts + 1;
             failedAttempts.set(accountKey, newUserAttempts);
 
-            // Lock account if max attempts reached
+            // DIFFERENT SECURITY BASED ON ROLE
             if (newUserAttempts >= MAX_ATTEMPTS) {
-                const lockUntil = Date.now() + LOCKOUT_TIME;
-                lockedAccounts.set(accountKey, lockUntil);
+                if (user.role === 'viewer') {
+                    // Viewers get temporary lockout
+                    const lockUntil = Date.now() + LOCKOUT_TIME;
+                    lockedAccounts.set(accountKey, lockUntil);
 
-                // Auto-unlock after timer
-                setTimeout(() => {
-                    lockedAccounts.delete(accountKey);
-                    failedAttempts.delete(accountKey);
-                }, LOCKOUT_TIME);
+                    // Auto-unlock after timer
+                    setTimeout(() => {
+                        lockedAccounts.delete(accountKey);
+                        failedAttempts.delete(accountKey);
+                    }, LOCKOUT_TIME);
+
+                } else {
+                    // Authors, Editors, Admins get ACCOUNT SUSPENSION
+                    await User.findOneAndUpdate(
+                        { username: user.username },
+                        { status: 'suspended' }
+                    );
+
+                    await logAction('system', 'security-alert', 'system', {
+                        message: `Account suspended due to brute force attempts`,
+                        username: user.username,
+                        role: user.role,
+                        ip: clientIP,
+                        attempts: newUserAttempts
+                    });
+                }
             }
 
             // Set expiration for IP lockout
@@ -104,17 +154,28 @@ const login = async (req, res) => {
                 reason: 'Invalid password',
                 attempts: newUserAttempts,
                 ip: clientIP,
-                locked: newUserAttempts >= MAX_ATTEMPTS
+                locked: newUserAttempts >= MAX_ATTEMPTS,
+                role: user.role
             });
 
-            // Return remaining attempts - use the LOWER of IP or account attempts
+            // Return appropriate message
             const remainingFromIP = MAX_ATTEMPTS - (ipAttempts + 1);
             const remainingFromAccount = MAX_ATTEMPTS - newUserAttempts;
             const remainingAttempts = Math.min(remainingFromIP, remainingFromAccount);
 
-            return res.status(401).json({
-                error: `Invalid credentials. ${remainingAttempts > 0 ? `${remainingAttempts} attempts remaining` : 'Account locked'}`
-            });
+            let errorMessage = `Invalid credentials. `;
+
+            if (newUserAttempts >= MAX_ATTEMPTS) {
+                if (user.role === 'viewer') {
+                    errorMessage += 'Account temporarily locked for 15 minutes.';
+                } else {
+                    errorMessage += 'Account suspended due to security concerns. Please contact administrator.';
+                }
+            } else {
+                errorMessage += `${remainingAttempts} attempts remaining`;
+            }
+
+            return res.status(401).json({ error: errorMessage });
         }
 
         // SUCCESSFUL LOGIN - Reset counters
@@ -129,7 +190,10 @@ const login = async (req, res) => {
             role: user.role,
         };
 
-        await logAction(user.username, 'login-success', user.username, { ip: clientIP });
+        await logAction(user.username, 'login-success', user.username, {
+            ip: clientIP,
+            role: user.role
+        });
         res.json({ message: 'Login successful', user: req.session.user });
 
     } catch (err) {
