@@ -35,14 +35,71 @@ class RichTextEditor {
             });
         }
 
-        // Keyboard shortcuts
+        // Keyboard shortcuts - ONLY INTERCEPT SPECIFIC COMBINATIONS
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
+            // Only prevent default for the shortcuts we want to handle
+            if ((e.ctrlKey || e.metaKey) && !e.altKey) {
                 switch (e.key.toLowerCase()) {
-                    case 'b': this.toggleBold(); break;
-                    case 'i': this.toggleItalic(); break;
-                    case 'u': this.toggleUnderline(); break;
+                    case 'b':
+                        e.preventDefault();
+                        this.toggleBold();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        this.toggleItalic();
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        this.toggleUnderline();
+                        break;
+                    case 'z':
+                        if (!e.shiftKey) {
+                            e.preventDefault();
+                            this.undo();
+                        } else {
+                            e.preventDefault();
+                            this.redo();
+                        }
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        this.redo();
+                        break;
+                    case 'a':
+                        // Allow Ctrl+A (Select All) - don't prevent default
+                        break;
+                    case 'c':
+                    case 'x':
+                    case 'v':
+                        // Allow Ctrl+C, Ctrl+X, Ctrl+V - don't prevent default
+                        break;
+                    case 'l':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.justifyLeft();
+                        }
+                        break;
+                    case 'e':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.justifyCenter();
+                        }
+                        break;
+                    case 'r':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.justifyRight();
+                        }
+                        break;
+                    case 'j':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.justifyFull();
+                        }
+                        break;
+                    default:
+                        // Allow all other Ctrl+key combinations
+                        break;
                 }
             }
         });
@@ -62,24 +119,6 @@ class RichTextEditor {
         }
     }
 
-    // Fallback method using modern approach
-    applyModernStyle(property, value) {
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const selectedText = range.toString();
-
-            if (selectedText) {
-                const span = document.createElement('span');
-                span.style[property] = value;
-                span.textContent = selectedText;
-
-                range.deleteContents();
-                range.insertNode(span);
-            }
-        }
-    }
-
     // Specific formatting methods
     toggleBold() {
         this.applyStyle('bold');
@@ -94,7 +133,31 @@ class RichTextEditor {
     }
 
     applyStrikethrough() {
-        this.applyStyle('strikethrough');
+        document.execCommand('strikeThrough', false, null);
+    }
+
+    undo() {
+        document.execCommand('undo', false, null);
+    }
+
+    redo() {
+        document.execCommand('redo', false, null);
+    }
+
+    justifyLeft() {
+        document.execCommand('justifyLeft', false, null);
+    }
+
+    justifyCenter() {
+        document.execCommand('justifyCenter', false, null);
+    }
+
+    justifyRight() {
+        document.execCommand('justifyRight', false, null);
+    }
+
+    justifyFull() {
+        document.execCommand('justifyFull', false, null);
     }
 
     insertList(ordered = false) {
@@ -336,12 +399,12 @@ function formatText(command, value = null) {
         case 'insertOrderedList': window.richTextEditor.insertList(true); break;
         case 'createLink': window.richTextEditor.insertLink(); break;
         case 'removeFormat': document.execCommand('removeFormat', false, null); break;
-        case 'undo': document.execCommand('undo', false, null); break;
-        case 'redo': document.execCommand('redo', false, null); break;
-        case 'justifyLeft': document.execCommand('justifyLeft', false, null); break;
-        case 'justifyCenter': document.execCommand('justifyCenter', false, null); break;
-        case 'justifyRight': document.execCommand('justifyRight', false, null); break;
-        case 'justifyFull': document.execCommand('justifyFull', false, null); break;
+        case 'undo': window.richTextEditor.undo(); break;
+        case 'redo': window.richTextEditor.redo(); break;
+        case 'justifyLeft': window.richTextEditor.justifyLeft(); break;
+        case 'justifyCenter': window.richTextEditor.justifyCenter(); break;
+        case 'justifyRight': window.richTextEditor.justifyRight(); break;
+        case 'justifyFull': window.richTextEditor.justifyFull(); break;
         case 'subscript': document.execCommand('subscript', false, null); break;
         case 'superscript': document.execCommand('superscript', false, null); break;
         case 'fontName': window.richTextEditor.applyStyle('fontName', value); break;
