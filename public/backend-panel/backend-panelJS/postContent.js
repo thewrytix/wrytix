@@ -485,3 +485,49 @@ function insertVideoAtPosition(url, replaceElement) {
     // This would be similar to insertVideo() but positioned relative to replaceElement
     insertVideo(); // For now, just use the main function
 }
+
+// Add to your existing file upload handling
+function uploadVideo() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // For now, use data URL - in production, upload to server
+            const videoUrl = await readFileAsDataURL(file);
+            insertVideoAtUrl(videoUrl);
+        }
+    };
+    input.click();
+}
+
+// Helper function for direct video URLs
+function insertVideoAtUrl(url) {
+    const editor = document.getElementById('postContent');
+    editor.focus();
+
+    const videoHTML = `
+        <div class="video-wrapper" contenteditable="false">
+            <video controls width="560" style="max-width:100%;">
+                <source src="${url}" type="${getVideoMimeType(url)}">
+                Your browser does not support the video tag.
+            </video>
+            <div class="video-controls">
+                <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
+                <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
+            </div>
+        </div>
+        <br>
+    `;
+
+    document.execCommand('insertHTML', false, videoHTML);
+    showSuccess('Video uploaded');
+}
+
+function getVideoMimeType(url) {
+    if (url.includes('.mp4')) return 'video/mp4';
+    if (url.includes('.webm')) return 'video/webm';
+    if (url.includes('.ogg')) return 'video/ogg';
+    return 'video/mp4';
+}
