@@ -66,28 +66,86 @@
 
             <label>Content</label>
             <div class="formatting-toolbar">
-                <button type="button" title="Undo"onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                <!-- Existing buttons -->
+                <button type="button" title="Undo" onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
                 <button type="button" title="Redo" onclick="formatText('redo')"><i class="fa-solid fa-rotate-right"></i></button>
+
+                <!-- Text formatting -->
                 <button type="button" title="Bold" onclick="formatText('bold')"><i class="fa-solid fa-bold"></i></button>
                 <button type="button" title="Italic" onclick="formatText('italic')"><i class="fa-solid fa-italic"></i></button>
                 <button type="button" title="Underline" onclick="formatText('underline')"><i class="fa-solid fa-underline"></i></button>
+                <button type="button" title="Strikethrough" onclick="formatText('strikeThrough')"><i class="fa-solid fa-strikethrough"></i></button>
+
+                <!-- Font controls -->
+                <select onchange="formatText('fontName', this.value)" title="Font Family">
+                    <option value="">Font</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+
+                <select onchange="formatText('fontSize', this.value)" title="Font Size">
+                    <option value="">Size</option>
+                    <option value="1">Small</option>
+                    <option value="3">Normal</option>
+                    <option value="5">Large</option>
+                    <option value="7">X-Large</option>
+                </select>
+
+                <!-- Colors -->
                 <label>
                     <input type="color" id="fontColorPicker" title="Font Color" style="height: 30px; width: 25px; border:none; background: transparent; padding: 0;" />
                 </label>
+                <label>
+                    <input type="color" id="bgColorPicker" title="Background Color" style="height: 30px; width: 25px; border:none; background: transparent; padding: 0;" />
+                </label>
+
+                <!-- Lists & Structure -->
                 <button type="button" title="Bullets" onclick="formatText('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
                 <button type="button" title="Numbers" onclick="formatText('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+
+                <!-- Headers & Blocks -->
                 <select onchange="applyHeading(this)" title="Select Header">
-                    <option value="" >Header</option>
+                    <option value="">Header</option>
+                    <option value="h1">H1</option>
                     <option value="h2">H2</option>
                     <option value="h3">H3</option>
                     <option value="h4">H4</option>
                 </select>
+
+                <button type="button" title="Blockquote" onclick="formatText('formatBlock', '<blockquote>')">
+                    <i class="fa-solid fa-quote-left"></i>
+                </button>
+
+                <!-- Links & Media -->
                 <button type="button" title="Link" onclick="formatText('createLink')"><i class="fa-solid fa-link"></i></button>
                 <button type="button" title="Image" onclick="insertImage()"><i class="fa-solid fa-image"></i></button>
+                <button type="button" title="Insert Table" onclick="insertTable()"><i class="fa-solid fa-table"></i></button>
+                <button type="button" title="Insert Video" onclick="insertVideo()"><i class="fa-solid fa-video"></i></button>
+
+                <!-- Alignment -->
                 <button type="button" title="Align left" onclick="formatText('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
                 <button type="button" title="Align center" onclick="formatText('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
                 <button type="button" title="Align right" onclick="formatText('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
                 <button type="button" title="Align justify" onclick="formatText('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
+
+                <!-- Special formatting -->
+                <button type="button" title="Inline Code" onclick="formatText('formatBlock', '<code>')">
+                    <i class="fa-solid fa-code"></i>
+                </button>
+                <button type="button" title="Subscript" onclick="formatText('subscript')">
+                    <i class="fa-solid fa-subscript"></i>
+                </button>
+                <button type="button" title="Superscript" onclick="formatText('superscript')">
+                    <i class="fa-solid fa-superscript"></i>
+                </button>
+
+                <!-- Utility -->
+                <button type="button" title="Clear Formatting" onclick="formatText('removeFormat')">
+                    <i class="fa-solid fa-eraser"></i>
+                </button>
+
                 <input type="file" id="imageUploader" accept="image/*" style="display:none" />
             </div>
             <div id="postContent" contenteditable="true" class="rich-editor" required></div>

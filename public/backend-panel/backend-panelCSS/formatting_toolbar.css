@@ -123,3 +123,50 @@ form select{
 .resizable-wrapper.active div[style*="position: absolute"] {
     display: block !important;
 }
+
+
+/* Video wrapper styling */
+.video-wrapper {
+    position: relative;
+    display: inline-block;
+    margin: 10px 0;
+    max-width: 100%;
+}
+
+.video-wrapper iframe,
+.video-wrapper video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.video-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: none;
+    gap: 4px;
+    background: rgba(0,0,0,0.7);
+    padding: 4px 6px;
+    border-radius: 4px;
+    z-index: 10;
+}
+
+.video-wrapper:hover .video-controls {
+    display: flex;
+}
+
+.video-btn {
+    background: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+    line-height: 1;
+}
+
+.video-btn:hover {
+    background: #f0f0f0;
+}
