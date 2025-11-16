@@ -3,6 +3,7 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    cursor: pointer;
 }
 
 .formatting-toolbar button{
