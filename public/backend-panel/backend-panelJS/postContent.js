@@ -1,95 +1,162 @@
-// Helper function to read file as data URL
-function readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-// Show success notification
-function showSuccess(message) {
-    console.log('Success:', message);
-    // You can replace this with your toast/notification system
-    alert(message);
-}
-
-// Apply text formatting
-function formatText(command, value = null) {
-    try {
-        if (command === 'createLink') {
-            const url = prompt("Enter the link URL:");
-            if (url) document.execCommand(command, false, url);
-        } else {
-            document.execCommand(command, false, value);
-        }
-    } catch (error) {
-        console.error('Format error:', error);
+// Modern rich text editor using alternative to execCommand
+class RichTextEditor {
+    constructor() {
+        this.editor = document.getElementById('postContent');
+        this.init();
     }
-}
 
-// Apply heading
-function applyHeading(select) {
-    try {
-        const level = select.value;
-        if (level) {
-            document.execCommand('formatBlock', false, `<${level}>`);
-            select.value = '';
-        }
-    } catch (error) {
-        console.error('Heading error:', error);
+    init() {
+        console.log('Rich text editor initialized');
+        this.setupEventListeners();
     }
-}
 
-// Apply blockquote
-function applyBlockquote() {
-    try {
-        const editor = document.getElementById('postContent');
-        if (!editor) {
-            console.error('Editor not found');
-            return;
+    setupEventListeners() {
+        // Color pickers
+        const fontColorPicker = document.getElementById('fontColorPicker');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+
+        if (fontColorPicker) {
+            fontColorPicker.addEventListener('input', (e) => {
+                this.applyStyle('color', e.target.value);
+            });
         }
 
-        editor.focus();
+        if (bgColorPicker) {
+            bgColorPicker.addEventListener('input', (e) => {
+                this.applyStyle('backgroundColor', e.target.value);
+            });
+        }
+
+        // Image upload
+        const imageUploader = document.getElementById('imageUploader');
+        if (imageUploader) {
+            imageUploader.addEventListener('change', (e) => {
+                this.handleImageUpload(e);
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                switch (e.key.toLowerCase()) {
+                    case 'b': this.toggleBold(); break;
+                    case 'i': this.toggleItalic(); break;
+                    case 'u': this.toggleUnderline(); break;
+                }
+            }
+        });
+    }
+
+    // Core formatting methods
+    applyStyle(style, value) {
+        document.execCommand('styleWithCSS', false, true);
+        switch (style) {
+            case 'bold': document.execCommand('bold', false, null); break;
+            case 'italic': document.execCommand('italic', false, null); break;
+            case 'underline': document.execCommand('underline', false, null); break;
+            case 'color': document.execCommand('foreColor', false, value); break;
+            case 'backgroundColor': document.execCommand('hiliteColor', false, value); break;
+            case 'fontName': document.execCommand('fontName', false, value); break;
+            case 'fontSize': document.execCommand('fontSize', false, value); break;
+        }
+    }
+
+    // Fallback method using modern approach
+    applyModernStyle(property, value) {
         const selection = window.getSelection();
-
         if (selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             const selectedText = range.toString();
 
             if (selectedText) {
-                // Wrap selected text in blockquote
-                const blockquote = document.createElement('blockquote');
-                blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
-                blockquote.textContent = selectedText;
+                const span = document.createElement('span');
+                span.style[property] = value;
+                span.textContent = selectedText;
 
                 range.deleteContents();
-                range.insertNode(blockquote);
-            } else {
-                // Insert empty blockquote
-                const blockquote = document.createElement('blockquote');
-                blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
-                blockquote.innerHTML = '&nbsp;';
-
-                range.insertNode(blockquote);
-
-                // Move cursor inside blockquote
-                const newRange = document.createRange();
-                newRange.setStart(blockquote, 0);
-                newRange.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(newRange);
+                range.insertNode(span);
             }
         }
-    } catch (error) {
-        console.error('Blockquote error:', error);
     }
-}
 
-// Insert table
-function insertTable() {
-    try {
+    // Specific formatting methods
+    toggleBold() {
+        this.applyStyle('bold');
+    }
+
+    toggleItalic() {
+        this.applyStyle('italic');
+    }
+
+    toggleUnderline() {
+        this.applyStyle('underline');
+    }
+
+    applyStrikethrough() {
+        this.applyStyle('strikethrough');
+    }
+
+    insertList(ordered = false) {
+        document.execCommand(ordered ? 'insertOrderedList' : 'insertUnorderedList');
+    }
+
+    applyHeading(level) {
+        document.execCommand('formatBlock', false, `<${level}>`);
+    }
+
+    insertLink() {
+        const url = prompt("Enter the link URL:");
+        if (url) {
+            document.execCommand('createLink', false, url);
+        }
+    }
+
+    insertImage() {
+        document.getElementById('imageUploader').click();
+    }
+
+    async handleImageUpload(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            try {
+                const imageUrl = await this.readFileAsDataURL(file);
+                this.insertImageAtCursor(imageUrl);
+                e.target.value = "";
+                this.showSuccess('Image added');
+            } catch (error) {
+                console.error('Image upload error:', error);
+            }
+        }
+    }
+
+    insertImageAtCursor(url) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '100%';
+            img.style.borderRadius = '4px';
+            img.style.margin = '10px 0';
+
+            range.insertNode(img);
+
+            // Add space after image
+            const br = document.createElement('br');
+            range.insertNode(br);
+
+            // Move cursor after image
+            const newRange = document.createRange();
+            newRange.setStartAfter(br);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
+    }
+
+    insertTable() {
         const rows = prompt("Enter number of rows:", "2");
         const cols = prompt("Enter number of columns:", "2");
 
@@ -98,99 +165,56 @@ function insertTable() {
             for (let i = 0; i < rows; i++) {
                 tableHTML += '<tr>';
                 for (let j = 0; j < cols; j++) {
-                    tableHTML += '<td style="padding: 8px; border: 1px solid #999;">&nbsp;</td>';
+                    tableHTML += `<td style="padding: 8px; border: 1px solid #999;">&nbsp;</td>`;
                 }
                 tableHTML += '</tr>';
             }
             tableHTML += '</table>';
 
-            document.execCommand('insertHTML', false, tableHTML);
+            this.insertHTML(tableHTML);
         }
-    } catch (error) {
-        console.error('Table error:', error);
     }
-}
 
-// Insert image
-function insertImage() {
-    try {
-        document.getElementById('imageUploader').click();
-    } catch (error) {
-        console.error('Image insert error:', error);
+    insertHTML(html) {
+        document.execCommand('insertHTML', false, html);
     }
-}
 
-// Handle image upload
-document.addEventListener('DOMContentLoaded', function() {
-    const imageUploader = document.getElementById('imageUploader');
-    if (imageUploader) {
-        imageUploader.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                try {
-                    const imageUrl = await readFileAsDataURL(file);
-                    insertImageAndContinue(imageUrl);
-                    e.target.value = "";
-                } catch (error) {
-                    console.error('Image upload error:', error);
-                }
+    applyBlockquote() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const selectedText = range.toString();
+
+            if (selectedText) {
+                const blockquote = document.createElement('blockquote');
+                blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
+                blockquote.textContent = selectedText;
+
+                range.deleteContents();
+                range.insertNode(blockquote);
+            } else {
+                const blockquote = document.createElement('blockquote');
+                blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
+                blockquote.innerHTML = '&nbsp;';
+
+                range.insertNode(blockquote);
+
+                const newRange = document.createRange();
+                newRange.setStart(blockquote, 0);
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
             }
-        });
-    }
-});
-
-// Insert image and continue editing
-function insertImageAndContinue(url) {
-    try {
-        const editor = document.getElementById('postContent');
-        if (!editor) return;
-
-        editor.focus();
-        const range = window.getSelection().getRangeAt(0);
-
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '4px';
-        img.style.margin = '10px 0';
-
-        range.insertNode(img);
-
-        // Add space after image
-        const br = document.createElement('br');
-        range.insertNode(br);
-
-        // Move cursor after image
-        const newRange = document.createRange();
-        newRange.setStartAfter(br);
-        newRange.collapse(true);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-
-        showSuccess('Image added');
-    } catch (error) {
-        console.error('Image insert error:', error);
-    }
-}
-
-// Video functions
-function insertVideo() {
-    try {
-        const choice = confirm("Click OK to upload video file, Cancel to enter video URL");
-
-        if (choice) {
-            uploadVideo();
-        } else {
-            insertVideoFromUrl();
         }
-    } catch (error) {
-        console.error('Video insert error:', error);
     }
-}
 
-function uploadVideo() {
-    try {
+    // Video methods
+    insertVideo() {
+        const choice = confirm("Click OK to upload video file, Cancel to enter video URL");
+        choice ? this.uploadVideo() : this.insertVideoFromUrl();
+    }
+
+    uploadVideo() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'video/*';
@@ -201,42 +225,29 @@ function uploadVideo() {
                     alert('Video file too large. Please select a video under 50MB.');
                     return;
                 }
-
                 try {
-                    const videoUrl = await readFileAsDataURL(file);
-                    insertVideoAtUrl(videoUrl, file.type);
+                    const videoUrl = await this.readFileAsDataURL(file);
+                    this.insertVideoElement(videoUrl, file.type);
                 } catch (error) {
                     console.error('Video upload error:', error);
                 }
             }
         };
         input.click();
-    } catch (error) {
-        console.error('Video upload init error:', error);
     }
-}
 
-function insertVideoFromUrl() {
-    try {
-        const videoUrl = prompt("Enter video URL (YouTube, Vimeo, or direct video link):");
-        if (!videoUrl) return;
-        insertVideoAtUrl(videoUrl);
-    } catch (error) {
-        console.error('Video URL error:', error);
+    insertVideoFromUrl() {
+        const videoUrl = prompt("Enter video URL:");
+        if (videoUrl) {
+            this.insertVideoElement(videoUrl);
+        }
     }
-}
 
-function insertVideoAtUrl(url, mimeType = null) {
-    try {
-        const editor = document.getElementById('postContent');
-        if (!editor) return;
-
-        editor.focus();
+    insertVideoElement(url, mimeType = null) {
         let videoHTML = '';
 
-        // YouTube
         if (url.includes('youtube.com') || url.includes('youtu.be')) {
-            const videoId = extractYouTubeId(url);
+            const videoId = this.extractYouTubeId(url);
             if (videoId) {
                 videoHTML = `
                     <div style="margin: 10px 0;">
@@ -246,10 +257,8 @@ function insertVideoAtUrl(url, mimeType = null) {
                     </div>
                 `;
             }
-        }
-        // Vimeo
-        else if (url.includes('vimeo.com')) {
-            const videoId = extractVimeoId(url);
+        } else if (url.includes('vimeo.com')) {
+            const videoId = this.extractVimeoId(url);
             if (videoId) {
                 videoHTML = `
                     <div style="margin: 10px 0;">
@@ -259,10 +268,8 @@ function insertVideoAtUrl(url, mimeType = null) {
                     </div>
                 `;
             }
-        }
-        // Direct video
-        else if (url.match(/\.(mp4|webm|ogg|mov|avi)$/i) || url.startsWith('data:video/')) {
-            const videoType = mimeType || getVideoMimeType(url);
+        } else {
+            const videoType = mimeType || this.getVideoMimeType(url);
             videoHTML = `
                 <div style="margin: 10px 0;">
                     <video controls style="max-width:100%; height:auto; border-radius:4px;">
@@ -274,91 +281,107 @@ function insertVideoAtUrl(url, mimeType = null) {
         }
 
         if (videoHTML) {
-            document.execCommand('insertHTML', false, videoHTML);
-            showSuccess('Video added successfully');
+            this.insertHTML(videoHTML);
+            this.showSuccess('Video added successfully');
         } else {
             alert("Invalid video URL");
         }
-    } catch (error) {
-        console.error('Video insert error:', error);
     }
-}
 
-// Video helper functions
-function extractYouTubeId(url) {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : null;
-}
-
-function extractVimeoId(url) {
-    const regExp = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
-}
-
-function getVideoMimeType(url) {
-    if (url.includes('.mp4') || url.startsWith('data:video/mp4')) return 'video/mp4';
-    if (url.includes('.webm') || url.startsWith('data:video/webm')) return 'video/webm';
-    if (url.includes('.ogg') || url.startsWith('data:video/ogg')) return 'video/ogg';
-    return 'video/mp4';
-}
-
-// Event listeners for color pickers
-document.addEventListener('DOMContentLoaded', function() {
-    const fontColorPicker = document.getElementById('fontColorPicker');
-    const bgColorPicker = document.getElementById('bgColorPicker');
-
-    if (fontColorPicker) {
-        fontColorPicker.addEventListener('input', function() {
-            try {
-                document.getElementById('postContent').focus();
-                document.execCommand('styleWithCSS', false, true);
-                document.execCommand('foreColor', false, this.value);
-            } catch (error) {
-                console.error('Font color error:', error);
-            }
+    // Utility methods
+    readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
         });
     }
 
-    if (bgColorPicker) {
-        bgColorPicker.addEventListener('input', function() {
-            try {
-                document.getElementById('postContent').focus();
-                document.execCommand('styleWithCSS', false, true);
-                document.execCommand('hiliteColor', false, this.value);
-            } catch (error) {
-                console.error('Background color error:', error);
-            }
-        });
+    showSuccess(message) {
+        console.log('Success:', message);
+        alert(message);
     }
-});
 
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey || e.metaKey) {
-        try {
-            switch (e.key.toLowerCase()) {
-                case 'b':
-                    e.preventDefault();
-                    formatText('bold');
-                    break;
-                case 'i':
-                    e.preventDefault();
-                    formatText('italic');
-                    break;
-                case 'u':
-                    e.preventDefault();
-                    formatText('underline');
-                    break;
-            }
-        } catch (error) {
-            console.error('Keyboard shortcut error:', error);
-        }
+    extractYouTubeId(url) {
+        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[7].length === 11) ? match[7] : null;
     }
-});
 
-// Initialize when page loads
+    extractVimeoId(url) {
+        const regExp = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
+        const match = url.match(regExp);
+        return match ? match[1] : null;
+    }
+
+    getVideoMimeType(url) {
+        if (url.includes('.mp4') || url.startsWith('data:video/mp4')) return 'video/mp4';
+        if (url.includes('.webm') || url.startsWith('data:video/webm')) return 'video/webm';
+        if (url.includes('.ogg') || url.startsWith('data:video/ogg')) return 'video/ogg';
+        return 'video/mp4';
+    }
+}
+
+// Global functions for HTML onclick attributes
+function formatText(command, value = null) {
+    if (!window.richTextEditor) return;
+
+    switch (command) {
+        case 'bold': window.richTextEditor.toggleBold(); break;
+        case 'italic': window.richTextEditor.toggleItalic(); break;
+        case 'underline': window.richTextEditor.toggleUnderline(); break;
+        case 'strikeThrough': window.richTextEditor.applyStrikethrough(); break;
+        case 'insertUnorderedList': window.richTextEditor.insertList(false); break;
+        case 'insertOrderedList': window.richTextEditor.insertList(true); break;
+        case 'createLink': window.richTextEditor.insertLink(); break;
+        case 'removeFormat': document.execCommand('removeFormat', false, null); break;
+        case 'undo': document.execCommand('undo', false, null); break;
+        case 'redo': document.execCommand('redo', false, null); break;
+        case 'justifyLeft': document.execCommand('justifyLeft', false, null); break;
+        case 'justifyCenter': document.execCommand('justifyCenter', false, null); break;
+        case 'justifyRight': document.execCommand('justifyRight', false, null); break;
+        case 'justifyFull': document.execCommand('justifyFull', false, null); break;
+        case 'subscript': document.execCommand('subscript', false, null); break;
+        case 'superscript': document.execCommand('superscript', false, null); break;
+        case 'fontName': window.richTextEditor.applyStyle('fontName', value); break;
+        case 'fontSize': window.richTextEditor.applyStyle('fontSize', value); break;
+        case 'formatBlock': document.execCommand('formatBlock', false, value); break;
+    }
+}
+
+function applyHeading(select) {
+    if (select.value && window.richTextEditor) {
+        window.richTextEditor.applyHeading(select.value);
+        select.value = '';
+    }
+}
+
+function applyBlockquote() {
+    if (window.richTextEditor) {
+        window.richTextEditor.applyBlockquote();
+    }
+}
+
+function insertImage() {
+    if (window.richTextEditor) {
+        window.richTextEditor.insertImage();
+    }
+}
+
+function insertTable() {
+    if (window.richTextEditor) {
+        window.richTextEditor.insertTable();
+    }
+}
+
+function insertVideo() {
+    if (window.richTextEditor) {
+        window.richTextEditor.insertVideo();
+    }
+}
+
+// Initialize editor
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Rich text editor initialized');
+    window.richTextEditor = new RichTextEditor();
 });

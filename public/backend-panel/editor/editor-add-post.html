@@ -114,7 +114,8 @@
                     <option value="h4">H4</option>
                 </select>
 
-                <button type="button" title="Blockquote" onclick="formatText('formatBlock', '<blockquote>')">
+                <!-- UPDATED BLOCKQUOTE BUTTON -->
+                <button type="button" title="Blockquote" onclick="applyBlockquote()">
                     <i class="fa-solid fa-quote-left"></i>
                 </button>
 
@@ -122,7 +123,7 @@
                 <button type="button" title="Link" onclick="formatText('createLink')"><i class="fa-solid fa-link"></i></button>
                 <button type="button" title="Image" onclick="insertImage()"><i class="fa-solid fa-image"></i></button>
                 <button type="button" title="Insert Table" onclick="insertTable()"><i class="fa-solid fa-table"></i></button>
-                <button type="button" title="Insert Video" onclick="insertVideo()">i class="fa-solid fa-video"></i></button>
+                <button type="button" title="Insert Video" onclick="insertVideo()"><i class="fa-solid fa-video"></i></button>
 
                 <!-- Alignment -->
                 <button type="button" title="Align left" onclick="formatText('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
