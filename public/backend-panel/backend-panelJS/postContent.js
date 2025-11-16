@@ -1,3 +1,13 @@
+// Helper function to read file as data URL
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 // Function to insert an image into the editor and continue editing
 function insertImageAndContinue(url) {
     const editor = document.getElementById('postContent');
@@ -64,7 +74,16 @@ document.getElementById('postContent').addEventListener('paste', function (e) {
 // Handle dragover event to style border
 document.getElementById('postContent').addEventListener('dragover', e => {
     e.preventDefault();
-    e.currentTarget.style.border = '2px dashed #aaa';
+    const hasVideoFiles = Array.from(e.dataTransfer.items).some(item =>
+        item.type.startsWith('video/')
+    );
+    const hasImageFiles = Array.from(e.dataTransfer.items).some(item =>
+        item.type.startsWith('image/')
+    );
+
+    if (hasVideoFiles || hasImageFiles) {
+        e.currentTarget.style.border = '2px dashed #007bff';
+    }
 });
 
 // Reset border on drag leave
@@ -73,15 +92,25 @@ document.getElementById('postContent').addEventListener('dragleave', e => {
     e.currentTarget.style.border = '1px solid var(--border-color)';
 });
 
-// Handle drop event for images
+// Handle drop event for images AND videos
 document.getElementById('postContent').addEventListener('drop', async e => {
     e.preventDefault();
     e.currentTarget.style.border = '1px solid var(--border-color)';
     const files = e.dataTransfer.files;
+
     for (const file of files) {
         if (file.type.startsWith('image/')) {
             const imageUrl = await readFileAsDataURL(file);
             insertImageAndContinue(imageUrl);
+        } else if (file.type.startsWith('video/')) {
+            // Check video file size
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Video file too large. Please select a video under 50MB.');
+                continue;
+            }
+
+            const videoUrl = await readFileAsDataURL(file);
+            insertVideoAtUrl(videoUrl, file.type);
         }
     }
 });
@@ -92,6 +121,43 @@ function applyHeading(select) {
     if (level) {
         formatText('formatBlock', `<${level}>`);
         select.value = '';
+    }
+}
+
+// Apply blockquote
+function applyBlockquote() {
+    const editor = document.getElementById('postContent');
+    editor.focus();
+
+    // Check if selection is already in a blockquote
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+
+        if (selectedText) {
+            // Wrap selected text in blockquote
+            const blockquote = document.createElement('blockquote');
+            blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
+            blockquote.textContent = selectedText;
+
+            range.deleteContents();
+            range.insertNode(blockquote);
+        } else {
+            // Insert empty blockquote
+            const blockquote = document.createElement('blockquote');
+            blockquote.style.cssText = 'border-left: 4px solid #ccc; margin: 10px 0; padding-left: 15px; font-style: italic; color: #555;';
+            blockquote.innerHTML = '<br>';
+
+            range.insertNode(blockquote);
+
+            // Move cursor inside blockquote
+            const newRange = document.createRange();
+            newRange.setStart(blockquote, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
     }
 }
 
@@ -128,6 +194,14 @@ document.getElementById('fontColorPicker').addEventListener('input', function ()
     document.execCommand('foreColor', false, color);
 });
 
+// Handle background color changes
+document.getElementById('bgColorPicker').addEventListener('input', function () {
+    document.getElementById('postContent').focus();
+    const color = this.value;
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('hiliteColor', false, color);
+});
+
 // Handle keyboard shortcuts (Ctrl+B, Ctrl+I, etc.)
 document.addEventListener('keydown', function (e) {
     if (e.ctrlKey || e.metaKey) {
@@ -140,14 +214,6 @@ document.addEventListener('keydown', function (e) {
             case 'r': if (e.shiftKey) { e.preventDefault(); formatText('justifyRight'); } break;
         }
     }
-});
-
-// Handle background color changes
-document.getElementById('bgColorPicker').addEventListener('input', function () {
-    document.getElementById('postContent').focus();
-    const color = this.value;
-    document.execCommand('styleWithCSS', false, true);
-    document.execCommand('hiliteColor', false, color);
 });
 
 // Insert table function
@@ -168,6 +234,186 @@ function insertTable() {
 
         document.execCommand('insertHTML', false, tableHTML);
     }
+}
+
+// Function to insert video (supports both URL and file upload)
+function insertVideo() {
+    const choice = confirm("Click OK to upload video file, Cancel to enter video URL");
+
+    if (choice) {
+        // Upload video file
+        uploadVideo();
+    } else {
+        // Enter video URL
+        insertVideoFromUrl();
+    }
+}
+
+// Upload video from file
+function uploadVideo() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Check file size (optional: limit to 50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Video file too large. Please select a video under 50MB.');
+                return;
+            }
+
+            const videoUrl = await readFileAsDataURL(file);
+            insertVideoAtUrl(videoUrl, file.type);
+        }
+    };
+    input.click();
+}
+
+// Insert video from URL
+function insertVideoFromUrl() {
+    const videoUrl = prompt("Enter video URL (YouTube, Vimeo, or direct video link):");
+    if (!videoUrl) return;
+    insertVideoAtUrl(videoUrl);
+}
+
+// Main function to insert video at URL
+function insertVideoAtUrl(url, mimeType = null) {
+    const editor = document.getElementById('postContent');
+    editor.focus();
+
+    let videoHTML = '';
+
+    // YouTube embed
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = extractYouTubeId(url);
+        if (videoId) {
+            videoHTML = `
+                <div class="video-wrapper" contenteditable="false">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="https://www.youtube.com/embed/${videoId}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                    <div class="video-controls">
+                        <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
+                        <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
+                    </div>
+                </div>
+                <br>
+            `;
+        } else {
+            alert("Invalid YouTube URL");
+            return;
+        }
+    }
+    // Vimeo embed
+    else if (url.includes('vimeo.com')) {
+        const videoId = extractVimeoId(url);
+        if (videoId) {
+            videoHTML = `
+                <div class="video-wrapper" contenteditable="false">
+                    <iframe 
+                        src="https://player.vimeo.com/video/${videoId}" 
+                        width="560" 
+                        height="315" 
+                        frameborder="0" 
+                        allow="autoplay; fullscreen; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                    <div class="video-controls">
+                        <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
+                        <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
+                    </div>
+                </div>
+                <br>
+            `;
+        } else {
+            alert("Invalid Vimeo URL");
+            return;
+        }
+    }
+    // Direct video file (URL or uploaded)
+    else if (url.match(/\.(mp4|webm|ogg|mov|avi)$/i) || url.startsWith('data:video/')) {
+        const videoType = mimeType || getVideoMimeType(url);
+        videoHTML = `
+            <div class="video-wrapper" contenteditable="false">
+                <video controls width="560" style="max-width:100%; border: 1px solid #ddd; border-radius: 4px;">
+                    <source src="${url}" type="${videoType}">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-controls">
+                    <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
+                    <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
+                </div>
+            </div>
+            <br>
+        `;
+    }
+    // Unsupported URL
+    else {
+        alert("Please enter a valid YouTube, Vimeo, or direct video URL (mp4, webm, ogg, mov, avi)");
+        return;
+    }
+
+    // Insert video into editor
+    document.execCommand('insertHTML', false, videoHTML);
+    showSuccess('Video added successfully');
+}
+
+// Extract YouTube video ID
+function extractYouTubeId(url) {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+}
+
+// Extract Vimeo video ID
+function extractVimeoId(url) {
+    const regExp = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
+    const match = url.match(regExp);
+    return match ? match[1] : null;
+}
+
+// Get video MIME type
+function getVideoMimeType(url) {
+    if (url.includes('.mp4') || url.startsWith('data:video/mp4')) return 'video/mp4';
+    if (url.includes('.webm') || url.startsWith('data:video/webm')) return 'video/webm';
+    if (url.includes('.ogg') || url.startsWith('data:video/ogg')) return 'video/ogg';
+    if (url.includes('.mov')) return 'video/quicktime';
+    if (url.includes('.avi')) return 'video/x-msvideo';
+    return 'video/mp4';
+}
+
+// Replace video
+function replaceVideo(button) {
+    const wrapper = button.closest('.video-wrapper');
+    const currentIframe = wrapper.querySelector('iframe, video');
+    const currentSrc = currentIframe.src || currentIframe.querySelector('source')?.src;
+
+    const newUrl = prompt("Enter new video URL:", currentSrc);
+    if (newUrl) {
+        insertVideoAtUrl(newUrl);
+        wrapper.remove();
+    }
+}
+
+// Delete video
+function deleteVideo(button) {
+    const wrapper = button.closest('.video-wrapper');
+    wrapper.nextElementSibling?.remove(); // Remove the <br> after
+    wrapper.remove();
+}
+
+// Success notification function
+function showSuccess(message) {
+    // Add your success notification logic here
+    console.log('Success:', message);
+    // You can use toast notifications or alerts
+    alert(message); // Replace with your preferred notification system
 }
 
 // -------------------- Image Resizing Logic -------------------- //
@@ -360,174 +606,4 @@ function makeImagesResizable() {
             if (tb) tb.style.display = 'none';
         });
     });
-}
-
-// Function to insert video
-function insertVideo() {
-    const videoUrl = prompt("Enter video URL (YouTube, Vimeo, or direct video link):");
-
-    if (!videoUrl) return;
-
-    const editor = document.getElementById('postContent');
-    editor.focus();
-
-    let videoHTML = '';
-
-    // YouTube embed
-    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        const videoId = extractYouTubeId(videoUrl);
-        if (videoId) {
-            videoHTML = `
-                <div class="video-wrapper" contenteditable="false">
-                    <iframe 
-                        width="560" 
-                        height="315" 
-                        src="https://www.youtube.com/embed/${videoId}" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                    <div class="video-controls">
-                        <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
-                        <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
-                    </div>
-                </div>
-                <br>
-            `;
-        }
-    }
-    // Vimeo embed
-    else if (videoUrl.includes('vimeo.com')) {
-        const videoId = extractVimeoId(videoUrl);
-        if (videoId) {
-            videoHTML = `
-                <div class="video-wrapper" contenteditable="false">
-                    <iframe 
-                        src="https://player.vimeo.com/video/${videoId}" 
-                        width="560" 
-                        height="315" 
-                        frameborder="0" 
-                        allow="autoplay; fullscreen; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                    <div class="video-controls">
-                        <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
-                        <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
-                    </div>
-                </div>
-                <br>
-            `;
-        }
-    }
-    // Direct video file
-    else if (videoUrl.match(/\.(mp4|webm|ogg|mov|avi)$/i)) {
-        videoHTML = `
-            <div class="video-wrapper" contenteditable="false">
-                <video controls width="560" style="max-width:100%;">
-                    <source src="${videoUrl}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <div class="video-controls">
-                    <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
-                    <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
-                </div>
-            </div>
-            <br>
-        `;
-    }
-    // Unsupported URL
-    else {
-        alert("Please enter a valid YouTube, Vimeo, or direct video URL (mp4, webm, ogg, mov, avi)");
-        return;
-    }
-
-    // Insert video into editor
-    document.execCommand('insertHTML', false, videoHTML);
-    showSuccess('Video added');
-}
-
-// Extract YouTube video ID
-function extractYouTubeId(url) {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : null;
-}
-
-// Extract Vimeo video ID
-function extractVimeoId(url) {
-    const regExp = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/;
-    const match = url.match(regExp);
-    return match ? match[1] : null;
-}
-
-// Replace video
-function replaceVideo(button) {
-    const wrapper = button.closest('.video-wrapper');
-    const currentIframe = wrapper.querySelector('iframe, video');
-    const currentSrc = currentIframe.src || currentIframe.querySelector('source')?.src;
-
-    const newUrl = prompt("Enter new video URL:", currentSrc);
-    if (newUrl) {
-        insertVideoAtPosition(newUrl, wrapper);
-        wrapper.remove();
-    }
-}
-
-// Delete video
-function deleteVideo(button) {
-    const wrapper = button.closest('.video-wrapper');
-    wrapper.nextElementSibling?.remove(); // Remove the <br> after
-    wrapper.remove();
-}
-
-// Helper function to insert video at specific position
-function insertVideoAtPosition(url, replaceElement) {
-    // This would be similar to insertVideo() but positioned relative to replaceElement
-    insertVideo(); // For now, just use the main function
-}
-
-// Add to your existing file upload handling
-function uploadVideo() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'video/*';
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // For now, use data URL - in production, upload to server
-            const videoUrl = await readFileAsDataURL(file);
-            insertVideoAtUrl(videoUrl);
-        }
-    };
-    input.click();
-}
-
-// Helper function for direct video URLs
-function insertVideoAtUrl(url) {
-    const editor = document.getElementById('postContent');
-    editor.focus();
-
-    const videoHTML = `
-        <div class="video-wrapper" contenteditable="false">
-            <video controls width="560" style="max-width:100%;">
-                <source src="${url}" type="${getVideoMimeType(url)}">
-                Your browser does not support the video tag.
-            </video>
-            <div class="video-controls">
-                <button onclick="replaceVideo(this)" class="video-btn">🔄</button>
-                <button onclick="deleteVideo(this)" class="video-btn">🗑</button>
-            </div>
-        </div>
-        <br>
-    `;
-
-    document.execCommand('insertHTML', false, videoHTML);
-    showSuccess('Video uploaded');
-}
-
-function getVideoMimeType(url) {
-    if (url.includes('.mp4')) return 'video/mp4';
-    if (url.includes('.webm')) return 'video/webm';
-    if (url.includes('.ogg')) return 'video/ogg';
-    return 'video/mp4';
 }
