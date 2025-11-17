@@ -59,87 +59,92 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
         try {
-            // Replace with your actual API endpoint
-            const [featuredRes, categoriesRes, sidebarRes] = await Promise.all([
-                fetch('https://wrytix.onrender.com/posts')
+            // Single fetch for all data (no redundancy)
+            const response = await fetch('https://wrytix.onrender.com/posts');
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            const allData = await response.json();  // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
 
-            ]);
+            // Remove skeletons FIRST (unblocks even partial loads)
+            document.querySelectorAll('.skeleton').forEach(el => {
+                el.style.opacity = '0';  // Fade out smooth
+                setTimeout(() => el.remove(), 300);  // 0.3s transition
+            });
 
-            const featuredData = await featuredRes.json();
-            const categoriesData = await categoriesRes.json();
-            const sidebarData = await sidebarRes.json();
-
-            /* ---- Remove all skeletons ---- */
-            document.querySelectorAll('.skeleton').forEach(el => el.remove());
-
-            /* ---- Inject Featured Posts ---- */
-            if (featuredSection) {
-                const largePost = featuredData.large;
-                const smallPosts = featuredData.small;
-
+            // Inject Featured (adapt if API keys differ)
+            if (featuredSection && allData.featured) {
+                const { large, small } = allData.featured;
                 // Large featured
                 const largeDiv = document.createElement("div");
                 largeDiv.className = "featured-large";
                 largeDiv.innerHTML = `
-                    <img src="${largePost.thumbnail}" alt="${largePost.title}">
-                    <div class="featured-info">
-                        <h2><a href="${largePost.link}">${largePost.title}</a></h2>
-                        <p>${largePost.description}</p>
-                    </div>
-                `;
+        <img src="$$ {large.thumbnail}" alt=" $${large.title}" loading="lazy">
+        <div class="featured-info">
+          <h2><a href="$$ {large.link}"> $${large.title}</a></h2>
+          <p>${large.description}</p>
+        </div>
+      `;
                 featuredSection.appendChild(largeDiv);
 
-                // Grid of small posts
+                // Small grid
                 const gridDiv = document.createElement("div");
                 gridDiv.className = "featured-grid";
-                smallPosts.forEach(post => {
+                small.forEach(post => {
                     const smallDiv = document.createElement("div");
                     smallDiv.className = "small-post";
                     smallDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}">
-                        <div>
-                            <h4><a href="${post.link}">${post.title}</a></h4>
-                            <p>${post.description}</p>
-                        </div>
-                    `;
+          <img src="$$ {post.thumbnail}" alt=" $${post.title}" loading="lazy">
+          <div>
+            <h4><a href="$$ {post.link}"> $${post.title}</a></h4>
+            <p>${post.description}</p>
+          </div>
+        `;
                     gridDiv.appendChild(smallDiv);
                 });
                 featuredSection.appendChild(gridDiv);
             }
 
-            /* ---- Inject Category Posts ---- */
+            // Inject Categories
             categorySections.forEach(section => {
                 const categoryId = section.id;
-                const posts = categoriesData[categoryId] || [];
+                const posts = allData.categories?.[categoryId] || [];
                 posts.forEach(post => {
                     const postDiv = document.createElement("div");
                     postDiv.className = "post-preview";
                     postDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}">
-                        <div>
-                            <h3><a href="${post.link}">${post.title}</a></h3>
-                            <p>${post.description}</p>
-                            <span class="post-date">${post.date}</span>
-                        </div>
-                    `;
+          <img src="$$ {post.thumbnail}" alt=" $${post.title}" loading="lazy">
+          <div>
+            <h3><a href="$$ {post.link}"> $${post.title}</a></h3>
+            <p>${post.description}</p>
+            <span class="post-date">${post.date}</span>
+          </div>
+        `;
                     section.appendChild(postDiv);
                 });
             });
 
-            /* ---- Inject Sidebar Lists ---- */
+            // Inject Sidebar
             sidebarLists.forEach(list => {
-                const listId = list.id; // assuming ul has id matching API
-                const items = sidebarData[listId] || [];
+                const listId = list.id;
+                const items = allData.sidebar?.[listId] || [];
                 items.forEach(item => {
                     const li = document.createElement("li");
-                    li.innerHTML = `<a href="${item.link}">${item.title}</a>
-                                    <span>${item.date}</span>`;
+                    li.innerHTML = `<a href="${item.link}">${item.title}</a> <span>${item.date}</span>`;
                     list.appendChild(li);
                 });
             });
 
         } catch (error) {
-
+            console.error('Content load failed:', error);
+            // Always remove skeletons on error + show retry
+            document.querySelectorAll('.skeleton').forEach(el => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            });
+            // Add error UI (append to body or a section)
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'padding: 20px; background: #ffebee; color: #d32f2f; text-align: center; margin: 20px; border-radius: 8px;';
+            errorDiv.innerHTML = '<p>Oops! Failed to load content. <button onclick="location.reload()" style="background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Retry Now</button></p>';
+            document.body.insertBefore(errorDiv, document.body.firstChild);
         }
     }
 
