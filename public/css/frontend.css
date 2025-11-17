@@ -446,6 +446,8 @@ img {
     border-radius: var(--border-radius-md);
     position: relative;
     overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.3s ease;  /* For fade-out on remove */
 }
 
 /* Shimmer animation */
@@ -458,13 +460,29 @@ img {
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
     animation: shimmer 1.5s infinite;
+    will-change: transform;  /* GPU hint for smoother shimmer */
+    transform: translateX(0);  /* Enables hardware acceleration */
 }
 
 @keyframes shimmer {
-    0% { left: -150px; }
-    100% { left: 100%; }
+    0% { transform: translateX(-150px);}/* Use transform for speed */
+    100% { transform: translateX(100%);}
 }
 
+/* Accessibility: No animation on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after {
+        animation: none;
+        background: #e0e0e0;  /* Static fallback */
+    }
+}
+
+/* Mobile: Slower shimmer to save CPU */
+@media (max-width: 486px) {
+    .skeleton::after {
+        animation-duration: 2s;  /* Gentler on phones */
+    }
+}
 /* Featured Section Skeletons */
 .featured-large.skeleton {
     display: flex;
