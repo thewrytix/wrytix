@@ -34,7 +34,9 @@ async function loadAds() {
     tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     try {
-        const res = await fetch('https://wrytix.onrender.com/ads');
+        const res = await fetch('https://wrytix.onrender.com/ads', {
+            credentials: 'include'  // Add this line
+        });
         const ads = await res.json();
 
         allFilteredAds = ads.filter(ad => {
@@ -128,9 +130,7 @@ function renderPagination() {
 }
 
 function editAd(id) {
-    window.location.href = `edit-ad.html?id=${id}`, {
-        credentials: 'include'
-    };
+    window.location.href = `edit-ad.html?id=${id}`;
 }
 
 async function deleteAd(id) {

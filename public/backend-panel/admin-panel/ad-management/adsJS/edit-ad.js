@@ -109,7 +109,9 @@ async function loadAd() {
 
     try {
         // Load ad data
-        const adRes = await fetch(`https://wrytix.onrender.com/ads/${adId}`);
+        const adRes = await fetch(`https://wrytix.onrender.com/ads/${adId}`,  {
+            credentials: 'include'  // ← This is present here
+        });
         if (!adRes.ok) throw new Error('Failed to load ad');
         const ad = await adRes.json();
 
