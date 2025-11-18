@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login - Wrytix Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wrytix Internship Opportunities</title>
   <style>
     * {
       margin: 0;
@@ -12,332 +12,197 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden;
-      height: 100vh;
-    }
-
-    .login-container {
-      min-height: 100vh;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1f1f1f 0%, #2e2e2e 100%);
-      position: relative;
+      font-family: 'Poppins', sans-serif;
+      background: #f2f2f2;
       padding: 20px;
-      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
 
-    /* Animated background particles */
-    .login-container::before {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background-image:
-              radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
-      animation: float 20s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
-
-    .login-box {
-      background: #f9f9f9;
-      backdrop-filter: blur(10px);
-      padding: 50px 40px;
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      width: 100%;
-      max-width: 440px;
+    .flyer {
+      width: 850px;
+      height: 1100px;
+      background: #1A237E;
+      border-radius: 28px;
+      padding: 40px;
+      color: white;
       position: relative;
-      z-index: 1;
-      animation: slideUp 0.6s ease-out;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
 
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .logo-container {
+    .heading {
       text-align: center;
       margin-bottom: 35px;
     }
 
-    .logo-icon {
-      width: 70px;
-      height: 70px;
-      background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
-      border-radius: 18px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      color: white;
-      font-weight: bold;
-      margin-bottom: 15px;
-      box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
-      animation: bounce 2s ease-in-out infinite;
+    .heading h1 {
+      font-size: 50px;
+      font-weight: 800;
+      letter-spacing: -1px;
     }
 
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-15px);
-      }
-    }
-
-    h2 {
-      color: #2d3748;
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #718096;
-      font-size: 0.95rem;
-      margin-bottom: 30px;
-    }
-
-    .input-group {
-      position: relative;
-      margin-bottom: 25px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 16px 20px;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-      background-color: #ffffff;
-      transition: all 0.3s ease;
-      color: #2d3748;
-    }
-
-    .input-group input:focus {
-      outline: none;
-      border-color: #1A237E;
-      background-color: white;
-      box-shadow: 0 0 0 4px rgba(26, 35, 126, 0.1);
-    }
-
-    .input-group input::placeholder {
-      color: #a0aec0;
-    }
-
-    .input-icon {
-      position: absolute;
-      right: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #a0aec0;
-      font-size: 1.1rem;
-    }
-
-    button[type="submit"] {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
-      border: none;
-      color: #ffffff;
-      font-size: 1.05rem;
-      font-weight: 600;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(26, 35, 126, 0.4);
+    .heading p {
       margin-top: 10px;
+      font-size: 20px;
+      opacity: 0.95;
+      font-weight: 300;
     }
 
-    button[type="submit"]:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(26, 35, 126, 0.5);
+    .logo-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 12px;
     }
 
-    button[type="submit"]:active {
-      transform: translateY(0);
-    }
-
-    /* Toast notifications */
-    .alert {
-      position: fixed;
-      top: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 16px 28px;
-      border-radius: 12px;
+    .logo-text {
+      font-size: 48px;
       font-weight: 600;
-      font-size: 0.95rem;
-      color: #fff;
-      z-index: 9999;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-      animation: slideInDown 0.4s ease-out;
-      min-width: 300px;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(6px);
+    }
+
+    .section h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 700;
+      border-left: 5px solid white;
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .position, .requirement {
+      background: white;
+      color: #1A237E;
+      padding: 16px 18px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      font-size: 17px;
+      font-weight: 600;
+      gap: 10px;
+      border-left: 5px solid white;
+    }
+
+    .cta {
+      margin-top: 40px;
+      background: white;
+      padding: 25px;
       text-align: center;
+      border-radius: 18px;
+      color: #1A237E;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
-    .alert.error {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    .cta h3 {
+      font-size: 34px;
+      font-weight: 700;
+      margin-bottom: 15px;
     }
 
-    .alert.success {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    .cta p {
+      font-size: 19px;
+      font-weight: 500;
+      margin-bottom: 10px;
     }
 
-    @keyframes slideInDown {
-      from {
-        top: -100px;
-        opacity: 0;
-      }
-      to {
-        top: 30px;
-        opacity: 1;
-      }
+    .contact {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: #1A237E;
     }
 
-    /* Responsive design */
-    @media (max-width: 480px) {
-      .login-box {
-        padding: 40px 30px;
-      }
+    .bubble {
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      top: -40px;
+      right: -50px;
+    }
 
-      h2 {
-        font-size: 1.5rem;
-      }
-
-      .logo-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.7rem;
-      }
+    .bubble2 {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      bottom: 30px;
+      left: 30px;
     }
   </style>
 </head>
 <body>
-<div class="login-container">
-  <div class="login-box">
-    <div class="logo-container">
-      <div class="logo-icon">W</div>
-      <h2>Welcome Back</h2>
-      <p class="subtitle">Sign in to access Wrytix Backend Panel</p>
-    </div>
+<div class="flyer">
+  <div class="bubble"></div>
+  <div class="bubble2"></div>
 
-    <form id="loginForm" autocomplete="off">
-      <div class="input-group">
-        <input
-                type="text"
-                id="username"
-                name="username"
-                required
-                placeholder="Username"
-        />
-        <span class="input-icon">👤</span>
-      </div>
-
-      <div class="input-group">
-        <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                placeholder="Password"
-        />
-        <span class="input-icon">🔒</span>
-      </div>
-
-      <button type="submit">Sign In</button>
-    </form>
+  <div class="logo-box">
+    <svg width="70" height="70" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="35" cy="35" r="33" fill="white"/>
+      <path d="M23 26 L30 45 L35 32 L40 45 L47 26" stroke="#1A237E" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="logo-text">wrytix</span>
   </div>
+
+  <div class="heading">
+    <h1>🚀 Internship Opportunities</h1>
+    <p>Join Wrytix & Gain Real Industry Experience</p>
+  </div>
+
+  <div class="section">
+    <h2>Open Positions</h2>
+    <div class="grid">
+      <div class="position">📊 Social Media Analyst</div>
+      <div class="position">📈 Marketing Analyst</div>
+      <div class="position">✍️ Blogging Analyst</div>
+      <div class="position">💻 App Developer</div>
+      <div class="position">🎨 UI/UX Designer</div>
+      <div class="position">🖌️ Graphic Designer</div>
+      <div class="position">💼 Business Analyst</div>
+      <div class="position">🌐 Web Developer</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Requirements</h2>
+    <div class="grid">
+      <div class="requirement">💻 Personal Laptop</div>
+      <div class="requirement">🌐 Stable Internet Connection</div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h3>Apply Now!</h3>
+    <p>Take the first step toward a real career opportunity.</p>
+    <div class="contact">
+      <div>🌐 www.wry-tix.com</div>
+      <div>📧 careers@wry-tix.com</div>
+    </div>
+  </div>
+
 </div>
-
-<script>
-  const loginForm = document.getElementById('loginForm');
-
-  loginForm.addEventListener('submit', async function (e) {
-    e.preventDefault();
-
-    const username = loginForm.username.value.trim();
-    const password = loginForm.password.value.trim();
-
-    try {
-      const res = await fetch('https://wrytix.onrender.com/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.user) {
-        const { username, role } = data.user;
-        sessionStorage.setItem('loggedIn', 'true');
-        sessionStorage.setItem('user', JSON.stringify(data.user));
-        showSuccess("Login successful!");
-
-        setTimeout(() => {
-          switch (role) {
-            case 'admin':
-              window.location.href = 'admin-panel/admin-dashboard.html';
-              break;
-            case 'editor':
-              window.location.href = 'editor/editor-dashboard.html';
-              break;
-            case 'author':
-              window.location.href = 'author/author-dashboard.html';
-              break;
-            default:
-              showError('Unknown role. Contact admin.');
-          }
-        }, 1200);
-      } else {
-        if (res.status === 403 && data.error?.includes('suspended')) {
-          showError('Account suspended. Please contact administrator.');
-        } else if (res.status === 403 && data.error?.includes('inactive')) {
-          showError('Account inactive. Please contact administrator.');
-        } else {
-          showError('Invalid username or password.');
-        }
-      }
-    } catch (err) {
-      console.error('Login failed:', err);
-      showError('Server error. Try again.');
-    }
-  });
-
-  function showError(message) {
-    const alertBox = document.createElement('div');
-    alertBox.className = 'alert error';
-    alertBox.textContent = message;
-    document.body.appendChild(alertBox);
-    setTimeout(() => alertBox.remove(), 5000);
-  }
-
-  function showSuccess(message) {
-    const alertBox = document.createElement('div');
-    alertBox.className = 'alert success';
-    alertBox.textContent = message;
-    document.body.appendChild(alertBox);
-    setTimeout(() => alertBox.remove(), 5000);
-  }
-</script>
 </body>
 </html>

@@ -38,7 +38,8 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(adData)
+            body: JSON.stringify(adData),
+            credentials: 'include'
         });
 
         const result = await response.json();
