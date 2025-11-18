@@ -128,7 +128,9 @@ function renderPagination() {
 }
 
 function editAd(id) {
-    window.location.href = `edit-ad.html?id=${id}`;
+    window.location.href = `edit-ad.html?id=${id}`, {
+        credentials: 'include'
+    };
 }
 
 async function deleteAd(id) {
