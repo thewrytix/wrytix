@@ -107,7 +107,7 @@ async function deleteSelectedAds() {
 
     confirmAndRun( 'Are you sure you want to delete selected ads?', async () => {try {
             for (const checkbox of selected) {
-                await fetch(`https://wrytix.onrender.com/ads/${checkbox.dataset.id}`, { method: 'DELETE' });
+                await fetch(`https://wrytix.onrender.com/ads/${checkbox.dataset.id}`, { method: 'DELETE' , credentials: 'include'});
             }
             showSuccess('✅Selected ads deleted successfully.');
             await loadAds();

@@ -65,7 +65,8 @@ document.getElementById('editAdForm').addEventListener('submit', async (e) => {
     try {
         const response = await fetch(`https://wrytix.onrender.com/ads/${adId}`, {
             method: 'PUT',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
 
         if (response.ok) {

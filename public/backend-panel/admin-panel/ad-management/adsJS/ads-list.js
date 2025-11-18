@@ -134,7 +134,7 @@ function editAd(id) {
 async function deleteAd(id) {
     if (!confirm('Are you sure you want to delete this ad?')) return;
     try {
-        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, { method: 'DELETE' });
+        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, { method: 'DELETE', credentials: 'include' });
         if (res.ok) {
             showSuccess('✅Ad deleted');
             loadAds();
@@ -153,7 +153,8 @@ async function toggleAdStatus(id, currentStatus) {
         const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ active: !currentStatus })
+            body: JSON.stringify({ active: !currentStatus }),
+            credentials: 'include'
         });
 
         const result = await res.json();
