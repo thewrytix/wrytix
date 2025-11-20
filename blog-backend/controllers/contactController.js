@@ -27,7 +27,6 @@ const sendContactEmail = async (req, res) => {
                 <p><small>Sent from Wrytix Contact Form</small></p>
             `
         });
-
         
         if (error) {
             console.error('Resend error:', error);

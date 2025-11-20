@@ -32,6 +32,7 @@ form.addEventListener('submit', async function (e) {
     }
 });
 
+
 // Ads Show
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "contact";
