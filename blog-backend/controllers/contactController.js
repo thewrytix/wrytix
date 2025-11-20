@@ -1,7 +1,5 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const sendContactEmail = async (req, res) => {
     const { name, email, message } = req.body;
 
@@ -10,10 +8,12 @@ const sendContactEmail = async (req, res) => {
     }
 
     try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+
         const { data, error } = await resend.emails.send({
-            from: 'Wrytix Contact Form <onboarding@resend.dev>', // You can verify your domain later
-            replyTo: email,
-            to: ['info@wry-tix.com'], // Send to yourself
+            from: 'Wrytix <noreply@wry-tix.com>', // Your preferred format
+            replyTo: email, // So you can reply directly to the person who filled the form
+            to: ['info@wry-tix.com'], // Where you want to receive the contact form submissions
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>
