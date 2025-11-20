@@ -1,117 +1,142 @@
 //Contact-Form
-const form = document.querySelector('.contact-form');
-form.addEventListener('submit', async function (e) {
-    e.preventDefault();
+//Contact-Form
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector('.contact-form');
+    const API_BASE = 'https://wrytix.onrender.com';
 
-    const formData = new FormData(form);
-
-    // Sanitize all form inputs
-    const data = {
-        name: SecurityUtils.sanitizeInput(formData.get('name'), { maxLength: 100 }),
-        email: SecurityUtils.sanitizeInput(formData.get('email'), { maxLength: 100 }),
-        message: SecurityUtils.sanitizeInput(formData.get('message'), { maxLength: 1000 })
-    };
-
-    // Additional email validation
-    if (!isValidEmail(data.email)) {
-        showError('Please enter a valid email address');
-        return;
-    }
-
-    // Validate required fields
-    if (!data.name.trim() || !data.email.trim() || !data.message.trim()) {
-        showError('All fields are required');
-        return;
-    }
-
-    try {
-        const response = await fetch('https://wrytix.onrender.com/contact', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            // Use safe HTML setting
-            SecurityUtils.setSafeHTML(form, "<p style='color: green;'>Thank you! Your message has been sent successfully.</p>");
-        } else {
-            // Safely display error message
-            const errorMessage = SecurityUtils.escapeHtml(result.error || 'Something went wrong. Please try again.');
-            form.innerHTML = `<p style='color: red;'>${errorMessage}</p>`;
+    // Loading/Error helpers (same pattern as login)
+    function showLoading(show = true) {
+        let loadingEl = form.querySelector('.loading');
+        if (!loadingEl) {
+            loadingEl = document.createElement('div');
+            loadingEl.className = 'loading';
+            loadingEl.textContent = 'Sending message...';
+            loadingEl.style.cssText = 'text-align: center; color: #007bff; margin-top: 10px; display: none;';
+            form.appendChild(loadingEl);
         }
-    } catch (error) {
-        console.error('Error:', error);
-        // Use safe HTML for error message
-        SecurityUtils.setSafeHTML(form, "<p style='color: red;'>Network error. Please check your connection and try again.</p>");
-    }
-});
-
-// Email validation function
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Error display function
-function showError(message) {
-    // Find or create error element
-    let errorElement = form.querySelector('.form-error');
-    if (!errorElement) {
-        errorElement = document.createElement('div');
-        errorElement.className = 'form-error';
-        form.insertBefore(errorElement, form.firstChild);
+        loadingEl.style.display = show ? 'block' : 'none';
     }
 
-    // Safely set error message
-    SecurityUtils.setSafeHTML(errorElement, `<p style='color: red; margin-bottom: 15px;'>${message}</p>`);
-
-    // Auto-remove error after 5 seconds
-    setTimeout(() => {
-        if (errorElement && errorElement.parentNode) {
-            errorElement.remove();
+    function showError(message, isSuccess = false) {
+        let errorEl = form.querySelector('.error');
+        if (!errorEl) {
+            errorEl = document.createElement('div');
+            errorEl.className = 'error';
+            errorEl.style.cssText = `color: ${isSuccess ? 'green' : 'red'}; margin-top: 10px; text-align: center; display: none;`;
+            form.appendChild(errorEl);
         }
-    }, 5000);
-}
+        // SECURE: Escape error messages
+        errorEl.innerHTML = SecurityUtils.escapeHtml(message);
+        errorEl.style.display = 'block';
+        if (isSuccess) {
+            setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+        }
+    }
 
-// Optional: Add real-time validation
-function addRealTimeValidation() {
-    const inputs = form.querySelectorAll('input, textarea');
+    // Contact form handler - SECURE VERSION
+    async function handleContactSubmit(e) {
+        e.preventDefault();
 
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            // Clear any existing errors when user starts typing
-            const errorElement = form.querySelector('.form-error');
-            if (errorElement) {
-                errorElement.remove();
+        // Get raw inputs (for sending to API)
+        const rawName = document.getElementById('name').value.trim();
+        const rawEmail = document.getElementById('email').value.trim();
+        const rawMessage = document.getElementById('message').value.trim();
+
+        // Create sanitized versions for validation/display
+        const sanitizedName = SecurityUtils.sanitizeInput(rawName, { maxLength: 100 });
+        const sanitizedEmail = SecurityUtils.sanitizeInput(rawEmail, { maxLength: 100 });
+        const sanitizedMessage = SecurityUtils.sanitizeInput(rawMessage, { maxLength: 1000 });
+
+        // Validate using SANITIZED data
+        if (!sanitizedName || !sanitizedEmail || !sanitizedMessage) {
+            showError('Please fill all fields');
+            return;
+        }
+
+        // Additional email validation
+        if (!isValidEmail(sanitizedEmail)) {
+            showError('Please enter a valid email address');
+            return;
+        }
+
+        showLoading(true);
+        const errorEl = form.querySelector('.error');
+        if (errorEl) errorEl.style.display = 'none';
+
+        try {
+            const response = await fetch(`${API_BASE}/contact`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                // Send RAW data to API (backend should validate)
+                body: JSON.stringify({
+                    name: rawName,
+                    email: rawEmail,
+                    message: rawMessage
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Success - clear form and show success message
+                form.reset();
+                showError('Thank you! Your message has been sent successfully.', true);
+            } else {
+                // Safely display error message from server
+                const errorMessage = SecurityUtils.escapeHtml(result.error || 'Something went wrong. Please try again.');
+                showError(errorMessage);
             }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network error. Please check your connection and try again.');
+        } finally {
+            showLoading(false);
+        }
+    }
 
-            // Real-time email validation
-            if (input.type === 'email' && input.value.trim()) {
-                if (!isValidEmail(input.value)) {
-                    input.style.borderColor = 'red';
-                } else {
-                    input.style.borderColor = '';
+    // Email validation function
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // Real-time validation (optional enhancement)
+    function addRealTimeValidation() {
+        const inputs = form.querySelectorAll('input, textarea');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                // Clear any existing errors when user starts typing
+                const errorElement = form.querySelector('.error');
+                if (errorElement) {
+                    errorElement.remove();
                 }
-            }
-        });
 
-        // Clear border on focus
-        input.addEventListener('focus', function() {
-            this.style.borderColor = '';
-        });
-    });
-}
+                // Real-time email validation
+                if (input.type === 'email' && input.value.trim()) {
+                    if (!isValidEmail(input.value)) {
+                        input.style.borderColor = 'red';
+                    } else {
+                        input.style.borderColor = '';
+                    }
+                }
+            });
 
-// Initialize real-time validation when DOM is loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addRealTimeValidation);
-} else {
+            // Clear border on focus
+            input.addEventListener('focus', function() {
+                this.style.borderColor = '';
+            });
+        });
+    }
+
+    // Form submit listener
+    form.addEventListener('submit', handleContactSubmit);
+
+    // Initialize real-time validation
     addRealTimeValidation();
-}
+});
 
 // Ads Show
 async function loadSidebarAds() {
