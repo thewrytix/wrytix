@@ -1,4 +1,5 @@
-//Contact-Form
+
+// Contact-Form (Sanitized with SecurityUtils + Client-Side Validation)
 const form = document.querySelector('.contact-form');
 form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -7,12 +8,27 @@ form.addEventListener('submit', async function (e) {
     const rawEmail = formData.get('email');
     const rawMessage = formData.get('message');
 
-    // Sanitize inputs before sending
+    // Sanitize inputs before validation/sending
     const data = {
         name: SecurityUtils.sanitizeInput(rawName, { maxLength: 100 }),
         email: SecurityUtils.sanitizeInput(rawEmail, { maxLength: 100 }),
         message: SecurityUtils.sanitizeInput(rawMessage, { maxLength: 500 })
     };
+
+    // Client-side validation
+    if (!data.name.trim()) {
+        form.innerHTML = "<p style='color: red;'>Name is required.</p>";
+        return;
+    }
+    if (!data.message.trim()) {
+        form.innerHTML = "<p style='color: red;'>Message is required.</p>";
+        return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+        form.innerHTML = "<p style='color: red;'>Please enter a valid email address.</p>";
+        return;
+    }
 
     try {
         const response = await fetch('https://wrytix.onrender.com/contact', {
