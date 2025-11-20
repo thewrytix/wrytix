@@ -3,10 +3,14 @@
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "csrf-csrf": "^4.0.3",
+    "express-rate-limit": "^8.2.1",
     "express-session": "^1.18.1",
+    "express-slow-down": "^3.0.1",
     "mongodb": "^6.17.0",
     "multer": "^2.0.1",
     "node-fetch": "^3.3.2",
+    "rate-limit-redis": "^4.3.0",
+    "redis": "^5.10.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

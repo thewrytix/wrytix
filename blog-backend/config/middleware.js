@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const multer = require('multer');
+const apiRateLimiter = require('../middleware/rateLimit');
+const ddosProtection = require('../middleware/ddos');
 
 /* -----------------------------------------
    1️⃣ Multer Configuration
@@ -32,7 +34,6 @@ const corsOptions = {
         "https://wrytix.netlify.app",
         "https://wry-tix.com",
         "https://www.wry-tix.com",
-        "http://localhost:3000",
         "http://localhost:5500"
     ],
     credentials: true,
@@ -112,7 +113,17 @@ const setupMiddleware = (app) => {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
         next();
     });
+    // -----------------------------
+    // Apply global API rate limiter and DDoS protection
+    // -----------------------------
+    app.use((req, res, next) => {
+        // Skip login route for both protections
+        if (req.path.startsWith('/auth/login')) return next();
 
+        apiRateLimiter(req, res, () => {
+            ddosProtection(req, res, next);
+        });
+    });
     /* -----------------------------------------
        Root Test Route
     ------------------------------------------ */
