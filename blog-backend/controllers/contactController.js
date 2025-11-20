@@ -13,7 +13,7 @@ const sendContactEmail = async (req, res) => {
         const { data, error } = await resend.emails.send({
             from: 'Wrytix <noreply@wry-tix.com>', // Your preferred format
             replyTo: email, // So you can reply directly to the person who filled the form
-            to: ['info@wry-tix.com'], // Where you want to receive the contact form submissions
+            to: ['info@wry-tix.com'], // Where you want to receive the contact form submissions.
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>
