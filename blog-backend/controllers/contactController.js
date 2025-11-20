@@ -28,6 +28,7 @@ const sendContactEmail = async (req, res) => {
             `
         });
 
+        
         if (error) {
             console.error('Resend error:', error);
             return res.status(500).json({ error: "Failed to send message. Try again later." });
