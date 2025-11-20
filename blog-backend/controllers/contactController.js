@@ -11,7 +11,7 @@ const sendContactEmail = async (req, res) => {
         // Use StackMail SMTP settings
         const transporter = nodemailer.createTransport({
             host: "smtp.stackmail.com", // Your outgoing mail server
-            port: 587, // Usually 587 for StackMail
+            port: 465, // Usually 587 for StackMail
             secure: false, // true for 465, false for 587
             auth: {
                 user: process.env.CONTACT_EMAIL, // e.g., info@wry-tix.com

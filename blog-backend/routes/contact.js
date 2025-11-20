@@ -1,17 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const { sendContactEmail } = require('../controllers/contactController');
 
-console.log('📧 Loading contact routes...');
-
-try {
-    const { sendContactEmail } = require('../controllers/contactController');
-    console.log('✅ Contact controller imported successfully');
-
-    router.post('/contact', sendContactEmail);
-    console.log('✅ Contact route registered: POST /contact');
-
-} catch (error) {
-    console.error('❌ Error loading contact routes:', error);
-}
+router.post('/contact', (req, res) => {
+    console.log('🚀 Contact endpoint hit:', {
+        method: req.method,
+        url: req.url,
+        body: req.body
+    });
+    sendContactEmail(req, res);
+});
 
 module.exports = router;
