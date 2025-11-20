@@ -8,24 +8,24 @@ const sendContactEmail = async (req, res) => {
     }
 
     try {
-        // Configure for your wry-tix.com webmail
+        // Use StackMail SMTP settings
         const transporter = nodemailer.createTransport({
-            host: "mail.wry-tix.com", // Your email server host
-            port: 587, // Most web hosts use 587
+            host: "smtp.stackmail.com", // Your outgoing mail server
+            port: 587, // Usually 587 for StackMail
             secure: false, // true for 465, false for 587
             auth: {
-                user: "info@wry-tix.com", // Your email address
-                pass: "info@wry-tix.com149143123." // Your email password from environment variables
+                user: process.env.CONTACT_EMAIL, // e.g., info@wry-tix.com
+                pass: process.env.CONTACT_PASSWORD // your email password
             },
             tls: {
-                rejectUnauthorized: false // Often needed for shared hosting
+                rejectUnauthorized: false
             }
         });
 
         const mailOptions = {
-            from: `"Wrytix Contact Form" <info@wry-tix.com>`, // Send from your domain
-            replyTo: email, // So replies go to the user who filled the form
-            to: "info@wry-tix.com", // Send to yourself
+            from: `"Wrytix Contact Form" <${process.env.CONTACT_EMAIL}>`, // Use env variable here too
+            replyTo: email,
+            to: process.env.CONTACT_EMAIL, // Use env variable here
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>

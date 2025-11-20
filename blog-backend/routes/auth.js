@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const { login, logout, checkAuth, verifySession, signup} = require('../controllers/authController');
-console.log('Auth routes loaded - signup function:', typeof signup); // Should log 'function'
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { corsOptions } = require('../config/middleware');
 
