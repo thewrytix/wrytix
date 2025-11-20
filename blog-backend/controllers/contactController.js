@@ -12,6 +12,13 @@ const sendContactEmail = async (req, res) => {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
+    // Debug: Check environment variables
+    console.log('Environment check:', {
+        resendKey: process.env.RESEND_API_KEY ? `Set (${process.env.RESEND_API_KEY.substring(0, 10)}...)` : 'NOT SET',
+        nodeEnv: process.env.NODE_ENV
+    });
+
+
     // Double check API key exists
     if (!process.env.RESEND_API_KEY) {
         console.error('❌ RESEND_API_KEY is missing');
