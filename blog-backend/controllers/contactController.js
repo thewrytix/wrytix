@@ -1,9 +1,18 @@
 const { Resend } = require('resend');
 
-// Debug: Check if environment variable is loaded
-console.log('Resend API Key:', process.env.RESEND_API_KEY ? 'Loaded' : 'NOT LOADED');
+// Don't initialize Resend here - do it inside the function
+let resendInstance = null;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => {
+    if (!resendInstance) {
+        console.log('🔑 Initializing Resend with key:', process.env.RESEND_API_KEY ? 'Present' : 'Missing');
+        if (!process.env.RESEND_API_KEY) {
+            throw new Error('RESEND_API_KEY environment variable is missing');
+        }
+        resendInstance = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resendInstance;
+};
 
 const sendContactEmail = async (req, res) => {
     const { name, email, message } = req.body;
@@ -12,20 +21,9 @@ const sendContactEmail = async (req, res) => {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Debug: Check environment variables
-    console.log('Environment check:', {
-        resendKey: process.env.RESEND_API_KEY ? `Set (${process.env.RESEND_API_KEY.substring(0, 10)}...)` : 'NOT SET',
-        nodeEnv: process.env.NODE_ENV
-    });
-
-
-    // Double check API key exists
-    if (!process.env.RESEND_API_KEY) {
-        console.error('❌ RESEND_API_KEY is missing');
-        return res.status(500).json({ error: "Email service not configured properly." });
-    }
-
     try {
+        const resend = getResend();
+
         const { data, error } = await resend.emails.send({
             from: 'Wrytix Contact Form <onboarding@resend.dev>',
             replyTo: email,
