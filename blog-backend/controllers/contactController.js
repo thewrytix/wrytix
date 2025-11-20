@@ -1,18 +1,6 @@
 const { Resend } = require('resend');
 
-// Don't initialize Resend here - do it inside the function
-let resendInstance = null;
-
-const getResend = () => {
-    if (!resendInstance) {
-        console.log('🔑 Initializing Resend with key:', process.env.RESEND_API_KEY ? 'Present' : 'Missing');
-        if (!process.env.RESEND_API_KEY) {
-            throw new Error('RESEND_API_KEY environment variable is missing');
-        }
-        resendInstance = new Resend(process.env.RESEND_API_KEY);
-    }
-    return resendInstance;
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendContactEmail = async (req, res) => {
     const { name, email, message } = req.body;
@@ -22,12 +10,10 @@ const sendContactEmail = async (req, res) => {
     }
 
     try {
-        const resend = getResend();
-
         const { data, error } = await resend.emails.send({
-            from: 'Wrytix Contact Form <onboarding@resend.dev>',
+            from: 'Wrytix Contact Form <onboarding@resend.dev>', // You can verify your domain later
             replyTo: email,
-            to: ['info@wry-tix.com'],
+            to: ['info@wry-tix.com'], // Send to yourself
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>
