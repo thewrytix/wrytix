@@ -8,35 +8,30 @@ const sendContactEmail = async (req, res) => {
     }
 
     try {
-        // Use StackMail SMTP settings
         const transporter = nodemailer.createTransport({
-            host: "smtp.stackmail.com", // Your outgoing mail server
-            port: 465, // Usually 587 for StackMail
-            secure: false, // true for 465, false for 587
+            host: "smtp.stackmail.com",
+            port: 465,
+            secure: true,
             auth: {
-                user: process.env.CONTACT_EMAIL, // e.g., info@wry-tix.com
-                pass: process.env.CONTACT_PASSWORD // your email password
+                user: process.env.CONTACT_EMAIL,
+                pass: process.env.CONTACT_PASSWORD
             },
-            tls: {
-                rejectUnauthorized: false
-            }
+            tls: { rejectUnauthorized: false }
         });
 
         const mailOptions = {
-            from: `"Wrytix Contact Form" <${process.env.CONTACT_EMAIL}>`, // Use env variable here too
+            from: `"Wrytix Contact Form" <${process.env.CONTACT_EMAIL}>`,
+            to: process.env.CONTACT_EMAIL,
             replyTo: email,
-            to: process.env.CONTACT_EMAIL, // Use env variable here
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>
                 <p><strong>Name:</strong> ${name}</p>
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Message:</strong></p>
-                <div style="background: #f5f5f5; padding: 15px; border-left: 4px solid #007cba;">
+                <div style="background: #f5f5f5; padding: 15px;">
                     ${message.replace(/\n/g, '<br>')}
                 </div>
-                <hr>
-                <p><small>Sent from Wrytix Contact Form</small></p>
             `
         };
 
