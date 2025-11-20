@@ -1,4 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendContactEmail = async (req, res) => {
     const { name, email, message } = req.body;
@@ -8,35 +10,30 @@ const sendContactEmail = async (req, res) => {
     }
 
     try {
-        const transporter = nodemailer.createTransport({
-            host: "smtp.stackmail.com",
-            port: 465,
-            secure: true,
-            auth: {
-                user: process.env.CONTACT_EMAIL,
-                pass: process.env.CONTACT_PASSWORD
-            },
-            tls: { rejectUnauthorized: false }
-        });
-
-        const mailOptions = {
-            from: `"Wrytix Contact Form" <${process.env.CONTACT_EMAIL}>`,
-            to: process.env.CONTACT_EMAIL,
+        const { data, error } = await resend.emails.send({
+            from: 'Wrytix Contact Form <onboarding@resend.dev>', // You can verify your domain later
             replyTo: email,
+            to: ['info@wry-tix.com'], // Send to yourself
             subject: `New Contact Form Message from ${name}`,
             html: `
                 <h3>New Contact Form Submission</h3>
                 <p><strong>Name:</strong> ${name}</p>
                 <p><strong>Email:</strong> ${email}</p>
                 <p><strong>Message:</strong></p>
-                <div style="background: #f5f5f5; padding: 15px;">
+                <div style="background: #f5f5f5; padding: 15px; border-left: 4px solid #007cba;">
                     ${message.replace(/\n/g, '<br>')}
                 </div>
+                <hr>
+                <p><small>Sent from Wrytix Contact Form</small></p>
             `
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
+        if (error) {
+            console.error('Resend error:', error);
+            return res.status(500).json({ error: "Failed to send message. Try again later." });
+        }
 
+        console.log('✅ Email sent via Resend:', data?.id);
         res.json({ message: "Your message has been sent successfully!" });
 
     } catch (err) {
