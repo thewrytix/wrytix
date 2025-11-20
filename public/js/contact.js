@@ -4,11 +4,25 @@ form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const formData = new FormData(form);
+
+    // Sanitize all form inputs
     const data = {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        message: formData.get('message')
+        name: SecurityUtils.sanitizeInput(formData.get('name'), { maxLength: 100 }),
+        email: SecurityUtils.sanitizeInput(formData.get('email'), { maxLength: 100 }),
+        message: SecurityUtils.sanitizeInput(formData.get('message'), { maxLength: 1000 })
     };
+
+    // Additional email validation
+    if (!isValidEmail(data.email)) {
+        showError('Please enter a valid email address');
+        return;
+    }
+
+    // Validate required fields
+    if (!data.name.trim() || !data.email.trim() || !data.message.trim()) {
+        showError('All fields are required');
+        return;
+    }
 
     try {
         const response = await fetch('https://wrytix.onrender.com/contact', {
@@ -22,16 +36,82 @@ form.addEventListener('submit', async function (e) {
         const result = await response.json();
 
         if (response.ok) {
-            form.innerHTML = "<p style='color: green;'>Thank you! Your message has been sent successfully.</p>";
+            // Use safe HTML setting
+            SecurityUtils.setSafeHTML(form, "<p style='color: green;'>Thank you! Your message has been sent successfully.</p>");
         } else {
-            form.innerHTML = `<p style='color: red;'>${result.error || 'Something went wrong. Please try again.'}</p>`;
+            // Safely display error message
+            const errorMessage = SecurityUtils.escapeHtml(result.error || 'Something went wrong. Please try again.');
+            form.innerHTML = `<p style='color: red;'>${errorMessage}</p>`;
         }
     } catch (error) {
         console.error('Error:', error);
-        form.innerHTML = "<p style='color: red;'>Network error. Please check your connection and try again.</p>";
+        // Use safe HTML for error message
+        SecurityUtils.setSafeHTML(form, "<p style='color: red;'>Network error. Please check your connection and try again.</p>");
     }
 });
 
+// Email validation function
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Error display function
+function showError(message) {
+    // Find or create error element
+    let errorElement = form.querySelector('.form-error');
+    if (!errorElement) {
+        errorElement = document.createElement('div');
+        errorElement.className = 'form-error';
+        form.insertBefore(errorElement, form.firstChild);
+    }
+
+    // Safely set error message
+    SecurityUtils.setSafeHTML(errorElement, `<p style='color: red; margin-bottom: 15px;'>${message}</p>`);
+
+    // Auto-remove error after 5 seconds
+    setTimeout(() => {
+        if (errorElement && errorElement.parentNode) {
+            errorElement.remove();
+        }
+    }, 5000);
+}
+
+// Optional: Add real-time validation
+function addRealTimeValidation() {
+    const inputs = form.querySelectorAll('input, textarea');
+
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            // Clear any existing errors when user starts typing
+            const errorElement = form.querySelector('.form-error');
+            if (errorElement) {
+                errorElement.remove();
+            }
+
+            // Real-time email validation
+            if (input.type === 'email' && input.value.trim()) {
+                if (!isValidEmail(input.value)) {
+                    input.style.borderColor = 'red';
+                } else {
+                    input.style.borderColor = '';
+                }
+            }
+        });
+
+        // Clear border on focus
+        input.addEventListener('focus', function() {
+            this.style.borderColor = '';
+        });
+    });
+}
+
+// Initialize real-time validation when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addRealTimeValidation);
+} else {
+    addRealTimeValidation();
+}
 
 // Ads Show
 async function loadSidebarAds() {

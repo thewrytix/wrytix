@@ -27,17 +27,15 @@ const sendContactEmail = async (req, res) => {
                 <p><small>Sent from Wrytix Contact Form</small></p>
             `
         });
-        
+
         if (error) {
-            console.error('Resend error:', error);
             return res.status(500).json({ error: "Failed to send message. Try again later." });
         }
 
-        console.log('✅ Email sent via Resend:', data?.id);
         res.json({ message: "Your message has been sent successfully!" });
 
     } catch (err) {
-        console.error("Email send error:", err);
+
         res.status(500).json({ error: "Failed to send message. Try again later." });
     }
 };
