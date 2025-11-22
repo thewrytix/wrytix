@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     /* =================== FEATURED SECTION =================== */
     const featuredSection = document.querySelector(".featured-section");
-
     if (featuredSection) {
         // Large featured skeleton
         const largeSkeleton = document.createElement("div");
@@ -11,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="image-skeleton skeleton"></div>
             <div class="text-skeleton skeleton"></div>
         `;
-
         // Small featured grid skeleton
         const smallGridSkeleton = document.createElement("div");
         smallGridSkeleton.className = "featured-grid";
@@ -24,14 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             smallGridSkeleton.appendChild(smallPost);
         }
-
         featuredSection.appendChild(largeSkeleton);
         featuredSection.appendChild(smallGridSkeleton);
     }
-
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
-
     categorySections.forEach(section => {
         for (let i = 0; i < 3; i++) { // 3 skeleton posts per category
             const postSkeleton = document.createElement("div");
@@ -43,10 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
             section.appendChild(postSkeleton);
         }
     });
-
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
-
     sidebarLists.forEach(list => {
         for (let i = 0; i < 5; i++) { // 5 skeleton items
             const li = document.createElement("li");
@@ -55,19 +47,22 @@ document.addEventListener("DOMContentLoaded", () => {
             list.appendChild(li);
         }
     });
-
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
         try {
             // Single fetch for all data (no redundancy)
+            const startTime = performance.now(); // Measure fetch speed
             const response = await fetch('https://wrytix.onrender.com/posts');
+            const fetchTime = performance.now() - startTime;
+            console.log(`Fetch took ${fetchTime.toFixed(2)}ms`); // Log for debugging
+
             if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const allData = await response.json();  // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
+            const allData = await response.json(); // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
 
             // Remove skeletons FIRST (unblocks even partial loads)
             document.querySelectorAll('.skeleton').forEach(el => {
-                el.style.opacity = '0';  // Fade out smooth
-                setTimeout(() => el.remove(), 300);  // 0.3s transition
+                el.style.opacity = '0'; // Fade out smooth
+                setTimeout(() => el.remove(), 300); // 0.3s transition
             });
 
             // Inject Featured (adapt if API keys differ)
@@ -77,14 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const largeDiv = document.createElement("div");
                 largeDiv.className = "featured-large";
                 largeDiv.innerHTML = `
-        <img src="$$ {large.thumbnail}" alt=" $${large.title}" loading="lazy">
-        <div class="featured-info">
-          <h2><a href="$$ {large.link}"> $${large.title}</a></h2>
-          <p>${large.description}</p>
-        </div>
-      `;
+                    <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
+                    <div class="featured-info">
+                      <h2><a href="${large.link}">${large.title}</a></h2>
+                      <p>${large.description}</p>
+                    </div>
+                `;
                 featuredSection.appendChild(largeDiv);
-
                 // Small grid
                 const gridDiv = document.createElement("div");
                 gridDiv.className = "featured-grid";
@@ -92,17 +86,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     const smallDiv = document.createElement("div");
                     smallDiv.className = "small-post";
                     smallDiv.innerHTML = `
-          <img src="$$ {post.thumbnail}" alt=" $${post.title}" loading="lazy">
-          <div>
-            <h4><a href="$$ {post.link}"> $${post.title}</a></h4>
-            <p>${post.description}</p>
-          </div>
-        `;
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+                        <div>
+                          <h4><a href="${post.link}">${post.title}</a></h4>
+                          <p>${post.description}</p>
+                        </div>
+                    `;
                     gridDiv.appendChild(smallDiv);
                 });
                 featuredSection.appendChild(gridDiv);
             }
-
             // Inject Categories
             categorySections.forEach(section => {
                 const categoryId = section.id;
@@ -111,17 +104,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     const postDiv = document.createElement("div");
                     postDiv.className = "post-preview";
                     postDiv.innerHTML = `
-          <img src="$$ {post.thumbnail}" alt=" $${post.title}" loading="lazy">
-          <div>
-            <h3><a href="$$ {post.link}"> $${post.title}</a></h3>
-            <p>${post.description}</p>
-            <span class="post-date">${post.date}</span>
-          </div>
-        `;
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+                        <div>
+                          <h3><a href="${post.link}">${post.title}</a></h3>
+                          <p>${post.description}</p>
+                          <span class="post-date">${post.date}</span>
+                        </div>
+                    `;
                     section.appendChild(postDiv);
                 });
             });
-
             // Inject Sidebar
             sidebarLists.forEach(list => {
                 const listId = list.id;
@@ -132,7 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     list.appendChild(li);
                 });
             });
-
         } catch (error) {
             console.error('Content load failed:', error);
             // Always remove skeletons on error + show retry
@@ -147,9 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.body.insertBefore(errorDiv, document.body.firstChild);
         }
     }
-
     loadContent();
-
 });
 
 
