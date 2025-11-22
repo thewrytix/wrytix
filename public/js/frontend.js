@@ -58,6 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
+        const startTime = performance.now(); // Add this line
+        
         try {
             // Fetch data from API
             const response = await fetch('https://wrytix.onrender.com/posts');
