@@ -1,12 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const startTime = performance.now(); // Define startTime here
 
     /* =================== FEATURED SECTION =================== */
     const featuredSection = document.querySelector(".featured-section");
-    if (featuredSection) {
-        // Clear existing content
-        featuredSection.innerHTML = '';
 
+    if (featuredSection) {
         // Large featured skeleton
         const largeSkeleton = document.createElement("div");
         largeSkeleton.className = "featured-large skeleton";
@@ -34,9 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
+
     categorySections.forEach(section => {
-        // Clear existing content
-        section.innerHTML = '';
         for (let i = 0; i < 3; i++) {
             const postSkeleton = document.createElement("div");
             postSkeleton.className = "post-preview skeleton";
@@ -50,11 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
-    sidebarLists.forEach(list => {
-        // Clear existing list items but keep the list itself
-        const existingItems = list.querySelectorAll('li');
-        existingItems.forEach(item => item.remove());
 
+    sidebarLists.forEach(list => {
         for (let i = 0; i < 5; i++) {
             const li = document.createElement("li");
             li.className = "skeleton";
@@ -65,11 +58,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
+        const startTime = performance.now(); // Add this line
         try {
             // Fetch data from API
             const response = await fetch('https://wrytix.onrender.com/posts');
             if (!response.ok) throw new Error(`API error: ${response.status}`);
-
             const allData = await response.json();
 
             // Debug: Log API response and timing
@@ -86,53 +79,41 @@ document.addEventListener("DOMContentLoaded", () => {
             // Remove skeletons with fade effect
             document.querySelectorAll('.skeleton').forEach(el => {
                 el.style.opacity = '0';
-                setTimeout(() => {
-                    if (el.parentNode) {
-                        el.remove();
-                    }
-                }, 300);
+                setTimeout(() => el.remove(), 300);
             });
-
-            // Small delay to ensure DOM is ready
-            await new Promise(resolve => setTimeout(resolve, 50));
 
             // Inject Featured Section
             if (featuredSection && allData.featured) {
-                featuredSection.innerHTML = ''; // Clear skeletons
                 const { large, small } = allData.featured;
 
                 // Large featured post
-                if (large) {
-                    const largeDiv = document.createElement("div");
-                    largeDiv.className = "featured-large";
-                    largeDiv.innerHTML = `
-                        <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
-                        <div class="featured-info">
-                            <h2><a href="${large.link}">${large.title}</a></h2>
-                            <p>${large.description}</p>
-                        </div>
-                    `;
-                    featuredSection.appendChild(largeDiv);
-                }
+                const largeDiv = document.createElement("div");
+                largeDiv.className = "featured-large";
+                largeDiv.innerHTML = `
+                    <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
+                    <div class="featured-info">
+                        <h2><a href="${large.link}">${large.title}</a></h2>
+                        <p>${large.description}</p>
+                    </div>
+                `;
+                featuredSection.appendChild(largeDiv);
 
                 // Small featured grid
-                if (small && small.length > 0) {
-                    const gridDiv = document.createElement("div");
-                    gridDiv.className = "featured-grid";
-                    small.forEach(post => {
-                        const smallDiv = document.createElement("div");
-                        smallDiv.className = "small-post";
-                        smallDiv.innerHTML = `
-                            <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
-                            <div>
-                                <h4><a href="${post.link}">${post.title}</a></h4>
-                                <p>${post.description}</p>
-                            </div>
-                        `;
-                        gridDiv.appendChild(smallDiv);
-                    });
-                    featuredSection.appendChild(gridDiv);
-                }
+                const gridDiv = document.createElement("div");
+                gridDiv.className = "featured-grid";
+                small.forEach(post => {
+                    const smallDiv = document.createElement("div");
+                    smallDiv.className = "small-post";
+                    smallDiv.innerHTML = `
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+                        <div>
+                            <h4><a href="${post.link}">${post.title}</a></h4>
+                            <p>${post.description}</p>
+                        </div>
+                    `;
+                    gridDiv.appendChild(smallDiv);
+                });
+                featuredSection.appendChild(gridDiv);
             }
 
             // Inject Category Sections
@@ -142,23 +123,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (posts.length === 0) {
                     console.warn(`No posts found for category: ${categoryId}`);
-                    section.innerHTML = '<p>No posts available</p>';
-                } else {
-                    section.innerHTML = ''; // Clear skeletons
-                    posts.forEach(post => {
-                        const postDiv = document.createElement("div");
-                        postDiv.className = "post-preview";
-                        postDiv.innerHTML = `
-                            <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
-                            <div>
-                                <h3><a href="${post.link}">${post.title}</a></h3>
-                                <p>${post.description}</p>
-                                <span class="post-date">${post.date}</span>
-                            </div>
-                        `;
-                        section.appendChild(postDiv);
-                    });
                 }
+
+                posts.forEach(post => {
+                    const postDiv = document.createElement("div");
+                    postDiv.className = "post-preview";
+                    postDiv.innerHTML = `
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+                        <div>
+                            <h3><a href="${post.link}">${post.title}</a></h3>
+                            <p>${post.description}</p>
+                            <span class="post-date">${post.date}</span>
+                        </div>
+                    `;
+                    section.appendChild(postDiv);
+                });
             });
 
             // Inject Sidebar Lists
@@ -168,18 +147,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (items.length === 0) {
                     console.warn(`No items found for sidebar: ${listId}`);
-                    list.innerHTML = '<li>No items available</li>';
-                } else {
-                    list.innerHTML = ''; // Clear skeletons
-                    items.forEach(item => {
-                        const li = document.createElement("li");
-                        li.innerHTML = `
-                            <a href="${item.link}">${item.title}</a>
-                            <span>${item.date}</span>
-                        `;
-                        list.appendChild(li);
-                    });
                 }
+
+                items.forEach(item => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<a href="${item.link}">${item.title}</a> <span>${item.date}</span>`;
+                    list.appendChild(li);
+                });
             });
 
         } catch (error) {
@@ -188,11 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Remove skeletons on error
             document.querySelectorAll('.skeleton').forEach(el => {
                 el.style.opacity = '0';
-                setTimeout(() => {
-                    if (el.parentNode) {
-                        el.remove();
-                    }
-                }, 300);
+                setTimeout(() => el.remove(), 300);
             });
 
             // Display error message with retry button
@@ -208,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadContent();
+
 });
 
 (() => {
