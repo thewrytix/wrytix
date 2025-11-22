@@ -1,184 +1,211 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    /* =================== FEATURED SECTION =================== */
-    const featuredSection = document.querySelector(".featured-section");
+    /* ----------------------------------
+       Performance Timer
+    -----------------------------------*/
+    const startTime = performance.now();
 
-    if (featuredSection) {
-        // Large featured skeleton
-        const largeSkeleton = document.createElement("div");
-        largeSkeleton.className = "featured-large skeleton";
-        largeSkeleton.innerHTML = `
-            <div class="image-skeleton skeleton"></div>
-            <div class="text-skeleton skeleton"></div>
-        `;
+    /* ----------------------------------
+       Quick Helpers
+    -----------------------------------*/
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => document.querySelectorAll(s);
 
-        // Small featured grid skeleton
-        const smallGridSkeleton = document.createElement("div");
-        smallGridSkeleton.className = "featured-grid";
-        for (let i = 0; i < 3; i++) {
-            const smallPost = document.createElement("div");
-            smallPost.className = "small-post skeleton";
-            smallPost.innerHTML = `
-                <div class="image-skeleton skeleton"></div>
-                <div class="text-skeleton skeleton"></div>
-            `;
-            smallGridSkeleton.appendChild(smallPost);
-        }
-
-        featuredSection.appendChild(largeSkeleton);
-        featuredSection.appendChild(smallGridSkeleton);
+    /* ----------------------------------
+       Skeleton Handling
+    -----------------------------------*/
+    function fadeOutSkeletons() {
+        $$(".skeleton").forEach(el => {
+            el.style.opacity = "0";
+            setTimeout(() => el.remove(), 220);
+        });
     }
 
-    /* =================== CATEGORY SECTIONS =================== */
-    const categorySections = document.querySelectorAll(".category-section");
+    /* ----------------------------------
+       Insert Initial Skeletons
+    -----------------------------------*/
+    const featuredSection = $(".featured-section");
+    const categorySections = $$(".category-section");
+    const sidebarLists = $$(".sidebar-section ul");
 
-    categorySections.forEach(section => {
-        for (let i = 0; i < 3; i++) {
-            const postSkeleton = document.createElement("div");
-            postSkeleton.className = "post-preview skeleton";
-            postSkeleton.innerHTML = `
-                <div class="image-skeleton skeleton"></div>
-                <div class="text-skeleton skeleton"></div>
-            `;
-            section.appendChild(postSkeleton);
-        }
+    if (featuredSection) {
+        featuredSection.insertAdjacentHTML("beforeend", `
+            <div class="featured-large skeleton"></div>
+            <div class="featured-grid">
+                <div class="small-post skeleton"></div>
+                <div class="small-post skeleton"></div>
+                <div class="small-post skeleton"></div>
+            </div>
+        `);
+    }
+
+    categorySections.forEach(sec => {
+        sec.insertAdjacentHTML("beforeend", `
+            <div class="post-preview skeleton"></div>
+            <div class="post-preview skeleton"></div>
+            <div class="post-preview skeleton"></div>
+        `);
     });
-
-    /* =================== SIDEBAR LISTS =================== */
-    const sidebarLists = document.querySelectorAll(".sidebar-section ul");
 
     sidebarLists.forEach(list => {
+        let html = "";
         for (let i = 0; i < 5; i++) {
-            const li = document.createElement("li");
-            li.className = "skeleton";
-            li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
-            list.appendChild(li);
+            html += `<li class="skeleton"></li>`;
         }
+        list.insertAdjacentHTML("beforeend", html);
     });
 
-    /* =================== FETCH API DATA =================== */
-    async function loadContent() {
+
+    /* ----------------------------------
+       LocalStorage Cache Handling
+    -----------------------------------*/
+    function getCachedData() {
+        const raw = localStorage.getItem("wrytix_home_data");
+        if (!raw) return null;
+
         try {
-            // Fetch data from API
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const allData = await response.json();
+            const parsed = JSON.parse(raw);
+            const age = Date.now() - parsed.timestamp;
+            if (age > 1000 * 60 * 3) return null; // 3 minute cache
+            return parsed.data;
+        } catch {
+            return null;
+        }
+    }
 
-            // Debug: Log API response and timing
-            const fetchTime = performance.now() - startTime;
-            console.log(`✅ Fetch completed in ${fetchTime.toFixed(2)}ms`);
-            console.log('📦 API Response:', allData);
-            console.log('📊 Data structure check:', {
-                hasFeatured: !!allData.featured,
-                hasCategories: !!allData.categories,
-                hasSidebar: !!allData.sidebar,
-                categoryCount: allData.categories ? Object.keys(allData.categories).length : 0
-            });
+    function cacheData(data) {
+        localStorage.setItem(
+            "wrytix_home_data",
+            JSON.stringify({ data, timestamp: Date.now() })
+        );
+    }
 
-            // Remove skeletons with fade effect
-            document.querySelectorAll('.skeleton').forEach(el => {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 300);
-            });
 
-            // Inject Featured Section
-            if (featuredSection && allData.featured) {
-                const { large, small } = allData.featured;
+    /* ----------------------------------
+       Render Functions (FAST DOM batching)
+    -----------------------------------*/
+    function renderFeatured(data) {
+        if (!featuredSection || !data.featured) return;
 
-                // Large featured post
-                const largeDiv = document.createElement("div");
-                largeDiv.className = "featured-large";
-                largeDiv.innerHTML = `
-                    <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
-                    <div class="featured-info">
-                        <h2><a href="${large.link}">${large.title}</a></h2>
-                        <p>${large.description}</p>
-                    </div>
-                `;
-                featuredSection.appendChild(largeDiv);
+        const { large, small } = data.featured;
 
-                // Small featured grid
-                const gridDiv = document.createElement("div");
-                gridDiv.className = "featured-grid";
-                small.forEach(post => {
-                    const smallDiv = document.createElement("div");
-                    smallDiv.className = "small-post";
-                    smallDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+        featuredSection.insertAdjacentHTML("beforeend", `
+            <div class="featured-large">
+                <img src="${large.thumbnail}" loading="lazy">
+                <div class="featured-info">
+                    <h2><a href="${large.link}">${large.title}</a></h2>
+                    <p>${large.description}</p>
+                </div>
+            </div>
+            <div class="featured-grid">
+                ${small.map(post => `
+                    <div class="small-post">
+                        <img src="${post.thumbnail}" loading="lazy">
                         <div>
                             <h4><a href="${post.link}">${post.title}</a></h4>
                             <p>${post.description}</p>
                         </div>
-                    `;
-                    gridDiv.appendChild(smallDiv);
-                });
-                featuredSection.appendChild(gridDiv);
-            }
+                    </div>`).join("")}
+            </div>
+        `);
+    }
 
-            // Inject Category Sections
-            categorySections.forEach(section => {
-                const categoryId = section.id;
-                const posts = allData.categories?.[categoryId] || [];
+    function renderCategories(data) {
+        categorySections.forEach(section => {
+            const id = section.id;
+            const posts = data.categories?.[id] || [];
 
-                if (posts.length === 0) {
-                    console.warn(`No posts found for category: ${categoryId}`);
-                }
-
-                posts.forEach(post => {
-                    const postDiv = document.createElement("div");
-                    postDiv.className = "post-preview";
-                    postDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
+            section.insertAdjacentHTML("beforeend", `
+                ${posts
+                .map(
+                    (p) => `
+                    <div class="post-preview">
+                        <img src="${p.thumbnail}" loading="lazy">
                         <div>
-                            <h3><a href="${post.link}">${post.title}</a></h3>
-                            <p>${post.description}</p>
-                            <span class="post-date">${post.date}</span>
+                            <h3><a href="${p.link}">${p.title}</a></h3>
+                            <p>${p.description}</p>
+                            <span class="post-date">${p.date}</span>
                         </div>
-                    `;
-                    section.appendChild(postDiv);
-                });
-            });
+                    </div>
+                `
+                )
+                .join("")}
+            `);
+        });
+    }
 
-            // Inject Sidebar Lists
-            sidebarLists.forEach(list => {
-                const listId = list.id;
-                const items = allData.sidebar?.[listId] || [];
+    function renderSidebar(data) {
+        sidebarLists.forEach(list => {
+            const id = list.id;
+            const items = data.sidebar?.[id] || [];
 
-                if (items.length === 0) {
-                    console.warn(`No items found for sidebar: ${listId}`);
-                }
+            list.insertAdjacentHTML(
+                "beforeend",
+                items
+                    .map(
+                        (it) => `
+                    <li>
+                        <a href="${it.link}">${it.title}</a>
+                        <span>${it.date}</span>
+                    </li>
+                `
+                    )
+                    .join("")
+            );
+        });
+    }
 
-                items.forEach(item => {
-                    const li = document.createElement("li");
-                    li.innerHTML = `<a href="${item.link}">${item.title}</a> <span>${item.date}</span>`;
-                    list.appendChild(li);
-                });
-            });
+    /* ----------------------------------
+       Lazy Loading Observer (categories only)
+    -----------------------------------*/
+    const categoryObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.dataset.visible = "true";
+                categoryObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
 
-        } catch (error) {
-            console.error('Content load failed:', error);
+    categorySections.forEach(section => categoryObserver.observe(section));
 
-            // Remove skeletons on error
-            document.querySelectorAll('.skeleton').forEach(el => {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 300);
-            });
 
-            // Display error message with retry button
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'padding: 20px; background: #ffebee; color: #d32f2f; text-align: center; margin: 20px; border-radius: 8px;';
-            errorDiv.innerHTML = `
-                <p><strong>Oops! Failed to load content.</strong></p>
-                <p>${error.message}</p>
-                <button onclick="location.reload()" style="background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Retry Now</button>
-            `;
-            document.body.insertBefore(errorDiv, document.body.firstChild);
+    /* ----------------------------------
+       Fetch Data + Render
+    -----------------------------------*/
+    async function loadContent() {
+        let data = getCachedData();
+
+        if (data) {
+            console.log("Loaded from cache");
+            renderFeatured(data);
+            renderCategories(data);
+            renderSidebar(data);
+            fadeOutSkeletons();
+        }
+
+        try {
+            const res = await fetch("https://wrytix.onrender.com/posts");
+            const fresh = await res.json();
+
+            console.log("Fetched fresh data:", fresh);
+
+            cacheData(fresh); // store for next visit
+
+            renderFeatured(fresh);
+            renderCategories(fresh);
+            renderSidebar(fresh);
+
+            fadeOutSkeletons();
+        } catch (err) {
+            console.error("Load failed:", err);
+            fadeOutSkeletons();
         }
     }
 
     loadContent();
-
 });
+
 
 (() => {
     async function fetchForexRates() {
