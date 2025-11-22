@@ -56,69 +56,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    /* =================== TRANSFORM FLAT ARRAY TO NESTED STRUCTURE =================== */
-    function transformData(posts) {
-        if (!Array.isArray(posts)) return { featured: null, categories: {}, sidebar: {} };
-
-        // Sort by date (most recent first)
-        const sortedPosts = [...posts].sort((a, b) => {
-            const dateA = new Date(a.date || a.created_at || 0);
-            const dateB = new Date(b.date || b.created_at || 0);
-            return dateB - dateA;
-        });
-
-        // Featured section: first post is large, next 3 are small
-        const featured = {
-            large: sortedPosts[0] || null,
-            small: sortedPosts.slice(1, 4)
-        };
-
-        // Group posts by category
-        const categories = {};
-        sortedPosts.forEach(post => {
-            const category = post.category?.toLowerCase() || 'uncategorized';
-            if (!categories[category]) categories[category] = [];
-            categories[category].push(post);
-        });
-
-        // Sidebar: trending (most recent 5) and popular (next 5)
-        const sidebar = {
-            'trending-list': sortedPosts.slice(0, 5).map(p => ({
-                title: p.title,
-                link: p.link || p.url || `#${p.id}`,
-                date: p.date || p.created_at || ''
-            })),
-            'popular-list': sortedPosts.slice(5, 10).map(p => ({
-                title: p.title,
-                link: p.link || p.url || `#${p.id}`,
-                date: p.date || p.created_at || ''
-            }))
-        };
-
-        return { featured, categories, sidebar };
-    }
-
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
-        const startTime = performance.now();
+        const startTime = performance.now(); // Add this line
         try {
             // Fetch data from API
             const response = await fetch('https://wrytix.onrender.com/posts');
             if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const rawData = await response.json();
+            const allData = await response.json();
 
             // Debug: Log API response and timing
             const fetchTime = performance.now() - startTime;
             console.log(`✅ Fetch completed in ${fetchTime.toFixed(2)}ms`);
-            console.log('📦 Raw API Response (first 2 posts):', rawData.slice(0, 2));
-
-            // Transform flat array into nested structure
-            const allData = transformData(rawData);
-            console.log('📊 Transformed Data Structure:', {
-                hasFeatured: !!allData.featured?.large,
-                categoryCount: Object.keys(allData.categories).length,
-                categories: Object.keys(allData.categories),
-                sidebarItems: Object.keys(allData.sidebar)
+            console.log('📦 API Response:', allData);
+            console.log('📊 Data structure check:', {
+                hasFeatured: !!allData.featured,
+                hasCategories: !!allData.categories,
+                hasSidebar: !!allData.sidebar,
+                categoryCount: allData.categories ? Object.keys(allData.categories).length : 0
             });
 
             // Remove skeletons with fade effect
@@ -128,17 +83,17 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             // Inject Featured Section
-            if (featuredSection && allData.featured?.large) {
+            if (featuredSection && allData.featured) {
                 const { large, small } = allData.featured;
 
                 // Large featured post
                 const largeDiv = document.createElement("div");
                 largeDiv.className = "featured-large";
                 largeDiv.innerHTML = `
-                    <img src="${large.thumbnail || large.image || 'placeholder.jpg'}" alt="${large.title}" loading="lazy">
+                    <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
                     <div class="featured-info">
-                        <h2><a href="${large.link || large.url || '#'}">${large.title}</a></h2>
-                        <p>${large.description || large.excerpt || ''}</p>
+                        <h2><a href="${large.link}">${large.title}</a></h2>
+                        <p>${large.description}</p>
                     </div>
                 `;
                 featuredSection.appendChild(largeDiv);
@@ -150,10 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     const smallDiv = document.createElement("div");
                     smallDiv.className = "small-post";
                     smallDiv.innerHTML = `
-                        <img src="${post.thumbnail || post.image || 'placeholder.jpg'}" alt="${post.title}" loading="lazy">
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
                         <div>
-                            <h4><a href="${post.link || post.url || '#'}">${post.title}</a></h4>
-                            <p>${post.description || post.excerpt || ''}</p>
+                            <h4><a href="${post.link}">${post.title}</a></h4>
+                            <p>${post.description}</p>
                         </div>
                     `;
                     gridDiv.appendChild(smallDiv);
@@ -167,20 +122,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 const posts = allData.categories?.[categoryId] || [];
 
                 if (posts.length === 0) {
-                    console.warn(`⚠️ No posts found for category: ${categoryId}`);
-                    return;
+                    console.warn(`No posts found for category: ${categoryId}`);
                 }
 
-                // Limit to 3 posts per category
-                posts.slice(0, 3).forEach(post => {
+                posts.forEach(post => {
                     const postDiv = document.createElement("div");
                     postDiv.className = "post-preview";
                     postDiv.innerHTML = `
-                        <img src="${post.thumbnail || post.image || 'placeholder.jpg'}" alt="${post.title}" loading="lazy">
+                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
                         <div>
-                            <h3><a href="${post.link || post.url || '#'}">${post.title}</a></h3>
-                            <p>${post.description || post.excerpt || ''}</p>
-                            <span class="post-date">${post.date || post.created_at || ''}</span>
+                            <h3><a href="${post.link}">${post.title}</a></h3>
+                            <p>${post.description}</p>
+                            <span class="post-date">${post.date}</span>
                         </div>
                     `;
                     section.appendChild(postDiv);
@@ -193,8 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const items = allData.sidebar?.[listId] || [];
 
                 if (items.length === 0) {
-                    console.warn(`⚠️ No items found for sidebar: ${listId}`);
-                    return;
+                    console.warn(`No items found for sidebar: ${listId}`);
                 }
 
                 items.forEach(item => {
@@ -204,10 +156,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
-            console.log('✅ Content loaded successfully!');
-
         } catch (error) {
-            console.error('❌ Content load failed:', error);
+            console.error('Content load failed:', error);
 
             // Remove skeletons on error
             document.querySelectorAll('.skeleton').forEach(el => {
