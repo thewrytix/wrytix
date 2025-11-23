@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     /* =================== FEATURED SECTION =================== */
     const featuredSection = document.querySelector(".featured-section");
-
     if (featuredSection) {
         // Large featured skeleton
         const largeSkeleton = document.createElement("div");
@@ -11,11 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="image-skeleton skeleton"></div>
             <div class="text-skeleton skeleton"></div>
         `;
-
         // Small featured grid skeleton
         const smallGridSkeleton = document.createElement("div");
         smallGridSkeleton.className = "featured-grid";
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) { // show 3 skeleton posts
             const smallPost = document.createElement("div");
             smallPost.className = "small-post skeleton";
             smallPost.innerHTML = `
@@ -24,16 +21,13 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             smallGridSkeleton.appendChild(smallPost);
         }
-
         featuredSection.appendChild(largeSkeleton);
         featuredSection.appendChild(smallGridSkeleton);
     }
-
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
-
     categorySections.forEach(section => {
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) { // 3 skeleton posts per category
             const postSkeleton = document.createElement("div");
             postSkeleton.className = "post-preview skeleton";
             postSkeleton.innerHTML = `
@@ -43,62 +37,49 @@ document.addEventListener("DOMContentLoaded", () => {
             section.appendChild(postSkeleton);
         }
     });
-
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
-
     sidebarLists.forEach(list => {
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 5; i++) { // 5 skeleton items
             const li = document.createElement("li");
             li.className = "skeleton";
             li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
             list.appendChild(li);
         }
     });
-
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
-        const startTime = performance.now(); // Add this line
         try {
-            // Fetch data from API
+            // Single fetch for all data (no redundancy)
+            const startTime = performance.now(); // Measure fetch speed
             const response = await fetch('https://wrytix.onrender.com/posts');
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const allData = await response.json();
-
-            // Debug: Log API response and timing
             const fetchTime = performance.now() - startTime;
-            console.log(`✅ Fetch completed in ${fetchTime.toFixed(2)}ms`);
-            console.log('📦 API Response:', allData);
-            console.log('📊 Data structure check:', {
-                hasFeatured: !!allData.featured,
-                hasCategories: !!allData.categories,
-                hasSidebar: !!allData.sidebar,
-                categoryCount: allData.categories ? Object.keys(allData.categories).length : 0
-            });
+            console.log(`Fetch took ${fetchTime.toFixed(2)}ms`); // Log for debugging
 
-            // Remove skeletons with fade effect
+            if (!response.ok) throw new Error(`API error: ${response.status}`);
+            const allData = await response.json(); // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
+
+            // Remove skeletons FIRST (unblocks even partial loads)
             document.querySelectorAll('.skeleton').forEach(el => {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 300);
+                el.style.opacity = '0'; // Fade out smooth
+                setTimeout(() => el.remove(), 300); // 0.3s transition
             });
 
-            // Inject Featured Section
+            // Inject Featured (adapt if API keys differ)
             if (featuredSection && allData.featured) {
                 const { large, small } = allData.featured;
-
-                // Large featured post
+                // Large featured
                 const largeDiv = document.createElement("div");
                 largeDiv.className = "featured-large";
                 largeDiv.innerHTML = `
                     <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
                     <div class="featured-info">
-                        <h2><a href="${large.link}">${large.title}</a></h2>
-                        <p>${large.description}</p>
+                      <h2><a href="${large.link}">${large.title}</a></h2>
+                      <p>${large.description}</p>
                     </div>
                 `;
                 featuredSection.appendChild(largeDiv);
-
-                // Small featured grid
+                // Small grid
                 const gridDiv = document.createElement("div");
                 gridDiv.className = "featured-grid";
                 small.forEach(post => {
@@ -107,78 +88,57 @@ document.addEventListener("DOMContentLoaded", () => {
                     smallDiv.innerHTML = `
                         <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
                         <div>
-                            <h4><a href="${post.link}">${post.title}</a></h4>
-                            <p>${post.description}</p>
+                          <h4><a href="${post.link}">${post.title}</a></h4>
+                          <p>${post.description}</p>
                         </div>
                     `;
                     gridDiv.appendChild(smallDiv);
                 });
                 featuredSection.appendChild(gridDiv);
             }
-
-            // Inject Category Sections
+            // Inject Categories
             categorySections.forEach(section => {
                 const categoryId = section.id;
                 const posts = allData.categories?.[categoryId] || [];
-
-                if (posts.length === 0) {
-                    console.warn(`No posts found for category: ${categoryId}`);
-                }
-
                 posts.forEach(post => {
                     const postDiv = document.createElement("div");
                     postDiv.className = "post-preview";
                     postDiv.innerHTML = `
                         <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
                         <div>
-                            <h3><a href="${post.link}">${post.title}</a></h3>
-                            <p>${post.description}</p>
-                            <span class="post-date">${post.date}</span>
+                          <h3><a href="${post.link}">${post.title}</a></h3>
+                          <p>${post.description}</p>
+                          <span class="post-date">${post.date}</span>
                         </div>
                     `;
                     section.appendChild(postDiv);
                 });
             });
-
-            // Inject Sidebar Lists
+            // Inject Sidebar
             sidebarLists.forEach(list => {
                 const listId = list.id;
                 const items = allData.sidebar?.[listId] || [];
-
-                if (items.length === 0) {
-                    console.warn(`No items found for sidebar: ${listId}`);
-                }
-
                 items.forEach(item => {
                     const li = document.createElement("li");
                     li.innerHTML = `<a href="${item.link}">${item.title}</a> <span>${item.date}</span>`;
                     list.appendChild(li);
                 });
             });
-
         } catch (error) {
             console.error('Content load failed:', error);
-
-            // Remove skeletons on error
+            // Always remove skeletons on error + show retry
             document.querySelectorAll('.skeleton').forEach(el => {
                 el.style.opacity = '0';
                 setTimeout(() => el.remove(), 300);
             });
-
-            // Display error message with retry button
+            // Add error UI (append to body or a section)
             const errorDiv = document.createElement('div');
             errorDiv.style.cssText = 'padding: 20px; background: #ffebee; color: #d32f2f; text-align: center; margin: 20px; border-radius: 8px;';
-            errorDiv.innerHTML = `
-                <p><strong>Oops! Failed to load content.</strong></p>
-                <p>${error.message}</p>
-                <button onclick="location.reload()" style="background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px;">Retry Now</button>
-            `;
+            errorDiv.innerHTML = '<p>Oops! Failed to load content. <button onclick="location.reload()" style="background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Retry Now</button></p>';
             document.body.insertBefore(errorDiv, document.body.firstChild);
         }
     }
-
     loadContent();
-
 });
 
 (() => {
