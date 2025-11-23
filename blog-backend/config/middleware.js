@@ -5,9 +5,13 @@ const multer = require('multer');
 const apiRateLimiter = require('../middleware/rateLimit');
 const ddosProtection = require('../middleware/ddos');
 
-/* ----------------------------------------- 1️⃣ Multer Configuration ------------------------------------------ */
+/* -----------------------------------------
+   1️⃣ Multer Configuration
+------------------------------------------ */
 const storage = multer.memoryStorage();
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     fileFilter: (req, file, cb) => {
         if (file.fieldname === "avatar") {
             if (!["image/jpeg", "image/png", "image/gif"].includes(file.mimetype)) {
@@ -22,7 +26,9 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
     }
 });
 
-/* ----------------------------------------- 2️⃣ CORS Configuration ------------------------------------------ */
+/* -----------------------------------------
+   2️⃣ CORS Configuration
+------------------------------------------ */
 const corsOptions = {
     origin: [
         "https://wrytix.netlify.app",
@@ -35,44 +41,53 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
 };
 
-/* ----------------------------------------- 3️⃣ Setup Middleware ------------------------------------------ */
+/* -----------------------------------------
+   3️⃣ Setup Middleware
+------------------------------------------ */
 const setupMiddleware = (app) => {
+
     // Trust reverse proxies (important for Render/Netlify)
     app.set('trust proxy', 1);
 
-    /* ------------------------- Helmet security headers -------------------------- */
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    "https://wry-tix.com",
-                    "https://www.wry-tix.com",
-                    "https://cdn.jsdelivr.net",
-                    "https://cdnjs.cloudflare.com"
-                ],
-                imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: [
-                    "'self'",
-                    "https://wrytix.onrender.com",
-                    "https://www.wry-tix.com"
-                ],
-                styleSrc: [
-                    "'self'",
-                    "'unsafe-inline'",
-                    "https://fonts.googleapis.com",
-                    "https://cdn.jsdelivr.net"
-                ],
-                fontSrc: ["'self'", "data:", "https:"]
+    /* -------------------------
+       Helmet security headers
+    -------------------------- */
+    app.use(
+        helmet({
+            contentSecurityPolicy: {
+                directives: {
+                    defaultSrc: ["'self'"],
+                    scriptSrc: [
+                        "'self'",
+                        "'unsafe-inline'",
+                        "https://wry-tix.com",
+                        "https://www.wry-tix.com",
+                        "https://cdn.jsdelivr.net",
+                        "https://cdnjs.cloudflare.com"
+                    ],
+                    imgSrc: ["'self'", "data:", "https:"],
+                    connectSrc: [
+                        "'self'",
+                        "https://wrytix.onrender.com",
+                        "https://www.wry-tix.com"
+                    ],
+                    styleSrc: [
+                        "'self'",
+                        "'unsafe-inline'",
+                        "https://fonts.googleapis.com",
+                        "https://cdn.jsdelivr.net"
+                    ],
+                    fontSrc: ["'self'", "data:", "https:"]
+                },
             },
-        },
-        crossOriginEmbedderPolicy: false,
-        crossOriginResourcePolicy: { policy: "cross-origin" }
-    }));
+            crossOriginEmbedderPolicy: false,
+            crossOriginResourcePolicy: { policy: "cross-origin" }
+        })
+    );
 
-    /* ----------------------------------------- Strict-Transport-Security (HTTPS only) ------------------------------------------ */
+    /* -----------------------------------------
+       Strict-Transport-Security (HTTPS only)
+    ------------------------------------------ */
     if (process.env.NODE_ENV === "production") {
         app.use((req, res, next) => {
             res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
@@ -80,29 +95,38 @@ const setupMiddleware = (app) => {
         });
     }
 
-    /* ----------------------------- Rate/DDOS FIRST (before CORS for error header injection) ----------------------------- */
-    app.use((req, res, next) => {
-        // Skip login route for both protections
-        if (req.path.startsWith('/auth/login')) return next();
-        apiRateLimiter(req, res, () => {
-            ddosProtection(req, res, next);
-        });
-    });
-
-    /* ----------------------------------------- CORS (AFTER Rate/DDOS) ------------------------------------------ */
+    /* -----------------------------------------
+       CORS (LOAD BEFORE LOGGING)
+    ------------------------------------------ */
     app.use(cors(corsOptions));
 
-    /* ----------------------------------------- Body Parsers ------------------------------------------ */
+    /* -----------------------------------------
+       Body Parsers
+    ------------------------------------------ */
     app.use(express.json({ limit: '50mb' }));
     app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-    /* ----------------------------------------- Request Logger ------------------------------------------ */
+    /* -----------------------------------------
+       Request Logger
+    ------------------------------------------ */
     app.use((req, res, next) => {
         console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
         next();
     });
+    // -----------------------------
+    // Apply global API rate limiter and DDoS protection
+    // -----------------------------
+    app.use((req, res, next) => {
+        // Skip login route for both protections
+        if (req.path.startsWith('/auth/login')) return next();
 
-    /* ----------------------------------------- Root Test Route ------------------------------------------ */
+        apiRateLimiter(req, res, () => {
+            ddosProtection(req, res, next);
+        });
+    });
+    /* -----------------------------------------
+       Root Test Route
+    ------------------------------------------ */
     app.get("/", (req, res) => {
         res.send("Backend is running 🚀");
     });
