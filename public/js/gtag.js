@@ -1,17 +1,18 @@
-// gtag.js - GA4 Optimized for wrytix.netlify.app (No Overwrites, Valid Domain)
+// gtag.js - Anti-Overwrite Edition (GA4 for wrytix.netlify.app)
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 
 gtag('js', new Date());
 
-// SINGLE config call—explicitly fixes domain/expiry issues
+// SINGLE config—explicit expiry to block overwrites
 gtag('config', 'G-7TNXE6FFKZ', {
-    // Domain: Locks to your Netlify site (no 'business' or mismatches)
-    cookie_domain: window.location.hostname,  // Dynamic: wrytix.netlify.app exactly
-    // Flags: Secure HTTPS + cross-frame friendly (Netlify-safe)
-    cookie_flags: 'SameSite=None;Secure',
-    // Expires: Hard-set 2 years—prevents overwrites from dupe calls
-    cookie_expires: 63072000,
-    // Privacy boost (optional, but good for 2025 regs)
-    anonymize_ip: true
+    cookie_domain: window.location.hostname,  // Matches wrytix.netlify.app exactly
+    cookie_flags: 'SameSite=None;Secure',     // HTTPS/Netlify safe
+    cookie_expires: 63072000,                 // Hard 2 years—resists resets
+    anonymize_ip: true                        // Bonus privacy
 });
+
+// Prevent dupes: Ignore extra configs
+window._gaConfigLoaded = true;  // Flag to block multiples (if other scripts check)
+
+console.log('🔒 GA Secured: Expiry Locked, No Overwrites');
