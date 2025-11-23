@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+
     /* =================== FEATURED SECTION =================== */
     const featuredSection = document.querySelector(".featured-section");
+
     if (featuredSection) {
         // Large featured skeleton
         const largeSkeleton = document.createElement("div");
@@ -9,10 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="image-skeleton skeleton"></div>
             <div class="text-skeleton skeleton"></div>
         `;
+
         // Small featured grid skeleton
         const smallGridSkeleton = document.createElement("div");
         smallGridSkeleton.className = "featured-grid";
-        for (let i = 0; i < 6; i++) { // show 3 skeleton posts
+        for (let i = 0; i < 5; i++) { // show 3 skeleton posts
             const smallPost = document.createElement("div");
             smallPost.className = "small-post skeleton";
             smallPost.innerHTML = `
@@ -21,13 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             smallGridSkeleton.appendChild(smallPost);
         }
+
         featuredSection.appendChild(largeSkeleton);
         featuredSection.appendChild(smallGridSkeleton);
     }
+
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
+
     categorySections.forEach(section => {
-        for (let i = 0; i < 4; i++) { // 5 skeleton posts per category
+        for (let i = 0; i < 4; i++) { // 3 skeleton posts per category
             const postSkeleton = document.createElement("div");
             postSkeleton.className = "post-preview skeleton";
             postSkeleton.innerHTML = `
@@ -37,8 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
             section.appendChild(postSkeleton);
         }
     });
+
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
+
     sidebarLists.forEach(list => {
         for (let i = 0; i < 9; i++) { // 5 skeleton items
             const li = document.createElement("li");
@@ -47,15 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
             list.appendChild(li);
         }
     });
+
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
         try {
             // Single fetch for all data (no redundancy)
-            const startTime = performance.now(); // Measure fetch speed
             const response = await fetch('https://wrytix.onrender.com/posts');
-            const fetchTime = performance.now() - startTime;
-            console.log(`Fetch took ${fetchTime.toFixed(2)}ms`); // Log for debugging
-
             if (!response.ok) throw new Error(`API error: ${response.status}`);
             const allData = await response.json(); // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
 
@@ -79,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
                 featuredSection.appendChild(largeDiv);
+
                 // Small grid
                 const gridDiv = document.createElement("div");
                 gridDiv.className = "featured-grid";
@@ -96,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 featuredSection.appendChild(gridDiv);
             }
+
             // Inject Categories
             categorySections.forEach(section => {
                 const categoryId = section.id;
@@ -114,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     section.appendChild(postDiv);
                 });
             });
+
             // Inject Sidebar
             sidebarLists.forEach(list => {
                 const listId = list.id;
@@ -124,6 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     list.appendChild(li);
                 });
             });
+
         } catch (error) {
             console.error('Content load failed:', error);
             // Always remove skeletons on error + show retry
@@ -138,7 +147,9 @@ document.addEventListener("DOMContentLoaded", () => {
             document.body.insertBefore(errorDiv, document.body.firstChild);
         }
     }
+
     loadContent();
+
 });
 
 (() => {
