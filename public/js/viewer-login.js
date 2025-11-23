@@ -31,20 +31,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-            const res = await fetch(`${API_BASE}/check`, { // Matches your /auth/check
+            console.log('🔍 Checking auth...');
+            const res = await fetch(`${API_BASE}/check`, {
                 method: 'GET',
-                credentials: 'include'
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
             });
-            const rawText = await res.text();
-            if (!res.ok) throw new Error(`Status ${res.status}`);
-            const data = JSON.parse(rawText);
+            console.log('/check Status:', res.status); // Quick debug
+
+            if (res.status === 401) {
+                console.warn('👋 Guest detected—staying in guest mode'); // Softer log
+                currentUser = null;
+                updateViewerUI();
+                return; // Clean exit, no error
+            }
+            if (!res.ok) {
+                throw new Error(`Unexpected status ${res.status}`);
+            }
+
+            const data = await res.json();
             if (data.username) {
                 currentUser = data;
+                console.log('✅ User mode activated:', data.username);
             }
         } catch (err) {
-            console.error('Auth check failed:', err);
+            if (err.message.includes('401')) {
+                console.warn('Auth soft-fail (guest):', err.message); // Demote to warn
+            } else {
+                console.error('Real auth error:', err); // Only error on weird stuff
+            }
+            currentUser = null;
         } finally {
-            updateViewerUI();
+            updateViewerUI(); // Always ensure UI syncs
         }
     }
 
