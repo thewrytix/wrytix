@@ -15,6 +15,3 @@ gtag('config', 'G-7TNXE6FFKZ', {
     // Privacy boost (optional, but good for 2025 regs)
     anonymize_ip: true
 });
-
-// Temp debug: Remove after testing
-console.log('✅ GA Loaded: Domain=' + window.location.hostname + ', Expires=Fixed');
