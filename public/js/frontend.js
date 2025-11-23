@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Small featured grid skeleton
         const smallGridSkeleton = document.createElement("div");
         smallGridSkeleton.className = "featured-grid";
-        for (let i = 0; i < 5; i++) { // show 3 skeleton posts
+        for (let i = 0; i < 6; i++) { // show 3 skeleton posts
             const smallPost = document.createElement("div");
             smallPost.className = "small-post skeleton";
             smallPost.innerHTML = `
