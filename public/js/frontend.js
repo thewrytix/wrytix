@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
     categorySections.forEach(section => {
-        for (let i = 0; i < 5; i++) { // 3 skeleton posts per category
+        for (let i = 0; i < 4; i++) { // 5 skeleton posts per category
             const postSkeleton = document.createElement("div");
             postSkeleton.className = "post-preview skeleton";
             postSkeleton.innerHTML = `
@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
     sidebarLists.forEach(list => {
-        for (let i = 0; i < 10; i++) { // 5 skeleton items
+        for (let i = 0; i < 9; i++) { // 5 skeleton items
             const li = document.createElement("li");
             li.className = "skeleton";
             li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
