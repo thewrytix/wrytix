@@ -3,19 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== CATEGORY SECTIONS =================== */
     const categorySections = document.querySelectorAll(".category-section");
 
-    categorySections.forEach(section => {
-        for (let i = 0; i < 4; i++) { // 3 skeleton posts per category
-            const postSkeleton = document.createElement("div");
-            postSkeleton.className = "post-preview skeleton";
-            postSkeleton.innerHTML = `
-                <div class="image-skeleton skeleton"></div>
-                <div class="text-skeleton skeleton"></div>
-            `;
-            section.appendChild(postSkeleton);
-        }
-    });
-
-
 
     /* =================== FETCH API DATA =================== */
     async function loadContent() {

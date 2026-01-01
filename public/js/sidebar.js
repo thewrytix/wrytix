@@ -3,15 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== SIDEBAR LISTS =================== */
     const sidebarLists = document.querySelectorAll(".sidebar-section ul");
 
-    sidebarLists.forEach(list => {
-        for (let i = 0; i < 9; i++) { // 5 skeleton items
-            const li = document.createElement("li");
-            li.className = "skeleton";
-            li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
-            list.appendChild(li);
-        }
-    });
-
     /* =================== FETCH API DATA =================== */
     async function loadContent() {
         try {
