@@ -57,98 +57,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /* =================== FETCH API DATA =================== */
-    async function loadContent() {
+    async function loadAllData() {
         try {
-            // Single fetch for all data (no redundancy)
             const response = await fetch('https://wrytix.onrender.com/posts');
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
-            const allData = await response.json(); // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
+            if (!response.ok) throw new Error(`API: ${response.status}`);
+            const allPosts = await response.json(); // Raw array of posts
 
-            // Remove skeletons FIRST (unblocks even partial loads)
-            document.querySelectorAll('.skeleton').forEach(el => {
-                el.style.opacity = '0'; // Fade out smooth
-                setTimeout(() => el.remove(), 300); // 0.3s transition
-            });
+            // Cache for 5min
+            localStorage.setItem('wrytix-posts', JSON.stringify({ data: allPosts, timestamp: Date.now() }));
 
-            // Inject Featured (adapt if API keys differ)
-            if (featuredSection && allData.featured) {
-                const { large, small } = allData.featured;
-                // Large featured
-                const largeDiv = document.createElement("div");
-                largeDiv.className = "featured-large";
-                largeDiv.innerHTML = `
-                    <img src="${large.thumbnail}" alt="${large.title}" loading="lazy">
-                    <div class="featured-info">
-                      <h2><a href="${large.link}">${large.title}</a></h2>
-                      <p>${large.description}</p>
-                    </div>
-                `;
-                featuredSection.appendChild(largeDiv);
+            // Process once: featured, categories, sidebar
+            processFeatured(allPosts); // Your existing featured logic
+            processCategories(allPosts); // Merge blogData.renderAll logic
+            processSidebar(allPosts); // Merge fetchPostsFromAPI + updateSidebarPosts
 
-                // Small grid
-                const gridDiv = document.createElement("div");
-                gridDiv.className = "featured-grid";
-                small.forEach(post => {
-                    const smallDiv = document.createElement("div");
-                    smallDiv.className = "small-post";
-                    smallDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
-                        <div>
-                          <h4><a href="${post.link}">${post.title}</a></h4>
-                          <p>${post.description}</p>
-                        </div>
-                    `;
-                    gridDiv.appendChild(smallDiv);
-                });
-                featuredSection.appendChild(gridDiv);
-            }
-
-            // Inject Categories
-            categorySections.forEach(section => {
-                const categoryId = section.id;
-                const posts = allData.categories?.[categoryId] || [];
-                posts.forEach(post => {
-                    const postDiv = document.createElement("div");
-                    postDiv.className = "post-preview";
-                    postDiv.innerHTML = `
-                        <img src="${post.thumbnail}" alt="${post.title}" loading="lazy">
-                        <div>
-                          <h3><a href="${post.link}">${post.title}</a></h3>
-                          <p>${post.description}</p>
-                          <span class="post-date">${post.date}</span>
-                        </div>
-                    `;
-                    section.appendChild(postDiv);
-                });
-            });
-
-            // Inject Sidebar
-            sidebarLists.forEach(list => {
-                const listId = list.id;
-                const items = allData.sidebar?.[listId] || [];
-                items.forEach(item => {
-                    const li = document.createElement("li");
-                    li.innerHTML = `<a href="${item.link}">${item.title}</a> <span>${item.date}</span>`;
-                    list.appendChild(li);
-                });
-            });
-
-        } catch (error) {
-            console.error('Content load failed:', error);
-            // Always remove skeletons on error + show retry
+            // Remove all skeletons
             document.querySelectorAll('.skeleton').forEach(el => {
                 el.style.opacity = '0';
                 setTimeout(() => el.remove(), 300);
             });
-            // Add error UI (append to body or a section)
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'padding: 20px; background: #ffebee; color: #d32f2f; text-align: center; margin: 20px; border-radius: 8px;';
-            errorDiv.innerHTML = '<p>Oops! Failed to load content. <button onclick="location.reload()" style="background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Retry Now</button></p>';
-            document.body.insertBefore(errorDiv, document.body.firstChild);
+        } catch (error) {
+            console.error('Load failed:', error);
+            // Enhanced fallback: Load from cache if available
+            const cached = localStorage.getItem('wrytix-posts');
+            if (cached) {
+                const { data: allPosts, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < 300000) { // 5min TTL
+                    processFeatured(allPosts); // etc.
+                    return;
+                }
+            }
+            // Show retry UI (your existing errorDiv)
+            showRetryUI();
         }
     }
 
-    loadContent();
+// Helper: Check cache first
+    function getCachedPosts() {
+        const cached = localStorage.getItem('wrytix-posts');
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 300000) return data;
+        }
+        return null;
+    }
 
 });
 
