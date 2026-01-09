@@ -186,11 +186,42 @@ document.addEventListener("DOMContentLoaded", () => {
 // Ads Show
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "business";
+    const cacheKey = `wrytix-ads-${articleCategory}`;
+    const cacheTTL = 300000; // 5 minutes in ms
+
+    // Check cache first
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const { ads, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < cacheTTL) {
+                console.log(`Using cached ads for ${articleCategory}`);
+                renderAdSlides(ads);
+                return;
+            }
+        } catch (err) {
+            console.warn('Invalid cache, fetching fresh:', err);
+            localStorage.removeItem(cacheKey);
+        }
+    }
+
     try {
         const res = await fetch("https://wrytix.onrender.com/ads");
         const ads = await res.json();
         const now = new Date();
-        const filtered = ads.filter(ad => ad.category === articleCategory && ad.active && new Date(ad.startDate) <= now && new Date(ad.endDate) >= now );
+        const filtered = ads.filter(ad =>
+            ad.category === articleCategory &&
+            ad.active &&
+            new Date(ad.startDate) <= now &&
+            new Date(ad.endDate) >= now
+        );
+
+        // Cache the filtered ads
+        localStorage.setItem(cacheKey, JSON.stringify({
+            ads: filtered,
+            timestamp: Date.now()
+        }));
+
         renderAdSlides(filtered);
     } catch (err) {
         document.getElementById("mediaTrack").innerHTML = "<p>⚠️ Failed to load media.</p>";
