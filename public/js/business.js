@@ -176,71 +176,138 @@ function enableVerticalSlider(slider, count) {
 loadSidebarAds();
 
 
-//Live Market Data
+//Live market Data
 (function () {
     const app = {
-        refreshInterval: 60000,
-        prevPrices: {}, 
+        refreshInterval: 30000, // 30s for livelier feel (was 60s)
+        cacheKey: 'wrytix-market-data',
+        cacheTTL: 300000, // 5min
+        prevPrices: JSON.parse(localStorage.getItem('wrytix-prev-prices') || '{}'), // Persist across sessions
 
         init() {
-            this.fetchMarketData();
-            this.interval = setInterval(() => this.fetchMarketData(), this.refreshInterval);
+            this.loadData(true); // true = from cache if available
+            this.interval = setInterval(() => this.loadData(false), this.refreshInterval);
         },
 
-        async fetchMarketData() {
+        async loadData(useCache = false) {
+            let data;
+            if (useCache) {
+                data = this.getCachedData();
+                if (data) {
+                    this.renderAll(data);
+                    return; // Instant render from cache
+                }
+            }
+
             try {
-                const res = await fetch('https://wrytix.onrender.com/api/market-data');
-                const data = await res.json();
-
-                if (data.stocks) this.paginateAndRender(data.stocks, 'stock-data', 'stock-dots');
-                if (data.forex?.rates) this.updateForex(data.forex);
-                if (data.crypto) this.updateCrypto(data.crypto);
-                if (data.gse) this.paginateAndRender(data.gse, 'gse-data', 'gse-dots');
-
-
-                this.updateTimestamp(new Date(data.lastUpdated));
+                const res = await this.fetchWithRetry('https://wrytix.onrender.com/api/market-data');
+                data = await res.json();
+                this.cacheData(data); // Cache fresh data
+                this.renderAll(data);
             } catch (err) {
-                console.error("Error fetching market data:", err);
+                console.error('Market data fetch failed:', err);
+                // Fallback: Use cache if available
+                data = this.getCachedData();
+                if (data) {
+                    this.renderAll(data); // Render stale data
+                    document.getElementById('market-updated').textContent = ' (Using cached data)';
+                } else {
+                    this.showError('Market data unavailable. Retrying...');
+                }
             }
         },
 
+        async fetchWithRetry(url, retries = 3, backoff = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res;
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i))); // Exponential backoff
+                }
+            }
+        },
+
+        getCachedData() {
+            const cached = localStorage.getItem(this.cacheKey);
+            if (!cached) return null;
+            const { data, timestamp } = JSON.parse(cached);
+            return Date.now() - timestamp < this.cacheTTL ? data : null;
+        },
+
+        cacheData(data) {
+            localStorage.setItem(this.cacheKey, JSON.stringify({
+                data,
+                timestamp: Date.now()
+            }));
+            // Update prevPrices cache
+            localStorage.setItem('wrytix-prev-prices', JSON.stringify(this.prevPrices));
+        },
+
+        renderAll(data) {
+            if (data.stocks) this.paginateAndRender(data.stocks, 'stock-data', 'stock-dots');
+            if (data.forex?.rates) this.updateForex(data.forex);
+            if (data.crypto) this.updateCrypto(data.crypto);
+            if (data.gse) this.paginateAndRender(data.gse, 'gse-data', 'gse-dots');
+            this.updateTimestamp(new Date(data.lastUpdated || Date.now()));
+        },
+
         updateTimestamp(date) {
-            document.getElementById('market-updated').textContent =
-                `Last updated: ${date.toLocaleTimeString()}`;
+            const el = document.getElementById('market-updated');
+            if (el) el.textContent = `Last updated: ${date.toLocaleTimeString()}`;
         },
 
         paginateAndRender(data, containerId, dotsId) {
             const container = document.getElementById(containerId);
             const dots = document.getElementById(dotsId);
+            if (!container || !dots) return;
+
             const perPage = 5;
             const pages = Math.ceil(data.length / perPage);
 
-            const renderPage = (i) => {
-                const items = data.slice(i * perPage, i * perPage + perPage);
-                container.innerHTML = items.map(item => {
+            // Use DocumentFragment for efficient batch DOM updates (no flicker)
+            const renderPage = (pageIdx) => {
+                const fragment = document.createDocumentFragment();
+                const items = data.slice(pageIdx * perPage, (pageIdx + 1) * perPage);
+
+                items.forEach(item => {
                     const prev = this.prevPrices[item.symbol];
                     let changeClass = '';
-                    if (item.price && typeof item.price === 'number' && prev !== undefined) {
-                        changeClass = item.price > prev ? 'up' : item.price < prev ? 'down' : '';
+                    let changeIcon = '';
+                    if (item.price && typeof item.price === 'number' && prev !== undefined && prev !== item.price) {
+                        changeClass = item.price > prev ? 'up' : 'down';
+                        changeIcon = item.price > prev ? '↗' : '↘';
                     }
                     this.prevPrices[item.symbol] = item.price;
-                    return `
-              <div class="market-item">
-                <span class="symbol">${item.symbol}</span>
-                <span class="price ${changeClass}">
-                  ${item.price ? `$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '--'}
-                </span>
-              </div>`;
-                }).join('');
 
+                    const div = document.createElement('div');
+                    div.className = `market-item ${changeClass}`;
+                    div.innerHTML = `
+            <span class="symbol">${item.symbol}</span>
+            <span class="price" aria-label="${changeClass ? 'Price changed' : 'Price stable'}">
+              ${item.price ? `$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}${changeIcon}` : '--'}
+            </span>
+          `;
+                    fragment.appendChild(div);
+                });
+
+                container.innerHTML = ''; // Clear once
+                container.appendChild(fragment); // Batch insert
+
+                // Dots with ARIA
                 dots.innerHTML = Array.from({ length: pages }, (_, idx) =>
-                    `<span class="dot ${idx === i ? 'active' : ''}"></span>`
+                    `<span class="dot ${idx === pageIdx ? 'active' : ''}" role="button" tabindex="0" aria-label="Page ${idx + 1} of ${pages}" data-page="${idx}"></span>`
                 ).join('');
 
-                dots.querySelectorAll('.dot').forEach((dot, idx) => dot.onclick = () => renderPage(idx));
+                dots.querySelectorAll('.dot').forEach((dot, idx) => {
+                    dot.onclick = () => renderPage(idx);
+                    dot.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') renderPage(idx); }; // Keyboard nav
+                });
             };
 
-            renderPage(0);
+            if (pages > 0) renderPage(0);
         },
 
         updateCrypto(crypto) {
@@ -254,15 +321,32 @@ loadSidebarAds();
         updateForex(forex) {
             const list = Object.entries(forex.rates).map(([symbol, rate]) => {
                 const formatted = symbol === 'EUR' || symbol === 'GBP'
-                    ? { symbol: `USD/${symbol}`, price: (1 / rate).toFixed(4) }
-                    : { symbol: `USD/${symbol}`, price: rate.toFixed(4) };
+                    ? { symbol: `USD/${symbol}`, price: parseFloat((1 / rate).toFixed(4)) }
+                    : { symbol: `USD/${symbol}`, price: parseFloat(rate.toFixed(4)) };
                 return formatted;
             });
             this.paginateAndRender(list, 'forex-data', 'forex-dots');
+        },
+
+        showError(msg) {
+            // Inject error into containers if needed
+            ['stock-data', 'forex-data', 'crypto-data', 'gse-data'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `<div class="error-msg">${msg}</div>`;
+            });
         }
-
-
     };
 
-    setTimeout(() => app.init(), 500);
+    // Init on DOM ready (no setTimeout delay)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    } else {
+        app.init();
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        localStorage.setItem('wrytix-prev-prices', JSON.stringify(app.prevPrices));
+        clearInterval(app.interval);
+    });
 })();
