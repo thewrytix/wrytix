@@ -562,7 +562,7 @@ img {
 
 
 /*-Advertisement */
-.ad-sidebar {
+.media-panel {
     margin-top: 40px;
     max-width: 300px;
     width: 100%;
@@ -570,7 +570,7 @@ img {
 
 }
 
-.ad-slider-wrapper {
+.rotator-container {
     height: 600px;
     max-height: 600px;
     width: 300px;
@@ -581,7 +581,7 @@ img {
     margin: auto;
 }
 
-.ad-slider {
+.media-track {
     display: flex;
     flex-direction: column;
     transition: transform 0.5s ease-in-out;
