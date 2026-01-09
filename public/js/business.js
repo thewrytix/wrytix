@@ -1,62 +1,105 @@
 document.addEventListener("DOMContentLoaded", () => {
     const newsContainer = document.getElementById("latest-business");
     const paginationContainer = document.getElementById("pagination-controls");
-
-    let currentPage = 1;
     const postsPerPage = 10;
     let allNewsPosts = [];
+    let currentPage = parseInt(new URLSearchParams(window.location.hash.slice(1)).get('page')) || 1;
+
+    // Cache key for business posts
+    const cacheKey = 'wrytix-business-posts';
+    const cacheTTL = 300000; // 5min
 
     async function fetchNewsPosts() {
-        try {
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            const data = await response.json();
+        // Check cache first
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < cacheTTL) {
+                allNewsPosts = data;
+                renderPage(currentPage);
+                renderPagination();
+                return;
+            }
+        }
 
+        try {
+            const url = 'https://wrytix.onrender.com/posts?category=business'; // Optimistic backend filter
+            const res = await fetchWithRetry(url);
+            const data = await res.json();
             allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "business")
+                .filter(post => post.category?.toLowerCase() === "business") // Fallback client filter
                 .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
+
+            // Cache fresh data
+            localStorage.setItem(cacheKey, JSON.stringify({ data: allNewsPosts, timestamp: Date.now() }));
 
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
             console.error("Failed to fetch business posts:", error);
-            newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
+            // Fallback to cache or error UI
+            const cachedData = JSON.parse(localStorage.getItem(cacheKey) || '{}').data || [];
+            if (cachedData.length > 0) {
+                allNewsPosts = cachedData;
+                renderPage(currentPage);
+                renderPagination();
+            } else {
+                newsContainer.innerHTML = `
+          <p>Something went wrong loading the news. <button onclick="fetchNewsPosts()" class="retry-btn">Retry</button></p>
+        `;
+            }
+        }
+    }
+
+    async function fetchWithRetry(url, retries = 3, backoff = 1000) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res;
+            } catch (err) {
+                if (i === retries - 1) throw err;
+                await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
+            }
         }
     }
 
     function renderPage(page) {
-        newsContainer.innerHTML = "";
-
+        newsContainer.innerHTML = ""; // Clear container
         const start = (page - 1) * postsPerPage;
         const end = start + postsPerPage;
         const postsToDisplay = allNewsPosts.slice(start, end);
 
         if (postsToDisplay.length === 0) {
-            newsContainer.innerHTML = `<p>No news posts found.</p>`;
+            newsContainer.innerHTML = `<p>No business posts found.</p>`;
             return;
         }
 
+        // Use DocumentFragment for efficient batch appends
+        const fragment = document.createDocumentFragment();
         postsToDisplay.forEach(post => {
             const postElement = document.createElement("article");
             postElement.classList.add("post-preview");
-
             const date = new Date(post.schedule).toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "long",
                 day: "numeric"
             });
-
             postElement.innerHTML = `
-                <div>
-                     <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
-                    <!--<small class="post-date">${date}</small>-->
-                    <p>${post.content.slice(0, 100)}...</p>
-                
-                </div>
-                <img src="${post.thumbnail}" alt="${post.title}">
-            `;
-
-            newsContainer.appendChild(postElement);
+        <div>
+          <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
+          <!-- <small class="post-date">${date}</small> -->
+          <p>${post.content.slice(0, 100)}...</p>
+        </div>
+        ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" loading="lazy">` : ''}
+      `;
+            fragment.appendChild(postElement);
         });
+        newsContainer.appendChild(fragment);
+
+        // Update URL hash for bookmarking/back-forward
+        window.location.hash = `page=${page}`;
+        currentPage = page;
     }
 
     function renderPagination() {
@@ -65,45 +108,80 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (totalPages <= 1) return;
 
+        // Previous button
         const prevBtn = document.createElement("button");
         prevBtn.textContent = "Previous";
         prevBtn.disabled = currentPage === 1;
+        prevBtn.classList.toggle("disabled", currentPage === 1);
         prevBtn.onclick = () => {
-            currentPage--;
-            renderPage(currentPage);
-            renderPagination();
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+                renderPagination();
+            }
         };
         paginationContainer.appendChild(prevBtn);
 
-        // Numbered page buttons
-        for (let i = 1; i <= totalPages; i++) {
+        // Numbered buttons with ellipsis (for >7 pages)
+        const maxVisible = 7;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
             const pageBtn = document.createElement("button");
             pageBtn.textContent = i;
-            pageBtn.classList.toggle("active-page", i === currentPage); // Add a class to style the current page
+            pageBtn.classList.toggle("active-page", i === currentPage);
             pageBtn.onclick = () => {
                 currentPage = i;
                 renderPage(currentPage);
                 renderPagination();
             };
             paginationContainer.appendChild(pageBtn);
+
+            // Ellipsis if gap
+            if (i !== endPage && i < totalPages) {
+                const ellipsis = document.createElement("span");
+                ellipsis.textContent = "...";
+                ellipsis.classList.add("ellipsis");
+                paginationContainer.appendChild(ellipsis);
+            }
         }
 
+        // Next button
         const nextBtn = document.createElement("button");
         nextBtn.textContent = "Next";
         nextBtn.disabled = currentPage === totalPages;
+        nextBtn.classList.toggle("disabled", currentPage === totalPages);
         nextBtn.onclick = () => {
-            currentPage++;
-            renderPage(currentPage);
-            renderPagination();
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage(currentPage);
+                renderPagination();
+            }
         };
         paginationContainer.appendChild(nextBtn);
+
+        // Accessibility
+        paginationContainer.setAttribute("role", "navigation");
+        paginationContainer.setAttribute("aria-label", "Business news pagination");
     }
 
-
+    // Load on init
     fetchNewsPosts();
+
+    // Listen for hash changes (back/forward nav)
+    window.addEventListener('hashchange', () => {
+        const newPage = parseInt(new URLSearchParams(window.location.hash.slice(1)).get('page')) || 1;
+        if (newPage !== currentPage && newPage >= 1 && newPage <= Math.ceil(allNewsPosts.length / postsPerPage)) {
+            currentPage = newPage;
+            renderPage(currentPage);
+            renderPagination();
+        }
+    });
 });
-
-
 // Ads Show
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "business";
