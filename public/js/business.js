@@ -185,62 +185,87 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Ads Show
 // Sidebar Media Loader (Obfuscated for Resilience)
+// Sidebar Media Loader (Debugged & Fixed)
 async function initMediaPanel() {
+    console.log('🛠️ Initializing media panel...'); // Debug: Start
     const category = document.querySelector("article")?.dataset.category || "business";
-    const track = document.getElementById("mediaTrack");
-    if (!track) return;
+    console.log(`📂 Category: ${category}`); // Debug: Category
 
-    // Cache key (neutral name)
+    // Flexible element selection (handles ID mismatches)
+    let track = document.getElementById("mediaTrack") || document.querySelector('.media-track, #adSlider');
+    let wrapper = document.getElementById("rotContainer") || document.querySelector('.rotator-container, #adSliderWrapper');
+    if (!track) {
+        console.error('❌ Track element not found! Check HTML IDs.');
+        return;
+    }
+    if (!wrapper) wrapper = track.parentElement; // Fallback
+    console.log('✅ Elements found:', { track: track.id || track.className, wrapper: wrapper.id || wrapper.className });
+
+    // Cache key
     const cacheKey = `wrytix-media-${category}`;
     const cacheTTL = 300000; // 5min
 
-    // Obfuscate elements dynamically
-    function obfuscate() {
-        const rand = Math.random().toString(36).slice(2, 8);
-        track.id = `track-${rand}`;
-        track.parentElement.id = `wrap-${rand}`;
-        track.className = `item-group-${rand}`;
-    }
-
     // Load from cache or API
     async function loadContent() {
-        // Try cache first (instant, evades fetch blocks)
+        console.log('🔄 Loading content...'); // Debug: Load start
+        // Try cache first
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
-            const { content, ts } = JSON.parse(cached);
-            if (Date.now() - ts < cacheTTL) {
-                renderSlides(content);
-                return;
+            try {
+                const { content, ts } = JSON.parse(cached);
+                if (Date.now() - ts < cacheTTL) {
+                    console.log(`📦 Cache hit: ${content.length} slides`);
+                    renderSlides(content);
+                    return;
+                }
+            } catch (e) {
+                console.warn('🗑️ Invalid cache, clearing:', e);
+                localStorage.removeItem(cacheKey);
             }
         }
 
         try {
-            // Fetch pre-rendered HTML from backend (harder to block)
-            const res = await fetchWithRetry(`https://wrytix.onrender.com/api/ads?cat=${category}`);
+            // Original URL + optional query (fallback if backend errors)
+            let url = 'https://wrytix.onrender.com/ads';
+            if (category !== 'general') url += `?cat=${encodeURIComponent(category)}`;
+            console.log(`🌐 Fetching: ${url}`); // Debug: URL
+
+            const res = await fetchWithRetry(url);
             const data = await res.json();
+            console.log(`📥 Raw data: ${data.length || 0} items`); // Debug: Raw
+
             const now = new Date();
-            const filtered = data.filter(ad =>
-                ad.category === category &&
+            let filtered = data.filter(ad =>
                 ad.active &&
                 new Date(ad.startDate) <= now &&
                 new Date(ad.endDate) >= now
             );
+            console.log(`🔍 Filtered (active/date): ${filtered.length}`); // Debug: After date filter
 
-            // Cache slides as HTML array
+            // Looser category match: If 0, fall back to all
+            if (filtered.length === 0) {
+                filtered = data.filter(ad => ad.active && new Date(ad.startDate) <= now && new Date(ad.endDate) >= now);
+                console.log(`🔄 Fallback: Using all active ads (${filtered.length})`);
+            } else {
+                filtered = filtered.filter(ad => ad.category === category);
+                console.log(`🏷️ Category filter: ${filtered.length}`);
+            }
+
+            // Build & cache slides
             const slides = filtered.map(ad => buildSlide(ad));
             localStorage.setItem(cacheKey, JSON.stringify({ content: slides, ts: Date.now() }));
+            console.log(`✨ Rendering ${slides.length} slides`); // Debug: Render
             renderSlides(slides);
         } catch (err) {
-            console.error('Media load error:', err);
-            // Fallback: Static or notice (non-ad-like)
+            console.error('🚨 Media load error:', err); // Enhanced log
             track.innerHTML = '<div class="fallback">Discover partners <a href="/sponsors">here</a>.</div>';
-            detectBlock(); // Check for interference
+            detectBlock();
         }
     }
 
-    // Build slide HTML (server-like rendering)
+    // Build slide HTML
     function buildSlide(ad) {
-        obfuscate(); // Re-obfuscate per slide
+        obfuscate(); // Obfuscate per slide (now safe after elements found)
         let html = '';
         if (ad.type === "image" && ad.file) {
             html = `<a href="${ad.link || '#'}" target="_blank" rel="nofollow"><img src="${ad.file}" alt="Featured media" loading="lazy"></a>`;
@@ -250,40 +275,44 @@ async function initMediaPanel() {
             html = `<div class="custom-content">${ad.html}</div>`;
         } else if (ad.type === "text" && ad.text) {
             html = `<div class="promo-text">${ad.text} <a href="${ad.link}">Learn more</a></div>`;
+        } else {
+            html = `<div class="default-slide">Sponsored content</div>`; // Ultimate fallback
         }
         return `<div class="media-item">${html}</div>`;
     }
 
-    // Render slides (CSS-driven for subtlety)
+    // Render slides
     function renderSlides(slides) {
         track.innerHTML = slides.join('');
+        console.log(`✅ Rendered: ${slides.length} slides`); // Debug: Success
         if (slides.length > 1) {
             initRotation(slides.length);
         } else if (slides.length === 0) {
             track.innerHTML = '<p>Content coming soon.</p>';
         }
-        detectBlock(); // Post-render check
+        detectBlock();
     }
 
-    // Subtle rotation (CSS transform, less detectable)
+    // Rotation
     function initRotation(count) {
         let idx = 0;
-        const wrapper = document.getElementById("rotContainer") || track.parentElement;
         wrapper.addEventListener("mouseenter", () => wrapper.classList.add("paused"));
         wrapper.addEventListener("mouseleave", () => wrapper.classList.remove("paused"));
 
         const rotator = () => {
             if (wrapper.classList.contains("paused")) return;
             idx = (idx + 1) % count;
-            track.style.transform = `translateY(-${idx * 100}%)`; // Assumes fixed-height slides
+            track.style.transform = `translateY(-${idx * 100}%)`;
+            console.log(`🔄 Rotated to slide ${idx + 1}`); // Debug: Rotation
         };
-        setInterval(rotator, 4000); // 4s cycle
+        setInterval(rotator, 4000);
     }
 
-    // Block detection (monitor for empty/mutated content)
+    // Block detection
     function detectBlock() {
         setTimeout(() => {
             if (track.children.length === 0 || track.innerHTML.includes("Loading")) {
+                console.warn('⚠️ Potential block detected');
                 track.innerHTML = `
           <div class="notice" style="text-align:center;padding:15px;background:#f0f8ff;border-radius:6px;">
             <p>Enjoy ad-free? <a href="/premium" style="color:#007bff;">Upgrade for $1/mo</a> or <button onclick="location.reload()" style="background:#007bff;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">Refresh</button></p>
@@ -301,15 +330,24 @@ async function initMediaPanel() {
                 if (!res.ok) throw new Error(`Status ${res.status}`);
                 return res;
             } catch (err) {
+                console.warn(`🔄 Retry ${i + 1}:`, err.message); // Debug: Retry
                 if (i === retries - 1) throw err;
-                await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Backoff
+                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
             }
         }
     }
 
+    // Obfuscate (now after elements confirmed)
+    function obfuscate() {
+        const rand = Math.random().toString(36).slice(2, 8);
+        track.id = `track-${rand}`;
+        wrapper.id = `wrap-${rand}`;
+        track.className = `item-group-${rand}`;
+        console.log(`🔐 Obfuscated with: ${rand}`); // Debug: Obfuscate
+    }
+
     // Init
-    obfuscate();
-    loadContent();
+    loadContent(); // Start without obfuscate() to avoid early breakage
 }
 
 // Run on DOM ready
@@ -318,7 +356,6 @@ if (document.readyState === 'loading') {
 } else {
     initMediaPanel();
 }
-
 
 //Live market Data
 (function () {
