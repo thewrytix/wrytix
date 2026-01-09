@@ -183,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-
+// Ads Show
 // Sidebar Media Loader (Obfuscated for Resilience)
 async function initMediaPanel() {
     const category = document.querySelector("article")?.dataset.category || "business";
@@ -318,6 +318,7 @@ if (document.readyState === 'loading') {
 } else {
     initMediaPanel();
 }
+
 
 //Live market Data
 (function () {
