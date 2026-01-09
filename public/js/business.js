@@ -243,6 +243,14 @@ loadSidebarAds();
             renderPage(0);
         },
 
+        updateCrypto(crypto) {
+            const list = Object.entries(crypto).map(([key, val]) => ({
+                symbol: key.toUpperCase().replace(/[^A-Z]/g, ''),
+                price: val.usd
+            }));
+            this.paginateAndRender(list, 'crypto-data', 'crypto-dots');
+        },
+
         updateForex(forex) {
             const list = Object.entries(forex.rates).map(([symbol, rate]) => {
                 const formatted = symbol === 'EUR' || symbol === 'GBP'
@@ -251,15 +259,9 @@ loadSidebarAds();
                 return formatted;
             });
             this.paginateAndRender(list, 'forex-data', 'forex-dots');
-        },
-
-        updateCrypto(crypto) {
-            const list = Object.entries(crypto).map(([key, val]) => ({
-                symbol: key.toUpperCase().replace(/[^A-Z]/g, ''),
-                price: val.usd
-            }));
-            this.paginateAndRender(list, 'crypto-data', 'crypto-dots');
         }
+
+
     };
 
     setTimeout(() => app.init(), 500);
