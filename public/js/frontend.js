@@ -1,4 +1,3 @@
-
 (() => {
     async function fetchForexRates() {
         try {
@@ -99,8 +98,6 @@ function updateTime() {
 
 updateTime();
 setInterval(updateTime, 1000); // Update every second for real-time clock
-
-
 
 
 

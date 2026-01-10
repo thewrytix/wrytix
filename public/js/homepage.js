@@ -105,6 +105,107 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// Trending and Popular Posts
+async function fetchPostsFromAPI() {
+    try {
+        const response = await fetch('https://wrytix.onrender.com/posts');
+        const data = await response.json();
+
+        // Ensure slug and schedule exist, and format thumbnail if needed
+        return data.map(post => ({
+            title: post.title || 'Untitled',
+            slug: post.slug || '', // ✅ Ensure slug is present
+            schedule: post.schedule || '', // fallback if missing
+            views: post.views || 0
+        }));
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+        return [];
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return "N/A";
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateStr).toLocaleDateString(undefined, options);
+}
+
+function updateSidebarPosts(posts) {
+    const trendingUl = document.getElementById('trending-list');
+    const popularUl = document.getElementById('popular-list');
+
+    if (!trendingUl || !popularUl) return;
+
+    function getDynamicThreshold(posts, percentage = 0.1) {
+        if (posts.length === 0) return 0;
+
+        // Sort posts by views (descending)
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+
+        // Index for top X% cutoff
+        const index = Math.floor(sorted.length * percentage);
+
+        // If percentage too small, ensure at least 1 element
+        const cutoffIndex = Math.max(index, 0);
+
+        return sorted[cutoffIndex]?.views || 0;
+    }
+
+    const now = new Date();
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+// Get thresholds dynamically
+    const trendingViewsThreshold = getDynamicThreshold(posts, 0.1); // top 10%
+    const popularViewsThreshold = getDynamicThreshold(posts, 0.05); // top 5%
+
+    const trendingPosts = posts
+        .filter(post => {
+            const postDate = new Date(post.schedule);
+            return (
+                // Within 2 weeks
+                postDate >= twoWeeksAgo ||
+                // Or older but in top 10% of views
+                post.views >= trendingViewsThreshold
+            );
+        })
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10);
+
+    const popularPosts = posts
+        .filter(post => {
+            const postDate = new Date(post.schedule);
+            return (
+                // Within 1 month
+                postDate >= oneMonthAgo ||
+                // Or older but in top 5% of views
+                post.views >= popularViewsThreshold
+            );
+        })
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10);
+
+    function createListItem(post) {
+        return `
+        <li>
+          <a href="posts/view-post.html?slug=${encodeURIComponent(post.slug)}">${post.title}</a>
+        <!--  <span class="post-date">${formatDate(post.schedule)}</span>-->
+        </li>`;
+    }
+
+    trendingUl.innerHTML = trendingPosts.map(createListItem).join('');
+    popularUl.innerHTML = popularPosts.map(createListItem).join('');
+}
+
+// Initialize
+document.addEventListener("DOMContentLoaded", async () => {
+    const allPosts = await fetchPostsFromAPI();
+    updateSidebarPosts(allPosts);
+});
+
+
+
+
 
 // Ads Show
 async function loadSidebarAds() {
