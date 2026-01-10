@@ -1,0 +1,310 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    /* =================== FEATURED SECTION =================== */
+    const featuredSection = document.querySelector(".featured-section");
+
+    if (featuredSection) {
+        // Large featured skeleton
+        const largeSkeleton = document.createElement("div");
+        largeSkeleton.className = "featured-large skeleton";
+        largeSkeleton.innerHTML = `
+            <div class="image-skeleton skeleton"></div>
+            <div class="text-skeleton skeleton"></div>
+        `;
+
+        // Small featured grid skeleton
+        const smallGridSkeleton = document.createElement("div");
+        smallGridSkeleton.className = "featured-grid";
+        for (let i = 0; i < 6; i++) { // show 3 skeleton posts
+            const smallPost = document.createElement("div");
+            smallPost.className = "small-post skeleton";
+            smallPost.innerHTML = `
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            `;
+            smallGridSkeleton.appendChild(smallPost);
+        }
+
+        featuredSection.appendChild(largeSkeleton);
+        featuredSection.appendChild(smallGridSkeleton);
+    }
+
+    /* =================== CATEGORY SECTIONS =================== */
+    const categorySections = document.querySelectorAll(".category-section");
+
+    categorySections.forEach(section => {
+        for (let i = 0; i < 4; i++) { // 3 skeleton posts per category
+            const postSkeleton = document.createElement("div");
+            postSkeleton.className = "post-preview skeleton";
+            postSkeleton.innerHTML = `
+                <div class="image-skeleton skeleton"></div>
+                <div class="text-skeleton skeleton"></div>
+            `;
+            section.appendChild(postSkeleton);
+        }
+    });
+
+    /* =================== SIDEBAR LISTS =================== */
+    const sidebarLists = document.querySelectorAll(".sidebar-section ul");
+
+    sidebarLists.forEach(list => {
+        for (let i = 0; i < 9; i++) { // 5 skeleton items
+            const li = document.createElement("li");
+            li.className = "skeleton";
+            li.innerHTML = `<div class="text-skeleton skeleton"></div>`;
+            list.appendChild(li);
+        }
+    });
+
+    /* =================== FETCH API DATA =================== */
+    async function loadAllData() {
+        try {
+            const response = await fetch('https://wrytix.onrender.com/posts');
+            if (!response.ok) throw new Error(`API: ${response.status}`);
+            const allPosts = await response.json(); // Raw array of posts
+
+            // Cache for 5min
+            localStorage.setItem('wrytix-posts', JSON.stringify({ data: allPosts, timestamp: Date.now() }));
+
+            // Process once: featured, categories, sidebar
+            processFeatured(allPosts); // Your existing featured logic
+            processCategories(allPosts); // Merge blogData.renderAll logic
+            processSidebar(allPosts); // Merge fetchPostsFromAPI + updateSidebarPosts
+
+            // Remove all skeletons
+            document.querySelectorAll('.skeleton').forEach(el => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            });
+        } catch (error) {
+            console.error('Load failed:', error);
+            // Enhanced fallback: Load from cache if available
+            const cached = localStorage.getItem('wrytix-posts');
+            if (cached) {
+                const { data: allPosts, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < 300000) { // 5min TTL
+                    processFeatured(allPosts); // etc.
+                    return;
+                }
+            }
+            // Show retry UI (your existing errorDiv)
+            showRetryUI();
+        }
+    }
+
+// Helper: Check cache first
+    function getCachedPosts() {
+        const cached = localStorage.getItem('wrytix-posts');
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 300000) return data;
+        }
+        return null;
+    }
+
+});
+
+
+
+// Ads Show
+async function loadSidebarAds() {
+    const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
+    const cacheKey = `wrytix-ads-${articleCategory}`;
+    const cacheTTL = 300000; // 5 minutes in ms
+
+    // Check cache first
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const { ads, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < cacheTTL) {
+                console.log(`Using cached ads for ${articleCategory}`);
+                renderAdSlides(ads);
+                return;
+            }
+        } catch (err) {
+            console.warn('Invalid cache, fetching fresh:', err);
+            localStorage.removeItem(cacheKey);
+        }
+    }
+
+    try {
+        const res = await fetch("https://wrytix.onrender.com/ads");
+        const ads = await res.json();
+        const now = new Date();
+        const filtered = ads.filter(ad =>
+            ad.category === articleCategory &&
+            ad.active &&
+            new Date(ad.startDate) <= now &&
+            new Date(ad.endDate) >= now
+        );
+
+        // Cache the filtered ads
+        localStorage.setItem(cacheKey, JSON.stringify({
+            ads: filtered,
+            timestamp: Date.now()
+        }));
+
+        renderAdSlides(filtered);
+    } catch (err) {
+        document.getElementById("mediaTrack").innerHTML = "<p>⚠️ Failed to load media.</p>";
+        console.error(err);
+    }
+}
+
+function renderAdSlides(ads) {
+    const slider = document.getElementById("mediaTrack");
+    slider.innerHTML = '';
+    if (ads.length === 0) {
+        slider.innerHTML = '<p>No media to display.</p>';
+        return;
+    }
+    ads.forEach(ad => {
+        const slide = document.createElement("div");
+        slide.className = "media-item";
+        let content = '';
+        if (ad.type === "image" && ad.file) {
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image"></a>`;
+        } else if (ad.type === "video" && ad.file) {
+            content = `<video src="${ad.file}" controls></video>`;
+        } else if (ad.type === "html" && ad.html) {
+            content = `<div class="custom-content">${ad.html}</div>`;
+        } else if (ad.type === "text" && ad.text) {
+            content = `<div class="promo-text">${ad.text}</div>`;
+        }
+        slide.innerHTML = content;
+        slider.appendChild(slide);
+    });
+    if (ads.length > 1) enableVerticalSlider(slider, ads.length);
+}
+
+function enableVerticalSlider(slider, count) {
+    let index = 0;
+    let paused = false;
+    const wrapper = document.getElementById("rotContainer");
+    wrapper.addEventListener("mouseenter", () => paused = true);
+    wrapper.addEventListener("mouseleave", () => paused = false);
+    setInterval(() => {
+        if (paused) return;
+        index = (index + 1) % count;
+        slider.style.transform = `translateY(-${index * 600}px)`;
+    }, 4000);
+}
+
+loadSidebarAds();
+
+
+
+
+(function () {
+    const blogData = {
+        posts: [],
+
+        async init() {
+            try {
+                const response = await fetch("https://wrytix.onrender.com/posts");
+                const data = await response.json();
+
+                // Convert API fields if needed
+                this.posts = data.map(post => {
+                    // Handle all image formats - check if already a data URL or needs conversion
+                    let thumbnail;
+                    if (!post.thumbnail) {
+                        thumbnail = ''; // No thumbnail
+                    } else if (post.thumbnail.startsWith('data:image')) {
+                        thumbnail = post.thumbnail; // Already formatted
+                    } else if (post.thumbnail.startsWith('http') || post.thumbnail.startsWith('/')) {
+                        thumbnail = post.thumbnail; // Regular URL
+                    } else {
+                        // Assume it's base64 data but don't force jpeg format
+                        thumbnail = `data:image;base64,${post.thumbnail}`;
+                    }
+
+                    return {
+                        title: post.title,
+                        slug: post.slug, // ✅ Add this line
+                        url: post.url,
+                        date: post.schedule,
+                        category: post.category,
+                        excerpt: post.content.slice(0, 100) + '...',
+                        thumbnail: thumbnail
+                    };
+                });
+
+                this.renderAll();
+            } catch (error) {
+                console.error("Failed to fetch posts:", error);
+            }
+        },
+
+
+
+        formatDate: function (dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+            function timeAgo(time) {
+                const seconds = Math.floor((now - time) / 1000);
+                if (seconds < 5) return "Just now";
+                if (seconds < 60) return `${seconds} seconds ago`;
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+                const days = Math.floor(hours / 24);
+                return `${days} day${days !== 1 ? "s" : ""} ago`;
+            }
+
+            if (diffDays < 7) {
+                // Show relative time if within 7 days
+                return timeAgo(date);
+            } else {
+                //  Show absolute date if 7+ days
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return date.toLocaleDateString(undefined, options);
+            }},
+
+
+        createPostHTML: function (post) {
+            return `
+            <article class="post-preview">
+                <div>
+                    <h3><a href="./posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
+                  <!--  <small class="post-date">${this.formatDate(post.date)}</small>-->
+                    <p>${post.excerpt}</p>
+                </div>
+                ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" onerror="this.style.display='none'">` : ''}
+            </article>`;
+        },
+
+        renderCategory: function (categoryId) {
+            const section = document.getElementById(categoryId);
+            if (!section) return;
+
+            const heading = section.querySelector("h2");
+
+            const categoryPosts = this.posts
+                .filter(post => post.category === categoryId)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5)
+                .map(post => this.createPostHTML(post))
+                .join('');
+
+            section.innerHTML = heading.outerHTML + categoryPosts;
+        },
+
+        renderAll: function () {
+            const categories = ["news", "foreign", "business", "sports", "lifestyle", "technology"];
+            categories.forEach(cat => this.renderCategory(cat));
+        }
+    };
+
+    // Run it safely after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => blogData.init());
+    } else {
+        blogData.init();
+    }
+})();
+
