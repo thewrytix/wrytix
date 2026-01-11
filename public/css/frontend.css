@@ -562,6 +562,57 @@ img {
 
 
 /*-Advertisement */
+/*-Ads mainBody */
+.media-section {
+    max-width: 650px;
+    width: 100%;
+    display: flex;
+    margin-bottom: 1em;
+}
+
+.media-container {
+    width: 1700px;
+    max-width: 2000px;
+    height: 170px;
+    overflow: hidden;
+    position: relative;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: auto;
+}
+
+.media-content {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.5s ease-in-out;
+}
+
+.media-slide {
+    min-width: 800px;
+    max-width: 1500px;
+    flex-shrink: 0;
+    padding: 0.5rem;
+    background: var(--neutral-color);
+    border-radius: 8px;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.media-slide img,
+.media-slide video {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+}
+.media-slide iframe {
+    width: 100%;
+    height: 100%;
+}
+
+/*-Ads-Sidebar */
 .media-panel {
     margin-top: 40px;
     max-width: 300px;
