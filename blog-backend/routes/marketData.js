@@ -56,9 +56,38 @@ router.get('/api/market-data', async (req, res) => {
 
         // CRYPTO
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
-            const cryptoRes = await fetch('https://api.coincap.io/v2/assets?ids=bitcoin,ethereum,litecoin,xrp,solana,bnb,cardano,dogecoin,shiba-inu');
-            const cryptoData = await cryptoRes.json();
-            cache.crypto = { data: cryptoData, timestamp: now };
+            try {
+                // Binance API for all prices (then filter)
+                const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/price');
+                const allPrices = await safeJson(cryptoRes);
+
+                const cryptoData = {};
+
+                // Filter and map the coins you need
+                allPrices.forEach(item => {
+                    switch(item.symbol) {
+                        case 'BTCUSDT': cryptoData.bitcoin = { usd: parseFloat(item.price) }; break;
+                        case 'ETHUSDT': cryptoData.ethereum = { usd: parseFloat(item.price) }; break;
+                        case 'LTCUSDT': cryptoData.litecoin = { usd: parseFloat(item.price) }; break;
+                        case 'XRPUSDT': cryptoData.ripple = { usd: parseFloat(item.price) }; break;
+                        case 'SOLUSDT': cryptoData.solana = { usd: parseFloat(item.price) }; break;
+                        case 'BNBUSDT': cryptoData.binancecoin = { usd: parseFloat(item.price) }; break;
+                        case 'ADAUSDT': cryptoData.cardano = { usd: parseFloat(item.price) }; break;
+                        case 'DOGEUSDT': cryptoData.dogecoin = { usd: parseFloat(item.price) }; break;
+                        case 'SHIBUSDT': cryptoData['shiba-inu'] = { usd: parseFloat(item.price) }; break;
+                    }
+                });
+
+                cache.crypto = { data: cryptoData, timestamp: now };
+
+            } catch (error) {
+                console.error('Binance batch failed, using CoinGecko:', error.message);
+
+                // Original CoinGecko as fallback
+                const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,ripple,solana,binancecoin,cardano,dogecoin,shiba-inu&vs_currencies=usd');
+                const cryptoData = await safeJson(cryptoRes);
+                cache.crypto = { data: cryptoData, timestamp: now };
+            }
         }
 
         // GSE
