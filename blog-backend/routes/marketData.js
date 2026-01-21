@@ -78,7 +78,10 @@ router.get('/api/market-data', async (req, res) => {
             const promises = symbols.map(({ symbol, id }) =>
                 fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)
                     .then(res => {
-                        console.log(`✓ ${symbol} response received`);
+                        if (!res.ok) {
+                            console.log(`✓ ${symbol} response received`);
+                            console.error(`❌ HTTP Error for ${symbol}: ${res.status}`);
+                        }
                         return safeJson(res);
                     })
                     .then(data => {
