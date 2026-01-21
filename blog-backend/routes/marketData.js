@@ -57,6 +57,8 @@ router.get('/api/market-data', async (req, res) => {
         // CRYPTO - Binance API Version (Individual Requests)
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
             console.log('🔄 Fetching fresh crypto data...');
+            console.log(`📊 Cache status: ${cache.crypto.data ? 'expired' : 'empty'}`);
+
             const symbols = [
                 { symbol: 'BTCUSDT', id: 'bitcoin' },
                 { symbol: 'ETHUSDT', id: 'ethereum' },
@@ -69,27 +71,44 @@ router.get('/api/market-data', async (req, res) => {
                 { symbol: 'SHIBUSDT', id: 'shiba-inu' }
             ];
 
+            console.log(`🎯 Fetching ${symbols.length} cryptocurrencies...`);
             const cryptoData = {};
 
             // Fetch all prices in parallel
             const promises = symbols.map(({ symbol, id }) =>
                 fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)
-                    .then(res => safeJson(res))
-                    .then(data => ({
-                        id,
-                        price: parseFloat(data.price)
-                    }))
+                    .then(res => {
+                        console.log(`✓ ${symbol} response received`);
+                        return safeJson(res);
+                    })
+                    .then(data => {
+                        console.log(`💰 ${id}: $${parseFloat(data.price).toLocaleString()}`);
+                        return {
+                            id,
+                            price: parseFloat(data.price)
+                        };
+                    })
+                    .catch(err => {
+                        console.error(`❌ Error fetching ${symbol}:`, err);
+                        return { id, price: 0 };
+                    })
             );
 
             const results = await Promise.all(promises);
+            console.log('⏳ All requests completed, processing results...');
 
             results.forEach(({ id, price }) => {
                 cryptoData[id] = { usd: price };
             });
 
             cache.crypto = { data: cryptoData, timestamp: now };
+            console.log(`✅ Crypto data cached successfully (${Object.keys(cryptoData).length} coins)`);
+            console.log(`⏰ Cache will expire in ${CACHE_DURATION / 1000}s`);
         } else {
-            console.log('✅ Using cached crypto data');
+            const cacheAge = Math.round((now - cache.crypto.timestamp) / 1000);
+            const timeLeft = Math.round((CACHE_DURATION - (now - cache.crypto.timestamp)) / 1000);
+            console.log(`✅ Using cached crypto data (age: ${cacheAge}s, expires in: ${timeLeft}s)`);
+            console.log(`📦 Cached coins: ${Object.keys(cache.crypto.data).length}`);
         }
 
         // GSE
