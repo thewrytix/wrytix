@@ -54,36 +54,33 @@ router.get('/api/market-data', async (req, res) => {
             cache.forex = { data: forexData, timestamp: now };
         }
 
-        // CRYPTO - Binance API Version (Individual Requests)
+        // CRYPTO - Binance API Version (Batch Request)
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
-            const symbols = [
-                { symbol: 'BTCUSDT', id: 'bitcoin' },
-                { symbol: 'ETHUSDT', id: 'ethereum' },
-                { symbol: 'LTCUSDT', id: 'litecoin' },
-                { symbol: 'XRPUSDT', id: 'ripple' },
-                { symbol: 'SOLUSDT', id: 'solana' },
-                { symbol: 'BNBUSDT', id: 'binancecoin' },
-                { symbol: 'ADAUSDT', id: 'cardano' },
-                { symbol: 'DOGEUSDT', id: 'dogecoin' },
-                { symbol: 'SHIBUSDT', id: 'shiba-inu' }
-            ];
+            const symbols = ['BTCUSDT', 'ETHUSDT', 'LTCUSDT', 'XRPUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOGEUSDT', 'SHIBUSDT'];
+            const symbolsParam = JSON.stringify(symbols);
+
+            const cryptoRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(symbolsParam)}`);
+            const prices = await safeJson(cryptoRes);
+
+            const symbolMap = {
+                'BTCUSDT': 'bitcoin',
+                'ETHUSDT': 'ethereum',
+                'LTCUSDT': 'litecoin',
+                'XRPUSDT': 'ripple',
+                'SOLUSDT': 'solana',
+                'BNBUSDT': 'binancecoin',
+                'ADAUSDT': 'cardano',
+                'DOGEUSDT': 'dogecoin',
+                'SHIBUSDT': 'shiba-inu'
+            };
 
             const cryptoData = {};
-
-            // Fetch all prices in parallel
-            const promises = symbols.map(({ symbol, id }) =>
-                fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)
-                    .then(res => safeJson(res))
-                    .then(data => ({
-                        id,
-                        price: parseFloat(data.price)
-                    }))
-            );
-
-            const results = await Promise.all(promises);
-
-            results.forEach(({ id, price }) => {
-                cryptoData[id] = { usd: price };
+            prices.forEach(item => {
+                if (symbolMap[item.symbol]) {
+                    cryptoData[symbolMap[item.symbol]] = {
+                        usd: parseFloat(item.price)
+                    };
+                }
             });
 
             cache.crypto = { data: cryptoData, timestamp: now };
