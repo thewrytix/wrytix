@@ -56,8 +56,8 @@ router.get('/api/market-data', async (req, res) => {
 
         // CRYPTO
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
-            const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,ripple,solana,binancecoin,cardano,dogecoin,shiba-inu&vs_currencies=usd');
-            const cryptoData = await safeJson(cryptoRes);
+            const cryptoRes = await fetch('https://api.coincap.io/v2/assets?ids=bitcoin,ethereum,litecoin,xrp,solana,bnb,cardano,dogecoin,shiba-inu');
+            const cryptoData = await cryptoRes.json();
             cache.crypto = { data: cryptoData, timestamp: now };
         }
 
