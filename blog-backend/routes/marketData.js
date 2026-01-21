@@ -54,40 +54,39 @@ router.get('/api/market-data', async (req, res) => {
             cache.forex = { data: forexData, timestamp: now };
         }
 
-        // CRYPTO
+        // CRYPTO - Binance API Version (Individual Requests)
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
-            try {
-                // Binance API for all prices (then filter)
-                const cryptoRes = await fetch('https://api.binance.com/api/v3/ticker/price');
-                const allPrices = await safeJson(cryptoRes);
+            const symbols = [
+                { symbol: 'BTCUSDT', id: 'bitcoin' },
+                { symbol: 'ETHUSDT', id: 'ethereum' },
+                { symbol: 'LTCUSDT', id: 'litecoin' },
+                { symbol: 'XRPUSDT', id: 'ripple' },
+                { symbol: 'SOLUSDT', id: 'solana' },
+                { symbol: 'BNBUSDT', id: 'binancecoin' },
+                { symbol: 'ADAUSDT', id: 'cardano' },
+                { symbol: 'DOGEUSDT', id: 'dogecoin' },
+                { symbol: 'SHIBUSDT', id: 'shiba-inu' }
+            ];
 
-                const cryptoData = {};
+            const cryptoData = {};
 
-                // Filter and map the coins you need
-                allPrices.forEach(item => {
-                    switch(item.symbol) {
-                        case 'BTCUSDT': cryptoData.bitcoin = { usd: parseFloat(item.price) }; break;
-                        case 'ETHUSDT': cryptoData.ethereum = { usd: parseFloat(item.price) }; break;
-                        case 'LTCUSDT': cryptoData.litecoin = { usd: parseFloat(item.price) }; break;
-                        case 'XRPUSDT': cryptoData.ripple = { usd: parseFloat(item.price) }; break;
-                        case 'SOLUSDT': cryptoData.solana = { usd: parseFloat(item.price) }; break;
-                        case 'BNBUSDT': cryptoData.binancecoin = { usd: parseFloat(item.price) }; break;
-                        case 'ADAUSDT': cryptoData.cardano = { usd: parseFloat(item.price) }; break;
-                        case 'DOGEUSDT': cryptoData.dogecoin = { usd: parseFloat(item.price) }; break;
-                        case 'SHIBUSDT': cryptoData['shiba-inu'] = { usd: parseFloat(item.price) }; break;
-                    }
-                });
+            // Fetch all prices in parallel
+            const promises = symbols.map(({ symbol, id }) =>
+                fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`)
+                    .then(res => safeJson(res))
+                    .then(data => ({
+                        id,
+                        price: parseFloat(data.price)
+                    }))
+            );
 
-                cache.crypto = { data: cryptoData, timestamp: now };
+            const results = await Promise.all(promises);
 
-            } catch (error) {
-                console.error('Binance batch failed, using CoinGecko:', error.message);
+            results.forEach(({ id, price }) => {
+                cryptoData[id] = { usd: price };
+            });
 
-                // Original CoinGecko as fallback
-                const cryptoRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,litecoin,ripple,solana,binancecoin,cardano,dogecoin,shiba-inu&vs_currencies=usd');
-                const cryptoData = await safeJson(cryptoRes);
-                cache.crypto = { data: cryptoData, timestamp: now };
-            }
+            cache.crypto = { data: cryptoData, timestamp: now };
         }
 
         // GSE
