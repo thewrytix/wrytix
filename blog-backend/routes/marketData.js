@@ -56,6 +56,7 @@ router.get('/api/market-data', async (req, res) => {
 
         // CRYPTO - Binance API Version (Individual Requests)
         if (!cache.crypto.data || now - cache.crypto.timestamp > CACHE_DURATION) {
+            console.log('🔄 Fetching fresh crypto data...');
             const symbols = [
                 { symbol: 'BTCUSDT', id: 'bitcoin' },
                 { symbol: 'ETHUSDT', id: 'ethereum' },
@@ -87,6 +88,8 @@ router.get('/api/market-data', async (req, res) => {
             });
 
             cache.crypto = { data: cryptoData, timestamp: now };
+        } else {
+            console.log('✅ Using cached crypto data');
         }
 
         // GSE
