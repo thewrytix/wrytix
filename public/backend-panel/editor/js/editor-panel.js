@@ -1,7 +1,7 @@
 async function verifyAndSetSession(requiredRole = 'editor') {
     // Check local session first
-    const userData = sessionStorage.getItem("user");
-    const loggedIn = sessionStorage.getItem("loggedIn");
+    const userData = localStorage.getItem("user");
+    const loggedIn = localStorage.getItem("loggedIn");
 
     if (loggedIn !== "true" || !userData) {
         window.location.href = '../login.html';
@@ -24,9 +24,9 @@ async function verifyAndSetSession(requiredRole = 'editor') {
     }
 
     // Set UI elements
-    sessionStorage.setItem('loggedIn', 'true');
-    sessionStorage.setItem('currentUser', user.username);
-    sessionStorage.setItem('role', user.role);
+    localStorage.setItem('loggedIn', 'true');
+    localStorage.setItem('currentUser', user.username);
+    localStorage.setItem('role', user.role);
     const profileBtn = document.getElementById('profileBtn');
     if (profileBtn) {
         profileBtn.textContent = `👤 ${user.username}`;
