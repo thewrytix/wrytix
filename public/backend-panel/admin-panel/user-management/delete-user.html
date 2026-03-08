@@ -127,8 +127,8 @@
   });
 
   async function initializePage() {
-    const userData = sessionStorage.getItem('user');
-    const loggedIn = sessionStorage.getItem('loggedIn');
+    const userData = localStorage.getItem('user');
+    const loggedIn = localStorage.getItem('loggedIn');
     if (loggedIn !== 'true' || !userData) return;
 
     const user = JSON.parse(userData);

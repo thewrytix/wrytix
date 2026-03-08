@@ -129,7 +129,7 @@ document.getElementById("previewBtn").addEventListener("click", () => {
         schedule: schedule.value ? new Date(schedule.value).toISOString() : new Date().toISOString(),
         source: source.value.trim()
     };
-    sessionStorage.setItem("previewPost", JSON.stringify(previewData));
+    localStorage.setItem("previewPost", JSON.stringify(previewData));
     window.open("preview.html", "_blank");
 });
 

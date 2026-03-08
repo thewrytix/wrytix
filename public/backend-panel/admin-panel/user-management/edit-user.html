@@ -171,14 +171,14 @@
 
       const { user } = await sessionCheck.json();
 
-      sessionStorage.setItem('currentUser', user.username);
-      sessionStorage.setItem('role', user.role);
-      sessionStorage.setItem('userRole', user.role);
-      sessionStorage.setItem('loggedIn', 'true');
+      localStorage.setItem('currentUser', user.username);
+      localStorage.setItem('role', user.role);
+      localStorage.setItem('userRole', user.role);
+      localStorage.setItem('loggedIn', 'true');
 
       if (user.role !== 'admin') {
         showError('You do not have permission to access this page.');
-        sessionStorage.clear();
+        localStorage.clear();
         return window.location.href = '../../login.html';
       }
 
@@ -186,7 +186,7 @@
     } catch (err) {
       console.error('Session verification error:', err);
       showError('❌ Session verification failed. Redirecting to login...');
-      sessionStorage.clear();
+      localStorage.clear();
       setTimeout(() => {
         window.location.href = '../../login.html';
       }, 2000);

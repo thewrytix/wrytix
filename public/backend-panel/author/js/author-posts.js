@@ -21,7 +21,7 @@ function showNotLoggedIn() {
 
 async function fetchPosts() {
     try {
-        const userData = sessionStorage.getItem("user");
+        const userData = localStorage.getItem("user");
         if (!userData) return showNotLoggedIn();
 
         const user = JSON.parse(userData);

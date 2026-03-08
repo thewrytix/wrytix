@@ -70,7 +70,7 @@ document.getElementById('previewBtn')?.addEventListener('click', async () => {
         return;
     }
 
-    sessionStorage.setItem('previewPost', JSON.stringify(data));
+    localStorage.setItem('previewPost', JSON.stringify(data));
     window.open('preview.html', '_blank');
 });
 

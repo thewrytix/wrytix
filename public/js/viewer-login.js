@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Optional: Clear any stored data
                 localStorage.removeItem('authToken');
-                sessionStorage.removeItem('user');
+                localStorage.removeItem('user');
             })
             .catch((error) => {
                 console.error('Logout error:', error);

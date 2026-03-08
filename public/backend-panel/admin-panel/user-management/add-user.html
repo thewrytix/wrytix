@@ -148,12 +148,12 @@
         formData.append('email', email);
         formData.append('password', password);
         formData.append('role', role);
-        formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
+        formData.append('submittedBy', localStorage.getItem('currentUser') || 'anonymous');
         if (avatar) formData.append('avatar', avatar);
         if (documentFile) formData.append('pdf', documentFile);
 
         try {
-            const isAdmin = sessionStorage.getItem('userRole') === 'admin';
+            const isAdmin = localStorage.getItem('userRole') === 'admin';
             const endpoint = isAdmin ? '/users' : '/pendingUsers';
 
             const res = await fetch(`https://wrytix.onrender.com${endpoint}`, {

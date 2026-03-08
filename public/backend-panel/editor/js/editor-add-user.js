@@ -39,7 +39,7 @@ document.getElementById('addUserForm').addEventListener('submit', async (e) => {
     formData.append('email', email);
     formData.append('password', password);
     formData.append('role', role);
-    formData.append('submittedBy', sessionStorage.getItem('currentUser') || 'anonymous');
+    formData.append('submittedBy', localStorage.getItem('currentUser') || 'anonymous');
     if (avatar) formData.append('avatar', avatar);
     formData.append('pdf', documentFile);
 

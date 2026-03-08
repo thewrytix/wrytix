@@ -68,8 +68,8 @@
             if (res.ok && data.user) {
                 const { username, role } = data.user;
 
-                sessionStorage.setItem('loggedIn', 'true');
-                sessionStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('loggedIn', 'true');
+                localStorage.setItem('user', JSON.stringify(data.user));
                 showSuccess("Login successful!");
 
                 // Redirect after a short delay

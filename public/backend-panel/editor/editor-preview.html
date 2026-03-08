@@ -118,7 +118,7 @@
 </section>
 
 <script>
-  const previewData = JSON.parse(sessionStorage.getItem('previewPost'));
+  const previewData = JSON.parse(localStorage.getItem('previewPost'));
   console.log('Preview Date:', previewData?.date);
 
   if (previewData && previewData.title && previewData.content) {

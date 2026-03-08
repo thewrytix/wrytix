@@ -53,7 +53,7 @@ async function loadAuthorStats() {
     }
 }
 
-const userData = sessionStorage.getItem('user');
+const userData = localStorage.getItem('user');
 if (!userData) {
     alert("Please log in.");
     window.location.href = '../login.html';

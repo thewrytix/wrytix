@@ -32,13 +32,13 @@
   })
           .then(() => {
             // Clear session data on frontend
-            sessionStorage.clear();
+            localStorage.clear();
             // Redirect to login page
             window.location.href = 'login.html';
           })
           .catch(() => {
             // Fallback in case server is unreachable
-            sessionStorage.clear();
+            localStorage.clear();
             window.location.href = 'login.html';
           });
 </script>

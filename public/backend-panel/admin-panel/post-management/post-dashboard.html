@@ -104,7 +104,7 @@
 </div>
 <script>
 
-    const role = sessionStorage.getItem('role');
+    const role = localStorage.getItem('role');
     if (role !== 'admin') {
         alert("Access denied. You are not an Admin.");
         window.location.href = 'login.html';
@@ -244,7 +244,7 @@
 
 
     window.onload = async () => {
-        if (sessionStorage.getItem('loggedIn') !== 'true') {
+        if (localStorage.getItem('loggedIn') !== 'true') {
             window.location.href = 'login.html';
             return;
         }

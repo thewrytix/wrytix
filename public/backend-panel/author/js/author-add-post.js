@@ -45,7 +45,7 @@ document.getElementById('submitPostForm').addEventListener('submit', async (e) =
         reader.readAsDataURL(file);
     }) : '';
 
-    const submittedBy = sessionStorage.getItem('currentUser') || 'anonymous';
+    const submittedBy = localStorage.getItem('currentUser') || 'anonymous';
     const data = {
         title,
         slug,
@@ -99,7 +99,7 @@ document.getElementById('previewBtn')?.addEventListener('click', async () => {
         return;
     }
 
-    sessionStorage.setItem('previewPost', JSON.stringify(data));
+    localStorage.setItem('previewPost', JSON.stringify(data));
     window.open('preview.html', '_blank');
 });
 
