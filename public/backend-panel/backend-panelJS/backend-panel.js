@@ -1,8 +1,8 @@
 (function () {
     const loginRedirect = window.location.origin + '/backend-panel/login.html';
 
-    const userData = sessionStorage.getItem("user");
-    const loggedIn = sessionStorage.getItem("loggedIn");
+    const userData = localStorage.getItem("user");
+    const loggedIn = localStorage.getItem("loggedIn");
 
     if (loggedIn !== "true" || !userData) {
         showError("Please log in first.");
@@ -303,7 +303,7 @@ async function logout() {
     } catch (err) {
         // Silent error handling in production
     } finally {
-        sessionStorage.clear();
+        localStorage.clear();
         window.location.href = loginRedirect;
     }
 }
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            sessionStorage.clear();
+            localStorage.clear();
             window.location.href = loginRedirect;
         });
 
