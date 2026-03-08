@@ -171,7 +171,7 @@ document.getElementById('clearBtn').onclick = () => {
 };
 
 document.getElementById('logoutBtn').onclick = () => {
-    sessionStorage.removeItem('loggedIn');
+    localStorage.removeItem('loggedIn');
     window.location.href = '../../login.html';
 };
 

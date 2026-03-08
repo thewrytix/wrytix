@@ -4,7 +4,7 @@ const BASE_URL = "https://wrytix.onrender.com";
 const statsContainer = document.getElementById("statsContainer");
 
 async function loadAuthorStats() {
-    const userData = sessionStorage.getItem("user");
+    const userData = localStorage.getItem("user");
     if (!userData) {
         statsContainer.innerHTML = '<p style="color:red;">⚠️ Please log in to view your dashboard.</p>';
         return;

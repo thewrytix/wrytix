@@ -103,7 +103,7 @@ if (user.role !== 'editor') {
 }
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
-    sessionStorage.clear();
+    localStorage.clear();
     window.location.href = '../login.html';
 });
 
