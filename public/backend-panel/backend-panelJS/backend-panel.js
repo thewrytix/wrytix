@@ -308,7 +308,7 @@ async function logout() {
     }
 }
 
-function startSessionTimers(idleLimit = 30, absoluteLimit = 60) {
+function startSessionTimers(idleLimit = 15, absoluteLimit = 30) {
     let idleTimer = null;
     let absoluteTimer = null;
 
