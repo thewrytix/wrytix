@@ -100,6 +100,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 // Ads Main Show
+
+
 /*
 async function loadMainAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
