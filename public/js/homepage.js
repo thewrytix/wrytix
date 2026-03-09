@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 // Ads Main Show
+/*
 async function loadMainAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
     const cacheKey = `wrytix-ads-${articleCategory}`;
@@ -187,6 +188,8 @@ function enableHorizontalSlider(slider, count) {
 }
 
 loadMainAds();
+
+*/
 
 
 
