@@ -48,6 +48,7 @@ document.getElementById('editAdForm').addEventListener('submit', async (e) => {
     formData.append('id', document.getElementById('adId').value);
     formData.append('type', document.getElementById('adType').value);
     formData.append('category', document.getElementById('adCategory').value);
+    formData.append('subCategory', document.getElementById('adSubCategory').value);
     formData.append('startDate', document.getElementById('startDate').value);
     formData.append('endDate', document.getElementById('endDate').value);
     formData.append('active', document.getElementById('adActive').checked);
@@ -138,6 +139,11 @@ async function loadAd() {
             `<option value="${cat}" ${cat === ad.category ? 'selected' : ''}>${cat}</option>`
         ).join('');
 
+        // Populate category dropdown
+        const subCategorySelect = document.getElementById('adSubCategory');
+        subCategorySelect.innerHTML = subCategories.map(cat =>
+            `<option value="${cat}" ${cat === ad.category ? 'selected' : ''}>${cat}</option>`
+        ).join('');
         // Fill other fields
         document.getElementById('adHtml').value = ad.html || '';
         document.getElementById('adText').value = ad.text || '';
