@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 localStorage.removeItem('user');
             })
             .catch((error) => {
-                console.error('Logout error:', error);
+               // console.error('Logout error:', error);
                 // Still update UI even if logout request fails
                 currentUser = null;
                 updateViewerUI();
@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('password').value = '';
         } catch (err) {
             showError(loginModal, err.message);
-            console.error('Login error:', err);
+         //   console.error('Login error:', err);
         } finally {
             showLoading(loginModal, false);
         }
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const rawText = await res.text();
-            console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status);
+          //  console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status);
 
             if (!res.ok) {
                 let data;
@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showError(loginModal, 'Account created successfully! Please log in.', true);
         } catch (err) {
             showError(signupModal, err.message);
-            console.error('Signup error:', err);
+           // console.error('Signup error:', err);
         } finally {
             showLoading(signupModal, false);
         }
@@ -275,13 +275,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('viewProfile').addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Opening profile...');
+      //  console.log('Opening profile...');
         profileMenu.style.display = 'none';
     });
 
     document.getElementById('viewSettings').addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Opening settings...');
+      //  console.log('Opening settings...');
         profileMenu.style.display = 'none';
     });
 
