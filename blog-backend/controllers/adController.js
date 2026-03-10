@@ -22,6 +22,7 @@ const createAd = async (req, res) => {
             id: Date.now().toString(),
             type: req.body.type,
             category: req.body.category,
+            subCategory: req.body.subCategory,
             startDate: req.body.startDate,
             endDate: req.body.endDate,
             link: req.body.link || "",
