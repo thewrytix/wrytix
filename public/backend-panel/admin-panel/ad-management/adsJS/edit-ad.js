@@ -120,6 +120,7 @@ async function loadAd() {
         const categoriesRes = await fetch('https://wrytix.onrender.com/ads');
         const allAds = await categoriesRes.json();
         const categories = [...new Set(allAds.map(a => a.category))];
+        const subCategories = [...new Set(allAds.map(a => a.subCategory))];
 
         // Populate form
         document.getElementById('adId').value = ad.id;
@@ -144,6 +145,7 @@ async function loadAd() {
         subCategorySelect.innerHTML = subCategories.map(cat =>
             `<option value="${cat}" ${cat === ad.subCategory ? 'selected' : ''}>${cat}</option>`
         ).join('');
+
         // Fill other fields
         document.getElementById('adHtml').value = ad.html || '';
         document.getElementById('adText').value = ad.text || '';
