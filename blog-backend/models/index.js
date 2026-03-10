@@ -48,6 +48,7 @@ const AdSchema = new Schema({
     id: { type: String, required: true, unique: true },
     type: { type: String },
     category: { type: String },
+    subCategory: { type: String},
     startDate: { type: Date },
     endDate: { type: Date },
     link: { type: String, default: '' },
