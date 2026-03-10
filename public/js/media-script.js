@@ -1,5 +1,77 @@
 // Load ads for all media sections
+// Update loadAllMediaAds to ensure containers are ready
+async function loadAllMediaAds() {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
+        });
+    }
 
+    const mediaSections = document.querySelectorAll('.media-section[data-ad-position]');
+
+    if (mediaSections.length === 0) {
+        console.warn('No media sections found');
+        return;
+    }
+
+    const loadPromises = Array.from(mediaSections).map(async (section) => {
+        const position = section.dataset.adPosition;
+        const mediaContent = section.querySelector('.media-content');
+        const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
+
+        if (!mediaContent) {
+            console.warn(`Media content not found for position: ${position}`);
+            return;
+        }
+
+        const cacheKey = `wrytix-ads-${articleCategory}-${position}`;
+        const cacheTTL = 300000;
+
+        // Check cache
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                const { ads, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < cacheTTL) {
+                    console.log(`Using cached ${position} ads for ${articleCategory}`);
+                    renderAdSlides(ads, mediaContent);
+                    return;
+                }
+            } catch (err) {
+                console.warn('Invalid cache, fetching fresh:', err);
+                localStorage.removeItem(cacheKey);
+            }
+        }
+
+        try {
+            const res = await fetch("https://wrytix.onrender.com/ads");
+            const allAds = await res.json();
+            const now = new Date();
+
+            const filtered = allAds.filter(ad =>
+                ad.category === articleCategory &&
+                ad.position === position &&
+                ad.active &&
+                new Date(ad.startDate) <= now &&
+                new Date(ad.endDate) >= now
+            );
+
+            localStorage.setItem(cacheKey, JSON.stringify({
+                ads: filtered,
+                timestamp: Date.now()
+            }));
+
+            renderAdSlides(filtered, mediaContent);
+        } catch (err) {
+            mediaContent.innerHTML = "<p class='placeholder'>⚠️ Failed to load media.</p>";
+            console.error(`Error loading ${position} ads:`, err);
+        }
+    });
+
+    await Promise.all(loadPromises);
+    console.log('All media sections loaded');
+}
 
 // Updated render function
 function renderAdSlides(ads, container) {
@@ -91,79 +163,7 @@ function enableVerticalSlider(sliderWrapper, count, parentContainer) {
     window.sliderIntervals.push(interval);
 }
 
-// Update loadAllMediaAds to ensure containers are ready
-async function loadAllMediaAds() {
-    // Wait for DOM to be ready
-    if (document.readyState === 'loading') {
-        await new Promise(resolve => {
-            document.addEventListener('DOMContentLoaded', resolve);
-        });
-    }
 
-    const mediaSections = document.querySelectorAll('.media-section[data-ad-position]');
-
-    if (mediaSections.length === 0) {
-        console.warn('No media sections found');
-        return;
-    }
-
-    const loadPromises = Array.from(mediaSections).map(async (section) => {
-        const position = section.dataset.adPosition;
-        const mediaContent = section.querySelector('.media-content');
-        const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
-
-        if (!mediaContent) {
-            console.warn(`Media content not found for position: ${position}`);
-            return;
-        }
-
-        const cacheKey = `wrytix-ads-${articleCategory}-${position}`;
-        const cacheTTL = 300000;
-
-        // Check cache
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-            try {
-                const { ads, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < cacheTTL) {
-                    console.log(`Using cached ${position} ads for ${articleCategory}`);
-                    renderAdSlides(ads, mediaContent);
-                    return;
-                }
-            } catch (err) {
-                console.warn('Invalid cache, fetching fresh:', err);
-                localStorage.removeItem(cacheKey);
-            }
-        }
-
-        try {
-            const res = await fetch("https://wrytix.onrender.com/ads");
-            const allAds = await res.json();
-            const now = new Date();
-
-            const filtered = allAds.filter(ad =>
-                ad.category === articleCategory &&
-                ad.position === position &&
-                ad.active &&
-                new Date(ad.startDate) <= now &&
-                new Date(ad.endDate) >= now
-            );
-
-            localStorage.setItem(cacheKey, JSON.stringify({
-                ads: filtered,
-                timestamp: Date.now()
-            }));
-
-            renderAdSlides(filtered, mediaContent);
-        } catch (err) {
-            mediaContent.innerHTML = "<p class='placeholder'>⚠️ Failed to load media.</p>";
-            console.error(`Error loading ${position} ads:`, err);
-        }
-    });
-
-    await Promise.all(loadPromises);
-    console.log('All media sections loaded');
-}
 
 // Initialize
 loadAllMediaAds();
