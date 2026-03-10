@@ -142,7 +142,7 @@ async function loadAd() {
         // Populate category dropdown
         const subCategorySelect = document.getElementById('adSubCategory');
         subCategorySelect.innerHTML = subCategories.map(cat =>
-            `<option value="${cat}" ${cat === ad.category ? 'selected' : ''}>${cat}</option>`
+            `<option value="${cat}" ${cat === ad.subCategory ? 'selected' : ''}>${cat}</option>`
         ).join('');
         // Fill other fields
         document.getElementById('adHtml').value = ad.html || '';
