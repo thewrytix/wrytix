@@ -9,7 +9,7 @@ const AdSchema = new mongoose.Schema({
     text: { type: String},
     file: { type: String },
     category: { type: String, required: true },
-    subCategory: { type: String},
+    adPosition: { type: String},
     company: { type: String, default: '' },
     thumbnail: { type: String },
     active: { type: Boolean, default: true },
