@@ -18,7 +18,7 @@ async function loadAllMediaAds() {
     const loadPromises = Array.from(mediaSections).map(async (section) => {
         const position = section.dataset.adPosition;
         const mediaContent = section.querySelector('.media-content');
-        const articleCategory = document.querySelector("article")?.dataset.category || "homepage";
+        const articleCategory = document.querySelector("article")?.dataset.category || "home-category";
 
         if (!mediaContent) {
             console.warn(`Media content not found for position: ${position}`);
