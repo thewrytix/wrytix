@@ -1,6 +1,11 @@
 document.getElementById('addAdForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
+    // DEBUG: Check if element exists
+    const positionElement = document.getElementById('adPosition');
+    console.log('Position element:', positionElement);
+    console.log('Position value:', positionElement ? positionElement.value : 'ELEMENT NOT FOUND');
+
     const type = document.getElementById('adType').value;
     const category = document.getElementById('adCategory').value;
     const position = document.getElementById('adPosition').value;
@@ -34,6 +39,20 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
         active
     };
 
+    // DEBUG: Log the complete data being sent
+    console.log('📤 COMPLETE DATA BEING SENT:');
+    console.log(JSON.stringify(adData, null, 2));
+
+    // Also log individual fields
+    console.log('Individual fields:');
+    console.log('- type:', type);
+    console.log('- category:', category);
+    console.log('- position:', position); // Check if this shows correctly
+    console.log('- company:', company);
+    console.log('- startDate:', startDate);
+    console.log('- endDate:', endDate);
+    console.log('- active:', active);
+
     try {
         const response = await fetch('https://wrytix.onrender.com/ads', {
             method: 'POST',
@@ -44,7 +63,11 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
             credentials: 'include'
         });
 
+        // DEBUG: Log response status
+        console.log('Response status:', response.status);
+
         const result = await response.json();
+        console.log('📥 Server response:', result);
 
         if (response.ok) {
             showSuccess('Ad successfully created!');
@@ -59,8 +82,8 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
         console.error('Submission error:', err);
         showError('Submission failed. Please try again.');
     }
-
 });
+
 
 function toBase64(file) {
     return new Promise((resolve, reject) => {
