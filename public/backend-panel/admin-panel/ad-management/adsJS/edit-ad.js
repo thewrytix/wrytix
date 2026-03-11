@@ -141,9 +141,9 @@ async function loadAd() {
         ).join('');
 
         // Populate category dropdown
-        const subCategorySelect = document.getElementById('adSubCategory');
-        subCategorySelect.innerHTML = subCategories.map(cat =>
-            `<option value="${cat}" ${cat === ad.subCategory ? 'selected' : ''}>${cat}</option>`
+        const positionSelect = document.getElementById('adPosition');
+        positionSelect.innerHTML = subCategories.map(cat =>
+            `<option value="${cat}" ${cat === ad.position ? 'selected' : ''}>${cat}</option>`
         ).join('');
 
         // Fill other fields
