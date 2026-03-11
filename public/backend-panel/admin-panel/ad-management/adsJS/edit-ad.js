@@ -48,7 +48,7 @@ document.getElementById('editAdForm').addEventListener('submit', async (e) => {
     formData.append('id', document.getElementById('adId').value);
     formData.append('type', document.getElementById('adType').value);
     formData.append('category', document.getElementById('adCategory').value);
-    formData.append('subCategory', document.getElementById('adSubCategory').value);
+    formData.append('position', document.getElementById('adPosition').value);
     formData.append('startDate', document.getElementById('startDate').value);
     formData.append('endDate', document.getElementById('endDate').value);
     formData.append('active', document.getElementById('adActive').checked);
@@ -120,7 +120,7 @@ async function loadAd() {
         const categoriesRes = await fetch('https://wrytix.onrender.com/ads');
         const allAds = await categoriesRes.json();
         const categories = [...new Set(allAds.map(a => a.category))];
-        const subCategories = [...new Set(allAds.map(a => a.subCategory))];
+        const positions = [...new Set(allAds.map(a => a.position))];
 
         // Populate form
         document.getElementById('adId').value = ad.id;
@@ -142,7 +142,7 @@ async function loadAd() {
 
         // Populate category dropdown
         const positionSelect = document.getElementById('adPosition');
-        positionSelect.innerHTML = subCategories.map(cat =>
+        positionSelect.innerHTML = positions.map(cat =>
             `<option value="${cat}" ${cat === ad.position ? 'selected' : ''}>${cat}</option>`
         ).join('');
 
