@@ -3,7 +3,7 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
 
     const type = document.getElementById('adType').value;
     const category = document.getElementById('adCategory').value;
-    const adPosition = document.getElementById('adPosition').value;
+    const position = document.getElementById('position').value;
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     const link = document.getElementById('adLink').value;
@@ -23,7 +23,7 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
     const adData = {
         type,
         category,
-        adPosition,
+        position,
         company,
         startDate,
         endDate,

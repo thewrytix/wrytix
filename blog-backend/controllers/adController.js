@@ -22,7 +22,7 @@ const createAd = async (req, res) => {
             id: Date.now().toString(),
             type: req.body.type,
             category: req.body.category,
-            adPosition: req.body.adPosition,
+            position: req.body.position,
             startDate: req.body.startDate,
             endDate: req.body.endDate,
             link: req.body.link || "",
