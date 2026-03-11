@@ -602,8 +602,7 @@ img {
 .media-slide img,
 .media-slide video {
     width: 100%;
-    height: auto;
-    max-height: 100%;
+    height: 100%;
     object-fit: contain;
     border-radius: 6px;
 }
