@@ -11,7 +11,7 @@ async function loadAllMediaAds() {
     const mediaSections = document.querySelectorAll('.media-section[data-ad-position]');
 
     if (mediaSections.length === 0) {
-        console.warn('No media sections found');
+       // console.warn('No media sections found');
         return;
     }
 
@@ -21,7 +21,7 @@ async function loadAllMediaAds() {
         const articleCategory = document.querySelector("article")?.dataset.category || "home-category";
 
         if (!mediaContent) {
-            console.warn(`Media content not found for position: ${position}`);
+         //   console.warn(`Media content not found for position: ${position}`);
             return;
         }
 
@@ -34,12 +34,12 @@ async function loadAllMediaAds() {
             try {
                 const { ads, timestamp } = JSON.parse(cached);
                 if (Date.now() - timestamp < cacheTTL) {
-                    console.log(`Using cached ${position} ads for ${articleCategory}`);
+                    //console.log(`Using cached ${position} ads for ${articleCategory}`);
                     renderAdSlides(ads, mediaContent);
                     return;
                 }
             } catch (err) {
-                console.warn('Invalid cache, fetching fresh:', err);
+             //   console.warn('Invalid cache, fetching fresh:', err);
                 localStorage.removeItem(cacheKey);
             }
         }
@@ -65,12 +65,12 @@ async function loadAllMediaAds() {
             renderAdSlides(filtered, mediaContent);
         } catch (err) {
             mediaContent.innerHTML = "<p class='placeholder'>⚠️ Failed to load media.</p>";
-            console.error(`Error loading ${position} ads:`, err);
+          //  console.error(`Error loading ${position} ads:`, err);
         }
     });
 
     await Promise.all(loadPromises);
-    console.log('All media sections loaded');
+   // console.log('All media sections loaded');
 }
 
 // Updated render function
