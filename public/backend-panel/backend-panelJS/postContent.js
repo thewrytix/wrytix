@@ -187,7 +187,12 @@ class RichTextEditor {
                 this.insertImageAtCursor(imageUrl);
                 e.target.value = "";
 
+                // Debug: Check if showToast exists
+                console.log('showToast exists:', typeof window.showToast);
+                console.log('showToast function:', showToast);
+
                 showToast('Image added', 'success', 3000);
+
             } catch (error) {
                 console.error('Image upload error:', error);
             }
