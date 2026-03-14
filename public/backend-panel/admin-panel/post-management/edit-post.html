@@ -369,20 +369,33 @@
     });
 
 
+
+
     document.getElementById("deletePostBtn").addEventListener("click", () => {
-        if (!confirm("Delete this post?")) return;
+        confirmAndRun(
+            "Delete this post?",
+            async () => {
+                try {
+                    const response = await fetch(`${BASE_URL}/posts/${slug}`, {
+                        method: "DELETE",
+                        credentials: 'include'
+                    });
 
-        fetch(`${BASE_URL}/posts/${slug}`, {
-            method: "DELETE",
-            credentials: 'include'
-        })
-            .then(() => {
-                showSuccess("🗑️ Post deleted!");
-                setTimeout(() => location.href = "posts-list.html", 1500);
-            })
-            .catch(err => showError("❌ " + err.message));
+                    if (response.ok) {
+                        showSuccess("🗑️ Post deleted!");
+                        setTimeout(() => location.href = "posts-list.html", 1500);
+                    } else {
+                        const result = await response.json();
+                        showError("❌ " + (result.error || "Delete failed"));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showError("❌ " + err.message);
+                }
+            },
+            "❌ Deletion canceled."
+        );
     });
-
 
     document.getElementById("previewBtn").addEventListener("click", () => {
         if (!post) return;
