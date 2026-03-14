@@ -187,7 +187,7 @@ class RichTextEditor {
                 this.insertImageAtCursor(imageUrl);
                 e.target.value = "";
                 showSuccess('Image added');
-                
+
             } catch (error) {
                 console.error('Image upload error:', error);
             }
