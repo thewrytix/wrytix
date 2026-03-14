@@ -186,7 +186,7 @@ class RichTextEditor {
                 const imageUrl = await this.readFileAsDataURL(file);
                 this.insertImageAtCursor(imageUrl);
                 e.target.value = "";
-                this.showSuccess('Image added');
+               showSuccess('Image added');
             } catch (error) {
                 console.error('Image upload error:', error);
             }
