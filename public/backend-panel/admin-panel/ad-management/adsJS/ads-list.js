@@ -134,19 +134,28 @@ function editAd(id) {
 }
 
 async function deleteAd(id) {
-    if (!confirm('Are you sure you want to delete this ad?')) return;
-    try {
-        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, { method: 'DELETE', credentials: 'include' });
-        if (res.ok) {
-            showSuccess('✅Ad deleted');
-            loadAds();
-        } else {
-            showError('❌Delete failed');
-        }
-    } catch (err) {
-        showError('❌Error deleting ad');
-        console.error(err);
-    }
+    confirmAndRun(
+        'Are you sure you want to delete this ad?',
+        async () => {
+            try {
+                const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (res.ok) {
+                    showSuccess('✅ Ad deleted');
+                    loadAds();
+                } else {
+                    showError('❌ Delete failed');
+                }
+            } catch (err) {
+                console.error(err);
+                showError('❌ Error deleting ad');
+            }
+        },
+        "❌ Deletion canceled." 
+    );
 }
 
 
