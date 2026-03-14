@@ -154,7 +154,7 @@ async function deleteAd(id) {
                 showError('❌ Error deleting ad');
             }
         },
-        "❌ Deletion canceled." 
+        "❌ Deletion canceled."
     );
 }
 
