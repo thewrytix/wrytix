@@ -149,28 +149,38 @@ async function deleteAd(id) {
     }
 }
 
-async function toggleAdStatus(id, currentStatus) {
-    if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this ad?`)) return;
-    try {
-        const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ active: !currentStatus }),
-            credentials: 'include'
-        });
 
-        const result = await res.json();
-        if (res.ok) {
-            showSuccess(`✅Ad is now ${result.ad.active ? 'active' : 'inactive'}`);
-            loadAds();
-        } else {
-            showError('❌Failed to update ad: ' + result.error);
-        }
-    } catch (err) {
-        console.error("Toggle error:", err);
-        showError('❌An error occurred while toggling the ad');
-    }
+async function toggleAdStatus(id, currentStatus) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+
+    confirmAndRun(
+        `Are you sure you want to ${action} this ad?`,
+        async () => {
+            try {
+                const res = await fetch(`https://wrytix.onrender.com/ads/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ active: !currentStatus }),
+                    credentials: 'include'
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showSuccess(`✅ Ad is now ${result.ad.active ? 'active' : 'inactive'}`);
+                    loadAds(); // Refresh the ads list
+                } else {
+                    showError('❌ Failed to update ad: ' + result.error);
+                }
+            } catch (err) {
+                console.error("Toggle error:", err);
+                showError('❌ An error occurred while toggling the ad');
+            }
+        },
+        "❌ Action canceled." // Optional cancel message
+    );
 }
+
 
 function resetFilters() {
     document.getElementById('filterCategory').value = '';
