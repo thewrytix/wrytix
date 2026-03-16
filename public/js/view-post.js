@@ -174,25 +174,154 @@ document.addEventListener("DOMContentLoaded", async function () {
                         `;
         }
 
-        // Step 4: Fetch related posts in background
+        // Step 4: Fetch related posts in background with intelligent matching
         setTimeout(async () => {
             try {
                 const allPostsRes = await fetch("https://wrytix.onrender.com/posts");
                 const allPosts = await allPostsRes.json();
-                const relatedPosts = allPosts.filter(p => p.category === post.category && p.slug !== post.slug).slice(0, 10);
+
+                // Configuration
+                const config = {
+                    categoryWeight: 10,
+                    titleKeywordWeight: 3,
+                    contentKeywordWeight: 1,
+                    maxRelatedPosts: 10,
+                    minKeywordLength: 4,
+                    contentWordsToAnalyze: 50,
+                    relevanceThreshold: 1 // Minimum score to be considered related
+                };
+
+                // Common words to ignore
+                const stopWords = new Set([
+                    'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+                    'of', 'with', 'by', 'from', 'as', 'was', 'were', 'has', 'have', 'had',
+                    'this', 'that', 'these', 'those', 'will', 'would', 'could', 'should',
+                    'about', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
+                    'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'then',
+                    'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any',
+                    'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'than',
+                    'too', 'very', 'can', 'will', 'just'
+                ]);
+
+                // Extract meaningful keywords from title
+                const titleKeywords = post.title.toLowerCase()
+                    .split(/\s+/)
+                    .filter(word => word.length >= config.minKeywordLength && !stopWords.has(word))
+                    .map(word => word.replace(/[^\w\s]/g, '')); // Remove punctuation
+
+                // Extract keywords from content if available
+                let contentKeywords = [];
+                if (post.content) {
+                    // Remove HTML tags and get plain text
+                    const plainText = post.content
+                        .replace(/<[^>]*>/g, ' ')
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    // Get words and filter
+                    contentKeywords = plainText.toLowerCase()
+                        .split(/\s+/)
+                        .filter(word => word.length >= config.minKeywordLength && !stopWords.has(word))
+                        .map(word => word.replace(/[^\w\s]/g, ''))
+                        .slice(0, config.contentWordsToAnalyze); // Limit for performance
+                }
+
+                // Combine keywords and remove duplicates
+                const allKeywords = [...new Set([...titleKeywords, ...contentKeywords])];
+
+                console.log('Keywords for related search:', allKeywords);
+
+                // Score each post
+                const scoredPosts = allPosts
+                    .filter(p => p.slug !== post.slug) // Exclude current post
+                    .map(p => {
+                        let score = 0;
+
+                        // Category match
+                        if (p.category === post.category) {
+                            score += config.categoryWeight;
+                        }
+
+                        // Check title for keyword matches
+                        const postTitleLower = p.title.toLowerCase();
+                        allKeywords.forEach(keyword => {
+                            if (postTitleLower.includes(keyword)) {
+                                score += config.titleKeywordWeight;
+                            }
+                        });
+
+                        // Check content for keyword matches (if available)
+                        if (p.content && allKeywords.length > 0) {
+                            const postContentLower = p.content
+                                .replace(/<[^>]*>/g, ' ')
+                                .toLowerCase();
+
+                            allKeywords.forEach(keyword => {
+                                if (postContentLower.includes(keyword)) {
+                                    score += config.contentKeywordWeight;
+                                }
+                            });
+                        }
+
+                        return { post: p, score };
+                    })
+                    .filter(item => item.score >= config.relevanceThreshold) // Only relevant posts
+                    .sort((a, b) => {
+                        // Sort by score first, then by views if scores are equal
+                        if (b.score !== a.score) {
+                            return b.score - a.score;
+                        }
+                        return (b.post.views || 0) - (a.post.views || 0);
+                    });
+
+                // Get top posts
+                const relatedPosts = scoredPosts
+                    .slice(0, config.maxRelatedPosts)
+                    .map(item => item.post);
 
                 const relatedList = document.getElementById("related-list");
                 if (relatedList) {
                     if (relatedPosts.length === 0) {
-                        relatedList.innerHTML = "<li>No related posts found.</li>";
+                        // First fallback: Show posts from same category
+                        const categoryPosts = allPosts
+                            .filter(p => p.category === post.category && p.slug !== post.slug)
+                            .sort((a, b) => (b.views || 0) - (a.views || 0))
+                            .slice(0, 5);
+
+                        if (categoryPosts.length > 0) {
+                            relatedList.innerHTML = categoryPosts.map(p => `
+                        <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                    `).join('');
+                        }
+                        // Second fallback: Show most recent posts
+                        else {
+                            const recentPosts = allPosts
+                                .filter(p => p.slug !== post.slug)
+                                .sort((a, b) => new Date(b.schedule) - new Date(a.schedule))
+                                .slice(0, 5);
+
+                            if (recentPosts.length > 0) {
+                                relatedList.innerHTML = recentPosts.map(p => `
+                            <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                        `).join('');
+                            } else {
+                                relatedList.innerHTML = "<li>No related posts found.</li>";
+                            }
+                        }
                     } else {
                         relatedList.innerHTML = relatedPosts.map(p => `
-                                        <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
-                                    `).join('');
+                    <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                `).join('');
                     }
                 }
             } catch (err) {
                 console.error("Failed to load related posts:", err);
+                // Show fallback message
+                const relatedList = document.getElementById("related-list");
+                if (relatedList) {
+                    relatedList.innerHTML = "<li>Unable to load related posts.</li>";
+                }
             }
         }, 0);
 
