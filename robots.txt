@@ -1,0 +1,31 @@
+# Allow search engines to index the site
+User-agent: *
+Allow: /
+
+# Block known AI training crawlers (standard way, no Content-Signal needed)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+# Optional: Point to your sitemap (huge for indexing new posts)
+Sitemap: https://wry-tix.com/sitemap.xml
