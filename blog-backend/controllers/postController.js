@@ -269,41 +269,30 @@ const getTrendingPosts = async (req, res) => {
     }
 };
 
-// postController.js
-
 const getRelatedPosts = async (req, res) => {
     try {
         const { slug } = req.params;
-        const currentPost = await Post.findOne({ slug }).select('category title').lean();
+        const currentPost = await Post.findOne({ slug }).select('category').lean();
         if (!currentPost) return res.status(404).json({ message: 'Post not found' });
 
-        // Primary: same category, excluding current post, most viewed first
-        let related = await Post.find({
-            category: currentPost.category,
+        const now = new Date();
+        const candidates = await Post.find({
             slug: { $ne: slug },
-            schedule: { $lte: new Date() }
+            schedule: { $lte: now }
         })
-            .select('title slug thumbnail views')
-            .sort({ views: -1 })
-            .limit(5)
+            .select('title slug thumbnail views category')
+            .sort({ schedule: -1 })
+            .limit(30)
             .lean();
 
-        // Fallback: most recent posts overall if category has too few
-        if (related.length < 5) {
-            const recent = await Post.find({
-                slug: { $ne: slug },
-                schedule: { $lte: new Date() }
-            })
-                .select('title slug thumbnail views')
-                .sort({ schedule: -1 })
-                .limit(5 - related.length)
-                .lean();
+        const sameCategory = candidates.filter(p => p.category === currentPost.category);
+        const others = candidates.filter(p => p.category !== currentPost.category);
 
-            const existingSlugs = new Set(related.map(p => p.slug));
-            related = related.concat(recent.filter(p => !existingSlugs.has(p.slug)));
-        }
+        const related = [...sameCategory.sort((a, b) => b.views - a.views), ...others]
+            .slice(0, 5)
+            .map(({ title, slug, thumbnail, views }) => ({ title, slug, thumbnail, views }));
 
-        res.set('Cache-Control', 'public, max-age=120');
+        res.set('Cache-Control', 'public, max-age=180');
         res.json(related);
     } catch (err) {
         res.status(500).json({ error: "Server error" });
