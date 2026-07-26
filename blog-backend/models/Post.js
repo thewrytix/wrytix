@@ -20,11 +20,14 @@ const PostSchema = new mongoose.Schema({
     approvedAt: { type: Date },
     views: { type: Number, default: 0 },
     lastViewed: { type: Date },
+
 });
 
 PostSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();
 });
+
+PostSchema.index({ schedule: -1 });
 
 module.exports = mongoose.model('Post', PostSchema);
