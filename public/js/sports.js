@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
                     <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                      <!--<small class="post-date">${date}</small>-->
-                    <p>${post.content.slice(0, 120)}...</p>
+                    <p>${(post.excerpt || '').slice(0, 120)}...</p>
                    
                 </div>
                 <img src="${post.thumbnail}" alt="${post.title}">

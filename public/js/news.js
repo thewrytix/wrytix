@@ -8,17 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchNewsPosts() {
         try {
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            const data = await response.json();
+            const data = await window.WrytixPosts.getPosts();
 
             allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "news")
+                .filter(post => post.category.toLowerCase() === "sports")
                 .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
 
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch news posts:", error);
+            console.error("Failed to fetch sports posts:", error);
             newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
