@@ -81,17 +81,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
-    // Fetch main post and related posts IN PARALLEL — related no longer waits on the main post render
-    const relatedPromise = fetch(`${API_BASE}/posts/${slug}/related`)
-        .then(res => {
-            if (!res.ok) throw new Error(`API: ${res.status}`);
-            return res.json();
-        })
-        .catch(err => {
-            console.error("Failed to load related posts:", err);
-            return null;
-        });
-
     try {
         // Step 1: Fetch post
         const res = await fetch(`${API_BASE}/posts/${slug}`);
@@ -190,18 +179,27 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
     }
 
-    // Render related posts as soon as they resolve — independent of main post render timing
-    const relatedPosts = await relatedPromise;
+    // Step 6: Fetch + render related posts — fetch call now inlined directly here, as requested
+    console.log("[related-posts] Fetching:", `${API_BASE}/posts/${slug}/related`); // TEMP DEBUG — confirms this code path runs
     const relatedList = document.getElementById("related-list");
-    if (relatedList) {
-        if (!relatedPosts) {
+    try {
+        const relatedRes = await fetch(`${API_BASE}/posts/${slug}/related`);
+        console.log("[related-posts] Response status:", relatedRes.status); // TEMP DEBUG
+        if (!relatedRes.ok) throw new Error(`API: ${relatedRes.status}`);
+        const relatedPosts = await relatedRes.json();
+        console.log("[related-posts] Data:", relatedPosts); // TEMP DEBUG
+
+        if (relatedList) {
+            relatedList.innerHTML = relatedPosts.length > 0
+                ? relatedPosts.map(p => `
+                    <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                `).join('')
+                : "<li>No related posts found.</li>";
+        }
+    } catch (err) {
+        console.error("[related-posts] Failed to load:", err);
+        if (relatedList) {
             relatedList.innerHTML = "<li>Unable to load related posts.</li>";
-        } else if (relatedPosts.length === 0) {
-            relatedList.innerHTML = "<li>No related posts found.</li>";
-        } else {
-            relatedList.innerHTML = relatedPosts.map(p => `
-                <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
-            `).join('');
         }
     }
 
