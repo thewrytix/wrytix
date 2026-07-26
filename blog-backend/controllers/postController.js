@@ -269,6 +269,47 @@ const getTrendingPosts = async (req, res) => {
     }
 };
 
+// postController.js
+
+const getRelatedPosts = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const currentPost = await Post.findOne({ slug }).select('category title').lean();
+        if (!currentPost) return res.status(404).json({ message: 'Post not found' });
+
+        // Primary: same category, excluding current post, most viewed first
+        let related = await Post.find({
+            category: currentPost.category,
+            slug: { $ne: slug },
+            schedule: { $lte: new Date() }
+        })
+            .select('title slug thumbnail views')
+            .sort({ views: -1 })
+            .limit(5)
+            .lean();
+
+        // Fallback: most recent posts overall if category has too few
+        if (related.length < 5) {
+            const recent = await Post.find({
+                slug: { $ne: slug },
+                schedule: { $lte: new Date() }
+            })
+                .select('title slug thumbnail views')
+                .sort({ schedule: -1 })
+                .limit(5 - related.length)
+                .lean();
+
+            const existingSlugs = new Set(related.map(p => p.slug));
+            related = related.concat(recent.filter(p => !existingSlugs.has(p.slug)));
+        }
+
+        res.set('Cache-Control', 'public, max-age=120');
+        res.json(related);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 const getPopularPosts = async (req, res) => {
     try {
         const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -390,6 +431,7 @@ module.exports = {
     getPostBySlug,
     getFeaturedPosts,
     getPostsByCategory,
+    getRelatedPosts,
     getTrendingPosts,
     getPopularPosts,
     getHomepageCategoryPosts,

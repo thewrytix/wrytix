@@ -20,7 +20,8 @@ const {
     getHomepageCategoryPosts,
     getPostsByCategory,
     getTrendingPosts,
-    getPopularPosts
+    getPopularPosts,
+    getRelatedPosts,
 } = require('../controllers/postController');
 const { requireRole} = require('../middleware/auth');
 const { Post } = require('../models'); // Add this: Import Post model directly
@@ -29,13 +30,12 @@ const router = express.Router();
 
 // Your existing API routes...
 router.get('/posts', getPosts);
-// routes
-// routes
 router.get('/posts/homepage-categories', getHomepageCategoryPosts);
 router.get('/posts/featured', getFeaturedPosts);
 router.get('/posts/category/:category', getPostsByCategory);
 router.get('/posts/trending', getTrendingPosts);
 router.get('/posts/popular', getPopularPosts);
+router.get('/posts/:slug/related', getRelatedPosts);
 router.get('/posts/all', requireRole(['author', 'editor', 'admin']), getAllPosts);
 router.get('/posts/:slug', getPostBySlug);
 router.post('/posts/:slug/view', incrementPostView);
