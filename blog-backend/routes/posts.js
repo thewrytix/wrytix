@@ -15,7 +15,12 @@ const {
     getPostSubmissions,
     getPostSubmissionById,
     updatePostSubmission,
-    deletePostSubmission
+    deletePostSubmission,
+    getFeaturedPosts,
+    getHomepageCategoryPosts,
+    getPostsByCategory,
+    getTrendingPosts,
+    getPopularPosts
 } = require('../controllers/postController');
 const { requireRole} = require('../middleware/auth');
 const { Post } = require('../models'); // Add this: Import Post model directly
