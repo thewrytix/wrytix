@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // Step 4: Fetch related posts in background with intelligent matching
-        
+
         setTimeout(async () => {
             try {
                 const res = await fetch(`https://wrytix.onrender.com/posts/${slug}/related`);
