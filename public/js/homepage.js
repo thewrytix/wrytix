@@ -2,7 +2,7 @@
  * homepage.js
  * Handles: sidebar (trending/popular), featured section, category sections,
  * and homepage sidebar ad rotator.
- * Depends on: window.WrytixPosts (postsCache.js) — must load before this file.
+ * Depends on: window.WrytixPosts, window.optimizeThumbnail (postsCache.js) — must load before this file.
  */
 
 /* =========================================================
@@ -93,7 +93,7 @@ const FeaturedSection = (() => {
 
     const renderLarge = (post) => `
         <div class="featured-large">
-            <img src="${post.thumbnail}" alt="${post.title}">
+            <img src="${window.optimizeThumbnail(post.thumbnail, 800)}" alt="${post.title}" loading="lazy">
             <div class="featured-info">
                 <h3><a href="posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                 <p>${truncateText(post.excerpt, 20)}</p>
@@ -102,7 +102,7 @@ const FeaturedSection = (() => {
 
     const renderGridItem = (post) => `
         <div class="small-post">
-            <img src="${post.thumbnail}" alt="${post.title}">
+            <img src="${window.optimizeThumbnail(post.thumbnail, 300)}" alt="${post.title}" loading="lazy">
             <div>
                 <h4><a href="posts/view-post.html?slug=${post.slug}">${post.title}</a></h4>
                 <p>${truncateText(post.excerpt, 10)}</p>
@@ -151,7 +151,7 @@ const CategorySections = (() => {
                 <h3><a href="./posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                 <p>${post.excerpt}</p>
             </div>
-            ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" onerror="this.style.display='none'">` : ""}
+            ${post.thumbnail ? `<img src="${window.optimizeThumbnail(post.thumbnail, 300)}" alt="${post.title}" loading="lazy" onerror="this.style.display='none'">` : ""}
         </article>`;
 
     const renderCategory = (categoryId, posts) => {
@@ -218,7 +218,7 @@ const AdSlider = ((trackId, containerId, category) => {
 
     const renderSlideContent = (ad) => {
         if (ad.type === "image" && ad.file) {
-            return `<a href="${ad.link || "#"}" target="_blank"><img src="${ad.file}" alt="Media Image"></a>`;
+            return `<a href="${ad.link || "#"}" target="_blank"><img src="${ad.file}" alt="Media Image" loading="lazy"></a>`;
         }
         if (ad.type === "video" && ad.file) {
             return `<video src="${ad.file}" controls></video>`;

@@ -1,4 +1,4 @@
-// Shared, deduplicated fetch for /posts — used by frontend.js and homepage.js
+// Shared, deduplicated fetch for /posts — used across all pages
 window.WrytixPosts = (() => {
     let promise = null;
 
@@ -19,3 +19,9 @@ window.WrytixPosts = (() => {
 
     return { getPosts };
 })();
+
+// Cloudinary URL transform helper — resizes + compresses on the fly
+window.optimizeThumbnail = (url, width = 400) => {
+    if (!url || !url.includes('/upload/')) return url; // not a Cloudinary URL, leave as-is
+    return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`);
+};
