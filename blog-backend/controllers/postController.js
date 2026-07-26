@@ -146,16 +146,22 @@ const deletePost = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-
 const getPosts = async (req, res) => {
     try {
         const now = new Date();
         const posts = await Post.find({ schedule: { $lte: now } })
-            .select('title slug excerpt category schedule views thumbnail author featured')
+            .select('title slug excerpt category schedule views thumbnail author featured content')
             .sort({ schedule: -1 })
             .limit(100)
             .lean();
-        res.json(posts);
+
+        const shaped = posts.map(post => {
+            const excerpt = post.excerpt || (post.content ? post.content.replace(/<[^>]*>/g, '').slice(0, 150) + '...' : '');
+            const { content, ...rest } = post; // strip content before sending
+            return { ...rest, excerpt };
+        });
+
+        res.json(shaped);
     } catch (err) {
         res.status(500).json({ error: "Server error" });
     }
