@@ -52,63 +52,49 @@ router.delete('/postSubmissions/:id', requireRole(['author', 'editor', 'admin'])
 
 router.get('/posts/view-post.html', async (req, res) => {
     const slug = req.query.slug;
-    if (!slug) {
-        return res.status(400).send('<h1>Post slug required in URL (?slug=your-slug)</h1>');
-    }
+    if (!slug) return res.status(400).send('<h1>Post slug required</h1>');
 
     try {
         const post = await Post.findOne({ slug }).lean();
-        if (!post) {
-            return res.status(404).send('<h1>Post not found</h1>');
-        }
+        if (!post) return res.status(404).send('<h1>Post not found</h1>');
 
-        // Generate description
         let desc = post.excerpt || '';
         if (!desc) {
             desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
         }
 
-        const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+        const canonicalUrl = `https://wry-tix.com/posts/view-post.html?slug=${encodeURIComponent(slug)}`;
 
-        // Read the template file - fix the path
-        const templatePath = path.join(__dirname, '../public/posts/view-post.html'); //path.join(__dirname, '..', 'public', 'posts', 'view-post.html'); // Adjust path as needed
-        if (!fs.existsSync(templatePath)) {
-            console.error("❌ Template file missing:", templatePath);
-            return res.status(500).send('<h1>Template missing</h1>');
-        }
-
-        let html = fs.readFileSync(templatePath, 'utf8');
-
-        // Replace ALL meta tags properly
-        html = html
-            .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(post.title)}</title>`)
-            .replace(/<meta name="description" content="[^"]*"\/>/, `<meta name="description" content="${escapeHtml(desc)}" />`)
-            .replace(/<meta property="og:title" content="[^"]*"\/>/, `<meta property="og:title" content="${escapeHtml(post.title)}" />`)
-            .replace(/<meta property="og:description" content="[^"]*"\/>/, `<meta property="og:description" content="${escapeHtml(desc)}" />`)
-            .replace(/<meta property="og:image" content="[^"]*"\/>/, `<meta property="og:image" content="${post.thumbnail || ''}" />`)
-            .replace(/<meta property="og:url" content="[^"]*"\/>/, `<meta property="og:url" content="${fullUrl}" />`)
-            .replace(/<meta name="twitter:card" content="[^"]*"\/>/, `<meta name="twitter:card" content="summary_large_image" />`);
-
-        // Add Twitter meta tags
-        const twitterMetas = `
-            <meta name="twitter:title" content="${escapeHtml(post.title)}" />
-            <meta name="twitter:description" content="${escapeHtml(desc)}" />
-            <meta name="twitter:image" content="${post.thumbnail || ''}" />
-        `;
-
-        // Insert before closing head tag
-        html = html.replace('</head>', `${twitterMetas}</head>`);
-
-        // Also update the canonical URL if you have one
-        html = html.replace(/<link rel="canonical" href="[^"]*"\/>/, `<link rel="canonical" href="${fullUrl}" />`);
+        // Minimal HTML: just meta tags for crawlers, + instant redirect for real browsers
+        const html = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>${escapeHtml(post.title)}</title>
+    <meta name="description" content="${escapeHtml(desc)}" />
+    <meta property="og:title" content="${escapeHtml(post.title)}" />
+    <meta property="og:description" content="${escapeHtml(desc)}" />
+    <meta property="og:image" content="${post.thumbnail || ''}" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtml(post.title)}" />
+    <meta name="twitter:description" content="${escapeHtml(desc)}" />
+    <meta name="twitter:image" content="${post.thumbnail || ''}" />
+    <link rel="canonical" href="${canonicalUrl}" />
+    <meta http-equiv="refresh" content="0; url=${canonicalUrl}" />
+</head>
+<body>
+    <p>Redirecting to <a href="${canonicalUrl}">${escapeHtml(post.title)}</a>...</p>
+</body>
+</html>`;
 
         res.send(html);
     } catch (err) {
-        console.error('Error rendering post page:', err);
+        console.error('Error rendering post meta page:', err);
         res.status(500).send('<h1>Server error loading post</h1>');
     }
 });
-
 // Routes to manage static posts
 
 router.post('/generate-all-static', async (req, res) => {
