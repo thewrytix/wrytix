@@ -151,7 +151,7 @@ const getPosts = async (req, res) => {
     try {
         const now = new Date();
         const posts = await Post.find({ schedule: { $lte: now } })
-            .select('title slug excerpt category schedule views thumbnail author')
+            .select('title slug excerpt category schedule views thumbnail author featured')
             .sort({ schedule: -1 })
             .limit(100)
             .lean();
