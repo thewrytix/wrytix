@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", async function () {
+    const API_BASE = "https://wrytix.onrender.com";
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("slug");
 
-    // Blog post template
     const blogTemplate = `
                 <section class="blog-posts">
                     <article data-category="">
@@ -56,28 +56,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </div>
                 </section>
 
-
         <!-- Sidebar -->
         <aside class="sidebar">
-        
-        <div class="sidebar-section ad-sidebar">
+            <div class="sidebar-section ad-sidebar">
                 <div class="ad-slider-wrapper" id="adSliderWrapper">
                     <div class="ad-slider" id="adSlider">
                         <p>Loading ads...</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="sidebar-section" id="related-posts">
-                <h3>Related Posts </h3>
-                <ul id="related-list"></ul>
+                <h3>Related Posts</h3>
+                <ul id="related-list"><li class="loading">Loading related posts...</li></ul>
             </div>
-
-
         </aside>
             `;
 
-    // Inject template into target container
     const targetContainer = document.querySelector('.main-content');
     targetContainer.innerHTML = blogTemplate;
 
@@ -86,16 +81,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    // Fetch main post and related posts IN PARALLEL — related no longer waits on the main post render
+    const relatedPromise = fetch(`${API_BASE}/posts/${slug}/related`)
+        .then(res => {
+            if (!res.ok) throw new Error(`API: ${res.status}`);
+            return res.json();
+        })
+        .catch(err => {
+            console.error("Failed to load related posts:", err);
+            return null;
+        });
+
     try {
-        // Step 1: Fetch post quickly
-        const res = await fetch(`https://wrytix.onrender.com/posts/${slug}`);
+        // Step 1: Fetch post
+        const res = await fetch(`${API_BASE}/posts/${slug}`);
         if (!res.ok) throw new Error("Post not found");
         const post = await res.json();
 
-        // NEW: Generate description (for meta tags; use excerpt if available, else truncate content)
         let desc = post.excerpt || '';
         if (!desc) {
-            // Strip HTML tags and truncate to ~160 chars
             desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
         }
 
@@ -113,7 +117,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         document.getElementById("post-content").innerHTML = post.content;
 
-        // NEW INSERTION: Update meta tags for browser (safe fallback; server already does this for crawlers)
         if (document.querySelector('meta[property="og:title"]')) {
             document.querySelector('meta[property="og:title"]').setAttribute('content', post.title);
         }
@@ -122,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelector('meta[property="og:image"]').setAttribute('content', post.thumbnail || '');
         document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.href);
         document.querySelector('meta[name="twitter:card"]').setAttribute('content', 'summary_large_image');
-        // Optional Twitter extras (if not added server-side)
+
         let twitterTitle = document.querySelector('meta[name="twitter:title"]');
         if (!twitterTitle) {
             const meta = document.createElement('meta');
@@ -151,7 +154,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             twitterImg.setAttribute('content', post.thumbnail || '');
         }
 
-        // source
         const sourceEl = document.getElementById("post-source");
         if (post.source && post.source.startsWith('http')) {
             sourceEl.innerHTML = `<a href="${post.source}" target="_blank">${post.source}</a>`;
@@ -174,36 +176,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                         `;
         }
 
-        // Step 4: Fetch related posts in background with intelligent matching
-
-        setTimeout(async () => {
-            try {
-                const res = await fetch(`https://wrytix.onrender.com/posts/${slug}/related`);
-                if (!res.ok) throw new Error(`API: ${res.status}`);
-                const relatedPosts = await res.json();
-
-                const relatedList = document.getElementById("related-list");
-                if (relatedList) {
-                    relatedList.innerHTML = relatedPosts.length > 0
-                        ? relatedPosts.map(p => `
-                            <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
-                        `).join('')
-                        : "<li>No related posts found.</li>";
-                }
-            } catch (err) {
-                console.error("Failed to load related posts:", err);
-                const relatedList = document.getElementById("related-list");
-                if (relatedList) {
-                    relatedList.innerHTML = "<li>Unable to load related posts.</li>";
-                }
-            }
-        }, 0);
-
-        // Step 5: Increment views in background
-        fetch(`https://wrytix.onrender.com/posts/${slug}/view`, { method: 'POST' })
+        // Step 4: Increment views in background (fire and forget)
+        fetch(`${API_BASE}/posts/${slug}/view`, { method: 'POST' })
             .catch(err => console.warn("Failed to update views:", err));
 
-        // Step 6: Setup interactive features after content is loaded
+        // Step 5: Setup interactive features
         setupShareFeatures();
         setupCommentSystem();
 
@@ -213,14 +190,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
     }
 
+    // Render related posts as soon as they resolve — independent of main post render timing
+    const relatedPosts = await relatedPromise;
+    const relatedList = document.getElementById("related-list");
+    if (relatedList) {
+        if (!relatedPosts) {
+            relatedList.innerHTML = "<li>Unable to load related posts.</li>";
+        } else if (relatedPosts.length === 0) {
+            relatedList.innerHTML = "<li>No related posts found.</li>";
+        } else {
+            relatedList.innerHTML = relatedPosts.map(p => `
+                <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+            `).join('');
+        }
+    }
+
     function setupShareFeatures() {
-        // Share functionality is now handled by post-share-icons.js
-        // This function can be empty or removed entirely
         console.log("Share features will be initialized by post-share-icons.js");
     }
 
     function setupCommentSystem() {
-        // Comment functionality
         const commentButton = document.querySelector('.comment-button');
         if (commentButton) {
             commentButton.addEventListener('click', function() {
@@ -238,7 +227,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                             `;
                     commentsList.insertBefore(newComment, commentsList.firstChild);
 
-                    // Clear form
                     document.getElementById('username').value = '';
                     document.getElementById('commentText').value = '';
                 } else {
@@ -251,7 +239,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // Ads Show
 async function loadSidebarAds() {
-    // Get category from the ad container, default to "business"
     const adContainer = document.getElementById("adSlider");
     const category = adContainer?.dataset.category || "view-post";
 
@@ -274,7 +261,6 @@ async function loadSidebarAds() {
     }
 }
 
-
 function renderAdSlides(ads) {
     const slider = document.getElementById("adSlider");
     slider.innerHTML = '';
@@ -290,7 +276,7 @@ function renderAdSlides(ads) {
 
         let content = '';
         if (ad.type === "image" && ad.file) {
-            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Ad Image"></a>`;
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Ad Image" loading="lazy"></a>`;
         } else if (ad.type === "video" && ad.file) {
             content = `<video src="${ad.file}" controls></video>`;
         } else if (ad.type === "html" && ad.html) {
