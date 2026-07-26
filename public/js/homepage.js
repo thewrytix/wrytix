@@ -1,22 +1,14 @@
 /**
  * homepage.js
- * Handles: sidebar (trending/popular), featured section, category sections,
- * and homepage sidebar ad rotator.
- * Depends on: window.WrytixPosts, window.optimizeThumbnail (postsCache.js) — must load before this file.
+ * Fetches all homepage data in parallel via lean, purpose-built endpoints,
+ * then renders each section from the pre-fetched data.
  */
+
+const API_BASE = "https://wrytix.onrender.com";
 
 /* =========================================================
    Utilities
    ========================================================= */
-
-const formatDate = (dateStr) => {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-    });
-};
 
 const truncateText = (text, wordLimit) => {
     if (!text) return "";
@@ -28,60 +20,21 @@ const truncateText = (text, wordLimit) => {
    ========================================================= */
 
 const Sidebar = (() => {
-    const getDynamicThreshold = (posts, percentage = 0.1) => {
-        if (posts.length === 0) return 0;
-        const sorted = [...posts].sort((a, b) => b.views - a.views);
-        const cutoffIndex = Math.max(Math.floor(sorted.length * percentage), 0);
-        return sorted[cutoffIndex]?.views || 0;
-    };
-
     const createListItem = (post) => `
         <li>
             <a href="posts/view-post.html?slug=${encodeURIComponent(post.slug)}">${post.title}</a>
         </li>`;
 
-    const render = (posts) => {
+    const render = (trending, popular) => {
         const trendingUl = document.getElementById("trending-list");
         const popularUl = document.getElementById("popular-list");
         if (!trendingUl || !popularUl) return;
 
-        const now = new Date();
-        const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-        const trendingThreshold = getDynamicThreshold(posts, 0.1);
-        const popularThreshold = getDynamicThreshold(posts, 0.05);
-
-        const trendingPosts = posts
-            .filter(post => new Date(post.schedule) >= twoWeeksAgo || post.views >= trendingThreshold)
-            .sort((a, b) => b.views - a.views)
-            .slice(0, 10);
-
-        const popularPosts = posts
-            .filter(post => new Date(post.schedule) >= oneMonthAgo || post.views >= popularThreshold)
-            .sort((a, b) => b.views - a.views)
-            .slice(0, 10);
-
-        trendingUl.innerHTML = trendingPosts.map(createListItem).join("");
-        popularUl.innerHTML = popularPosts.map(createListItem).join("");
+        trendingUl.innerHTML = trending.map(createListItem).join("");
+        popularUl.innerHTML = popular.map(createListItem).join("");
     };
 
-    const init = async () => {
-        try {
-            const data = await window.WrytixPosts.getPosts();
-            const posts = data.map(post => ({
-                title: post.title || "Untitled",
-                slug: post.slug || "",
-                schedule: post.schedule || "",
-                views: post.views || 0
-            }));
-            render(posts);
-        } catch (error) {
-            console.error("Sidebar: failed to load posts:", error);
-        }
-    };
-
-    return { init };
+    return { render };
 })();
 
 /* =========================================================
@@ -89,8 +42,6 @@ const Sidebar = (() => {
    ========================================================= */
 
 const FeaturedSection = (() => {
-    const el = () => document.querySelector(".featured-section");
-
     const renderLarge = (post) => `
         <div class="featured-large">
             <img src="${window.optimizeThumbnail(post.thumbnail, 800)}" alt="${post.title}" loading="lazy">
@@ -109,33 +60,25 @@ const FeaturedSection = (() => {
             </div>
         </div>`;
 
-    const init = async () => {
-        const section = el();
+    const render = (featuredPosts) => {
+        const section = document.querySelector(".featured-section");
         if (!section) return;
 
-        try {
-            const posts = await window.WrytixPosts.getPosts();
-            const featured = posts.filter(post => post.featured === true);
-
-            if (featured.length === 0) {
-                section.innerHTML = "<p>No featured posts found.</p>";
-                return;
-            }
-
-            const [largePost, ...rest] = featured;
-            const gridHtml = rest.slice(0, 6).map(renderGridItem).join("");
-
-            section.innerHTML = `
-                ${renderLarge(largePost)}
-                <div class="featured-grid">${gridHtml}</div>
-            `;
-        } catch (error) {
-            console.error("FeaturedSection: failed to load posts:", error);
-            section.innerHTML = "<p>Failed to load featured posts.</p>";
+        if (!featuredPosts || featuredPosts.length === 0) {
+            section.innerHTML = "<p>No featured posts found.</p>";
+            return;
         }
+
+        const [largePost, ...rest] = featuredPosts;
+        const gridHtml = rest.slice(0, 6).map(renderGridItem).join("");
+
+        section.innerHTML = `
+            ${renderLarge(largePost)}
+            <div class="featured-grid">${gridHtml}</div>
+        `;
     };
 
-    return { init };
+    return { render };
 })();
 
 /* =========================================================
@@ -143,13 +86,11 @@ const FeaturedSection = (() => {
    ========================================================= */
 
 const CategorySections = (() => {
-    const CATEGORIES = ["news", "foreign", "business", "sports", "lifestyle", "technology"];
-
     const createPostHTML = (post) => `
         <article class="post-preview">
             <div>
                 <h3><a href="./posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
-                <p>${post.excerpt}</p>
+                <p>${post.excerpt || ""}</p>
             </div>
             ${post.thumbnail ? `<img src="${window.optimizeThumbnail(post.thumbnail, 300)}" alt="${post.title}" loading="lazy" onerror="this.style.display='none'">` : ""}
         </article>`;
@@ -159,45 +100,23 @@ const CategorySections = (() => {
         if (!section) return;
 
         const heading = section.querySelector("h2");
-        const postsHtml = posts
-            .filter(post => post.category === categoryId)
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 5)
-            .map(createPostHTML)
-            .join("");
-
+        const postsHtml = (posts || []).map(createPostHTML).join("");
         section.innerHTML = heading.outerHTML + postsHtml;
     };
 
-    const normalizePost = (post) => ({
-        title: post.title,
-        slug: post.slug,
-        url: post.url,
-        date: post.schedule,
-        category: post.category,
-        excerpt: post.excerpt || "",
-        thumbnail: post.thumbnail || ""
-    });
-
-    const init = async () => {
-        try {
-            const data = await window.WrytixPosts.getPosts();
-            const posts = data.map(normalizePost);
-            CATEGORIES.forEach(cat => renderCategory(cat, posts));
-        } catch (error) {
-            console.error("CategorySections: failed to load posts:", error);
-        }
+    const render = (categoryData) => {
+        Object.keys(categoryData).forEach(cat => renderCategory(cat, categoryData[cat]));
     };
 
-    return { init };
+    return { render };
 })();
 
 /* =========================================================
-   Ad Rotator (Sidebar)
+   Ad Rotator (Sidebar) — unchanged, separate data source
    ========================================================= */
 
 const AdSlider = ((trackId, containerId, category) => {
-    const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+    const CACHE_TTL_MS = 5 * 60 * 1000;
     const cacheKey = `wrytix-ads-${category}`;
 
     const getCached = () => {
@@ -256,9 +175,7 @@ const AdSlider = ((trackId, containerId, category) => {
             return;
         }
 
-        track.innerHTML = ads
-            .map(ad => `<div class="media-item">${renderSlideContent(ad)}</div>`)
-            .join("");
+        track.innerHTML = ads.map(ad => `<div class="media-item">${renderSlideContent(ad)}</div>`).join("");
 
         if (ads.length > 1) enableRotation(track, ads.length);
     };
@@ -271,7 +188,7 @@ const AdSlider = ((trackId, containerId, category) => {
         }
 
         try {
-            const res = await fetch("https://wrytix.onrender.com/ads");
+            const res = await fetch(`${API_BASE}/ads`);
             const ads = await res.json();
             const now = new Date();
 
@@ -295,12 +212,24 @@ const AdSlider = ((trackId, containerId, category) => {
 })("mediaTrack", "rotContainer", document.querySelector("article")?.dataset.category || "homepage");
 
 /* =========================================================
-   Init
+   Init — fetch everything in parallel, then render
    ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-    Sidebar.init();
-    FeaturedSection.init();
-    CategorySections.init();
-    AdSlider.init();
+document.addEventListener("DOMContentLoaded", async () => {
+    AdSlider.init(); // independent data source, runs concurrently with the rest
+
+    try {
+        const [featured, categoryPosts, trending, popular] = await Promise.all([
+            fetch(`${API_BASE}/posts/featured`).then(r => r.json()),
+            fetch(`${API_BASE}/posts/homepage-categories`).then(r => r.json()),
+            fetch(`${API_BASE}/posts/trending`).then(r => r.json()),
+            fetch(`${API_BASE}/posts/popular`).then(r => r.json())
+        ]);
+
+        FeaturedSection.render(featured);
+        CategorySections.render(categoryPosts);
+        Sidebar.render(trending, popular);
+    } catch (error) {
+        console.error("Homepage: failed to load data:", error);
+    }
 });

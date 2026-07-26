@@ -188,6 +188,112 @@ const getPostBySlug = async (req, res) => {
     }
 };
 
+// postController.js — new endpoints, each returns only what that view needs
+
+const getFeaturedPosts = async (req, res) => {
+    const posts = await Post.find({ featured: true, schedule: { $lte: new Date() } })
+        .select('title slug excerpt thumbnail schedule')
+        .sort({ schedule: -1 })
+        .limit(7)
+        .lean();
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json(posts);
+};
+
+const getPostsByCategory = async (req, res) => {
+    const { category } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+
+    const posts = await Post.find({ category, schedule: { $lte: new Date() } })
+        .select('title slug excerpt thumbnail schedule views')
+        .sort({ schedule: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean();
+
+    const total = await Post.countDocuments({ category, schedule: { $lte: new Date() } });
+
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ posts, total, page, totalPages: Math.ceil(total / limit) });
+};
+
+
+const getHomepageCategoryPosts = async (req, res) => {
+    try {
+        const categories = ["news", "foreign", "business", "sports", "lifestyle", "technology"];
+        const now = new Date();
+
+        const facetStage = {};
+        categories.forEach(cat => {
+            facetStage[cat] = [
+                { $match: { category: cat, schedule: { $lte: now } } },
+                { $sort: { schedule: -1 } },
+                { $limit: 5 },
+                { $project: { title: 1, slug: 1, excerpt: 1, thumbnail: 1, category: 1, schedule: 1 } }
+            ];
+        });
+
+        const [result] = await Post.aggregate([{ $facet: facetStage }]);
+
+        res.set('Cache-Control', 'public, max-age=60');
+        res.json(result); // { news: [...], sports: [...], business: [...], ... }
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+const getTrendingPosts = async (req, res) => {
+    try {
+        const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+        const posts = await Post.find({ schedule: { $lte: new Date() } })
+            .select('title slug views schedule')
+            .sort({ schedule: -1 })
+            .limit(200) // reasonable working set to rank from
+            .lean();
+
+        // Same dynamic-threshold logic as before, now run once server-side
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+        const threshold = sorted[Math.floor(sorted.length * 0.1)]?.views || 0;
+
+        const trending = posts
+            .filter(p => new Date(p.schedule) >= twoWeeksAgo || p.views >= threshold)
+            .sort((a, b) => b.views - a.views)
+            .slice(0, 10);
+
+        res.set('Cache-Control', 'public, max-age=120');
+        res.json(trending);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+const getPopularPosts = async (req, res) => {
+    try {
+        const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        const posts = await Post.find({ schedule: { $lte: new Date() } })
+            .select('title slug views schedule')
+            .sort({ schedule: -1 })
+            .limit(200)
+            .lean();
+
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+        const threshold = sorted[Math.floor(sorted.length * 0.05)]?.views || 0;
+
+        const popular = posts
+            .filter(p => new Date(p.schedule) >= oneMonthAgo || p.views >= threshold)
+            .sort((a, b) => b.views - a.views)
+            .slice(0, 10);
+
+        res.set('Cache-Control', 'public, max-age=120');
+        res.json(popular);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 const incrementPostView = async (req, res) => {
     try {
         const post = await Post.findOne({ slug: req.params.slug }).lean();
@@ -282,6 +388,11 @@ module.exports = {
     getPosts,
     getAllPosts,
     getPostBySlug,
+    getFeaturedPosts,
+    getPostsByCategory,
+    getTrendingPosts,
+    getPopularPosts,
+    getHomepageCategoryPosts,
     incrementPostView,
     createPost,
     updatePost,
