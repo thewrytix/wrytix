@@ -1,102 +1,70 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "https://wrytix.onrender.com";
+    const CATEGORY = "business";
+
     const newsContainer = document.getElementById("latest-business");
     const paginationContainer = document.getElementById("pagination-controls");
-    const postsPerPage = 10;
-    let allNewsPosts = [];
+
     let currentPage = parseInt(new URLSearchParams(window.location.hash.slice(1)).get('page')) || 1;
+    let totalPages = 1;
 
-    // Cache key for business posts
-    const cacheKey = 'wrytix-business-posts';
-    const cacheTTL = 300000; // 5min
-
-    async function fetchNewsPosts() {
+    async function fetchCategoryPage(page) {
         try {
-            const data = await window.WrytixPosts.getPosts();
+            newsContainer.innerHTML = `<p>Loading...</p>`;
 
-            allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "business")
-                .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
+            const res = await fetch(`${API_BASE}/posts/category/${CATEGORY}?page=${page}`);
+            if (!res.ok) throw new Error(`API: ${res.status}`);
+            const { posts, totalPages: pages } = await res.json();
 
-            renderPage(currentPage);
+            totalPages = pages;
+            currentPage = page;
+
+            renderPosts(posts);
             renderPagination();
+            window.location.hash = `page=${page}`;
         } catch (error) {
-            console.error("Failed to fetch news posts:", error);
+            console.error("Failed to fetch business posts:", error);
             newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
 
-    async function fetchWithRetry(url, retries = 3, backoff = 1000) {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res;
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
-            }
-        }
-    }
-
-    function renderPage(page) {
-        newsContainer.innerHTML = ""; // Clear container
-        const start = (page - 1) * postsPerPage;
-        const end = start + postsPerPage;
-        const postsToDisplay = allNewsPosts.slice(start, end);
-
-        if (postsToDisplay.length === 0) {
+    function renderPosts(posts) {
+        if (posts.length === 0) {
             newsContainer.innerHTML = `<p>No business posts found.</p>`;
             return;
         }
 
-        // Use DocumentFragment for efficient batch appends
         const fragment = document.createDocumentFragment();
-        postsToDisplay.forEach(post => {
+        posts.forEach(post => {
             const postElement = document.createElement("article");
             postElement.classList.add("post-preview");
-            const date = new Date(post.schedule).toLocaleDateString("en-GB", {
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-            });
             postElement.innerHTML = `
-        <div>
-          <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
-          <!-- <small class="post-date">${date}</small> -->
-         <p>${(post.excerpt || '').slice(0, 120)}...</p>
-        </div>
-        ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" loading="lazy">` : ''}
-      `;
+                <div>
+                    <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
+                    <p>${post.excerpt || ""}</p>
+                </div>
+                ${post.thumbnail ? `<img src="${window.optimizeThumbnail(post.thumbnail, 300)}" alt="${post.title}" loading="lazy">` : ''}
+            `;
             fragment.appendChild(postElement);
         });
-        newsContainer.appendChild(fragment);
 
-        // Update URL hash for bookmarking/back-forward
-        window.location.hash = `page=${page}`;
-        currentPage = page;
+        newsContainer.innerHTML = "";
+        newsContainer.appendChild(fragment);
     }
 
     function renderPagination() {
-        const totalPages = Math.ceil(allNewsPosts.length / postsPerPage);
         paginationContainer.innerHTML = "";
-
         if (totalPages <= 1) return;
 
-        // Previous button
         const prevBtn = document.createElement("button");
         prevBtn.textContent = "Previous";
         prevBtn.disabled = currentPage === 1;
         prevBtn.classList.toggle("disabled", currentPage === 1);
         prevBtn.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPage(currentPage);
-                renderPagination();
-            }
+            if (currentPage > 1) fetchCategoryPage(currentPage - 1);
         };
         paginationContainer.appendChild(prevBtn);
 
-        // Numbered buttons with ellipsis (for >7 pages)
         const maxVisible = 7;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -108,14 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const pageBtn = document.createElement("button");
             pageBtn.textContent = i;
             pageBtn.classList.toggle("active-page", i === currentPage);
-            pageBtn.onclick = () => {
-                currentPage = i;
-                renderPage(currentPage);
-                renderPagination();
-            };
+            pageBtn.onclick = () => fetchCategoryPage(i);
             paginationContainer.appendChild(pageBtn);
 
-            // Ellipsis if gap
             if (i !== endPage && i < totalPages) {
                 const ellipsis = document.createElement("span");
                 ellipsis.textContent = "...";
@@ -124,35 +87,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Next button
         const nextBtn = document.createElement("button");
         nextBtn.textContent = "Next";
         nextBtn.disabled = currentPage === totalPages;
         nextBtn.classList.toggle("disabled", currentPage === totalPages);
         nextBtn.onclick = () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPage(currentPage);
-                renderPagination();
-            }
+            if (currentPage < totalPages) fetchCategoryPage(currentPage + 1);
         };
         paginationContainer.appendChild(nextBtn);
 
-        // Accessibility
         paginationContainer.setAttribute("role", "navigation");
         paginationContainer.setAttribute("aria-label", "Business news pagination");
     }
 
     // Load on init
-    fetchNewsPosts();
+    fetchCategoryPage(currentPage);
 
     // Listen for hash changes (back/forward nav)
     window.addEventListener('hashchange', () => {
         const newPage = parseInt(new URLSearchParams(window.location.hash.slice(1)).get('page')) || 1;
-        if (newPage !== currentPage && newPage >= 1 && newPage <= Math.ceil(allNewsPosts.length / postsPerPage)) {
-            currentPage = newPage;
-            renderPage(currentPage);
-            renderPagination();
+        if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+            fetchCategoryPage(newPage);
         }
     });
 });
@@ -161,20 +116,17 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "business";
     const cacheKey = `wrytix-ads-${articleCategory}`;
-    const cacheTTL = 300000; // 5 minutes in ms
+    const cacheTTL = 300000;
 
-    // Check cache first
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
         try {
             const { ads, timestamp } = JSON.parse(cached);
             if (Date.now() - timestamp < cacheTTL) {
-                console.log(`Using cached ads for ${articleCategory}`);
                 renderAdSlides(ads);
                 return;
             }
         } catch (err) {
-            console.warn('Invalid cache, fetching fresh:', err);
             localStorage.removeItem(cacheKey);
         }
     }
@@ -190,12 +142,7 @@ async function loadSidebarAds() {
             new Date(ad.endDate) >= now
         );
 
-        // Cache the filtered ads
-        localStorage.setItem(cacheKey, JSON.stringify({
-            ads: filtered,
-            timestamp: Date.now()
-        }));
-
+        localStorage.setItem(cacheKey, JSON.stringify({ ads: filtered, timestamp: Date.now() }));
         renderAdSlides(filtered);
     } catch (err) {
         document.getElementById("mediaTrack").innerHTML = "<p>⚠️ Failed to load media.</p>";
@@ -215,7 +162,7 @@ function renderAdSlides(ads) {
         slide.className = "media-item";
         let content = '';
         if (ad.type === "image" && ad.file) {
-            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image"></a>`;
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image" loading="lazy"></a>`;
         } else if (ad.type === "video" && ad.file) {
             content = `<video src="${ad.file}" controls></video>`;
         } else if (ad.type === "html" && ad.html) {
@@ -245,16 +192,16 @@ function enableVerticalSlider(slider, count) {
 loadSidebarAds();
 
 
-//Live market Data
+// Live market Data — unchanged, separate feature, not affected by post-fetching migration
 (function () {
     const app = {
-        refreshInterval: 30000, // 30s for livelier feel (was 60s)
+        refreshInterval: 30000,
         cacheKey: 'wrytix-market-data',
-        cacheTTL: 300000, // 5min
-        prevPrices: JSON.parse(localStorage.getItem('wrytix-prev-prices') || '{}'), // Persist across sessions
+        cacheTTL: 300000,
+        prevPrices: JSON.parse(localStorage.getItem('wrytix-prev-prices') || '{}'),
 
         init() {
-            this.loadData(true); // true = from cache if available
+            this.loadData(true);
             this.interval = setInterval(() => this.loadData(false), this.refreshInterval);
         },
 
@@ -264,21 +211,20 @@ loadSidebarAds();
                 data = this.getCachedData();
                 if (data) {
                     this.renderAll(data);
-                    return; // Instant render from cache
+                    return;
                 }
             }
 
             try {
                 const res = await this.fetchWithRetry('https://wrytix.onrender.com/api/market-data');
                 data = await res.json();
-                this.cacheData(data); // Cache fresh data
+                this.cacheData(data);
                 this.renderAll(data);
             } catch (err) {
                 console.error('Market data fetch failed:', err);
-                // Fallback: Use cache if available
                 data = this.getCachedData();
                 if (data) {
-                    this.renderAll(data); // Render stale data
+                    this.renderAll(data);
                     document.getElementById('market-updated').textContent = ' (Using cached data)';
                 } else {
                     this.showError('Market data unavailable. Retrying...');
@@ -294,7 +240,7 @@ loadSidebarAds();
                     return res;
                 } catch (err) {
                     if (i === retries - 1) throw err;
-                    await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i))); // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
                 }
             }
         },
@@ -311,7 +257,6 @@ loadSidebarAds();
                 data,
                 timestamp: Date.now()
             }));
-            // Update prevPrices cache
             localStorage.setItem('wrytix-prev-prices', JSON.stringify(this.prevPrices));
         },
 
@@ -336,7 +281,6 @@ loadSidebarAds();
             const perPage = 5;
             const pages = Math.ceil(data.length / perPage);
 
-            // Use DocumentFragment for efficient batch DOM updates (no flicker)
             const renderPage = (pageIdx) => {
                 const fragment = document.createDocumentFragment();
                 const items = data.slice(pageIdx * perPage, (pageIdx + 1) * perPage);
@@ -362,17 +306,16 @@ loadSidebarAds();
                     fragment.appendChild(div);
                 });
 
-                container.innerHTML = ''; // Clear once
-                container.appendChild(fragment); // Batch insert
+                container.innerHTML = '';
+                container.appendChild(fragment);
 
-                // Dots with ARIA
                 dots.innerHTML = Array.from({ length: pages }, (_, idx) =>
                     `<span class="dot ${idx === pageIdx ? 'active' : ''}" role="button" tabindex="0" aria-label="Page ${idx + 1} of ${pages}" data-page="${idx}"></span>`
                 ).join('');
 
                 dots.querySelectorAll('.dot').forEach((dot, idx) => {
                     dot.onclick = () => renderPage(idx);
-                    dot.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') renderPage(idx); }; // Keyboard nav
+                    dot.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') renderPage(idx); };
                 });
             };
 
@@ -398,7 +341,6 @@ loadSidebarAds();
         },
 
         showError(msg) {
-            // Inject error into containers if needed
             ['stock-data', 'forex-data', 'crypto-data', 'gse-data'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = `<div class="error-msg">${msg}</div>`;
@@ -406,14 +348,12 @@ loadSidebarAds();
         }
     };
 
-    // Init on DOM ready (no setTimeout delay)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => app.init());
     } else {
         app.init();
     }
 
-    // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
         localStorage.setItem('wrytix-prev-prices', JSON.stringify(app.prevPrices));
         clearInterval(app.interval);

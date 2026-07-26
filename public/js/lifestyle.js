@@ -1,57 +1,50 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = "https://wrytix.onrender.com";
+    const CATEGORY = "lifestyle";
+
     const newsContainer = document.getElementById("latest-lifestyle");
     const paginationContainer = document.getElementById("pagination-controls");
 
     let currentPage = 1;
-    const postsPerPage = 10;
-    let allNewsPosts = [];
+    let totalPages = 1;
 
-    async function fetchNewsPosts() {
+    async function fetchCategoryPage(page) {
         try {
-            const data = await window.WrytixPosts.getPosts();
+            newsContainer.innerHTML = `<p>Loading...</p>`;
 
-            allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "lifestyle")
-                .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
+            const res = await fetch(`${API_BASE}/posts/category/${CATEGORY}?page=${page}`);
+            if (!res.ok) throw new Error(`API: ${res.status}`);
+            const { posts, totalPages: pages } = await res.json();
 
-            renderPage(currentPage);
+            totalPages = pages;
+            currentPage = page;
+
+            renderPosts(posts);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch news posts:", error);
+            console.error("Failed to fetch lifestyle posts:", error);
             newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
 
-    function renderPage(page) {
+    function renderPosts(posts) {
         newsContainer.innerHTML = "";
 
-        const start = (page - 1) * postsPerPage;
-        const end = start + postsPerPage;
-        const postsToDisplay = allNewsPosts.slice(start, end);
-
-        if (postsToDisplay.length === 0) {
+        if (posts.length === 0) {
             newsContainer.innerHTML = `<p>No news posts found.</p>`;
             return;
         }
 
-        postsToDisplay.forEach(post => {
+        posts.forEach(post => {
             const postElement = document.createElement("article");
             postElement.classList.add("post-preview");
-
-            const date = new Date(post.schedule).toLocaleDateString("en-GB", {
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-            });
 
             postElement.innerHTML = `
                 <div>
                     <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
-                     <!--<small class="post-date">${date}</small>-->
-                   <p>${(post.excerpt || '').slice(0, 120)}...</p>
-                    
+                    <p>${post.excerpt || ""}</p>
                 </div>
-                <img src="${post.thumbnail}" alt="${post.title}">
+                <img src="${window.optimizeThumbnail(post.thumbnail, 300)}" alt="${post.title}" loading="lazy">
             `;
 
             newsContainer.appendChild(postElement);
@@ -59,69 +52,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderPagination() {
-        const totalPages = Math.ceil(allNewsPosts.length / postsPerPage);
         paginationContainer.innerHTML = "";
-
         if (totalPages <= 1) return;
 
         const prevBtn = document.createElement("button");
         prevBtn.textContent = "Previous";
         prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => {
-            currentPage--;
-            renderPage(currentPage);
-            renderPagination();
-        };
+        prevBtn.onclick = () => fetchCategoryPage(currentPage - 1);
         paginationContainer.appendChild(prevBtn);
 
-        // Numbered page buttons
         for (let i = 1; i <= totalPages; i++) {
             const pageBtn = document.createElement("button");
             pageBtn.textContent = i;
-            pageBtn.classList.toggle("active-page", i === currentPage); // Add a class to style the current page
-            pageBtn.onclick = () => {
-                currentPage = i;
-                renderPage(currentPage);
-                renderPagination();
-            };
+            pageBtn.classList.toggle("active-page", i === currentPage);
+            pageBtn.onclick = () => fetchCategoryPage(i);
             paginationContainer.appendChild(pageBtn);
         }
 
         const nextBtn = document.createElement("button");
         nextBtn.textContent = "Next";
         nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => {
-            currentPage++;
-            renderPage(currentPage);
-            renderPagination();
-        };
+        nextBtn.onclick = () => fetchCategoryPage(currentPage + 1);
         paginationContainer.appendChild(nextBtn);
     }
 
-
-    fetchNewsPosts();
+    fetchCategoryPage(1);
 });
 
-
-
-// Ads Show
+// Ads Show (unchanged)
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "lifestyle";
     const cacheKey = `wrytix-ads-${articleCategory}`;
-    const cacheTTL = 300000; // 5 minutes in ms
+    const cacheTTL = 300000;
 
-    // Check cache first
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
         try {
             const { ads, timestamp } = JSON.parse(cached);
             if (Date.now() - timestamp < cacheTTL) {
-                console.log(`Using cached ads for ${articleCategory}`);
                 renderAdSlides(ads);
                 return;
             }
         } catch (err) {
-            console.warn('Invalid cache, fetching fresh:', err);
             localStorage.removeItem(cacheKey);
         }
     }
@@ -137,12 +109,7 @@ async function loadSidebarAds() {
             new Date(ad.endDate) >= now
         );
 
-        // Cache the filtered ads
-        localStorage.setItem(cacheKey, JSON.stringify({
-            ads: filtered,
-            timestamp: Date.now()
-        }));
-
+        localStorage.setItem(cacheKey, JSON.stringify({ ads: filtered, timestamp: Date.now() }));
         renderAdSlides(filtered);
     } catch (err) {
         document.getElementById("mediaTrack").innerHTML = "<p>⚠️ Failed to load media.</p>";
@@ -162,7 +129,7 @@ function renderAdSlides(ads) {
         slide.className = "media-item";
         let content = '';
         if (ad.type === "image" && ad.file) {
-            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image"></a>`;
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image" loading="lazy"></a>`;
         } else if (ad.type === "video" && ad.file) {
             content = `<video src="${ad.file}" controls></video>`;
         } else if (ad.type === "html" && ad.html) {
