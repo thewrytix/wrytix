@@ -1,11 +1,9 @@
-//Feature posts
-
+// Featured posts
 document.addEventListener("DOMContentLoaded", async () => {
     const featuredSection = document.querySelector(".featured-section");
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/posts"); // Replace with your actual API URL
-        const posts = await res.json();
+        const posts = await window.WrytixPosts.getPosts();
 
         // Filter only featured posts
         const featuredPosts = posts.filter(post => post.featured === true);
@@ -22,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <img src="${largePost.thumbnail}" alt="${largePost.title}">
                 <div class="featured-info">
                     <h3><a href="posts/view-post.html?slug=${largePost.slug}">${largePost.title}</a></h3>
-                    <p>${truncateText(largePost.content, 20)}</p>
+                    <p>${truncateText(largePost.excerpt, 20)}</p>
                 </div>
             </div>
         `;
@@ -33,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <img src="${post.thumbnail}" alt="${post.title}">
                 <div>
                     <h4><a href="posts/view-post.html?slug=${post.slug}">${post.title}</a></h4>
-                    <p>${truncateText(post.content, 10)}</p>
+                    <p>${truncateText(post.excerpt, 10)}</p>
                 </div>
             </div>
         `).join("");
@@ -52,6 +50,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     function truncateText(text, wordLimit) {
+        if (!text) return "";
         return text.split(" ").slice(0, wordLimit).join(" ") + "...";
     }
 });
