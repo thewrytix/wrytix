@@ -8,8 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchNewsPosts() {
         try {
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            const data = await response.json();
+            const data = await window.WrytixPosts.getPosts();
 
             allNewsPosts = data
                 .filter(post => post.category.toLowerCase() === "sports")

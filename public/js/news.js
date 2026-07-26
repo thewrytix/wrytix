@@ -11,13 +11,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await window.WrytixPosts.getPosts();
 
             allNewsPosts = data
-                .filter(post => post.category.toLowerCase() === "sports")
+                .filter(post => post.category.toLowerCase() === "news")
                 .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
 
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch sports posts:", error);
+            console.error("Failed to fetch news posts:", error);
             newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
                      <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                      <!--<small class="post-date">${date}</small>-->
-                    <p>${post.content.slice(0, 120)}...</p>
+                   <p>${(post.excerpt || '').slice(0, 120)}...</p>
                  
                 </div>
                 <img src="${post.thumbnail}" alt="${post.title}">
