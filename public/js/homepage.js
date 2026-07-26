@@ -2,14 +2,11 @@
 // Trending and Popular Posts
 async function fetchPostsFromAPI() {
     try {
-        const response = await fetch('https://wrytix.onrender.com/posts');
-        const data = await response.json();
-
-        // Ensure slug and schedule exist, and format thumbnail if needed
+        const data = await window.WrytixPosts.getPosts();
         return data.map(post => ({
             title: post.title || 'Untitled',
-            slug: post.slug || '', // ✅ Ensure slug is present
-            schedule: post.schedule || '', // fallback if missing
+            slug: post.slug || '',
+            schedule: post.schedule || '',
             views: post.views || 0
         }));
     } catch (error) {
@@ -296,8 +293,7 @@ loadSidebarAds();
 
         async init() {
             try {
-                const response = await fetch("https://wrytix.onrender.com/posts");
-                const data = await response.json();
+                const data = await window.WrytixPosts.getPosts();
 
                 // Convert API fields if needed
                 this.posts = data.map(post => {
@@ -320,7 +316,7 @@ loadSidebarAds();
                         url: post.url,
                         date: post.schedule,
                         category: post.category,
-                        excerpt: post.content.slice(0, 100) + '...',
+                        excerpt: post.excerpt || '',
                         thumbnail: thumbnail
                     };
                 });

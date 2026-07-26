@@ -59,9 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
     /* =================== FETCH API DATA =================== */
     async function loadAllData() {
         try {
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            if (!response.ok) throw new Error(`API: ${response.status}`);
-            const allPosts = await response.json(); // Raw array of posts
+            const allPosts = await window.WrytixPosts.getPosts();
 
             // Cache for 5min
             localStorage.setItem('wrytix-posts', JSON.stringify({ data: allPosts, timestamp: Date.now() }));
