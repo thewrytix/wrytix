@@ -150,7 +150,11 @@ const deletePost = async (req, res) => {
 const getPosts = async (req, res) => {
     try {
         const now = new Date();
-        const posts = await Post.find({ schedule: { $lte: now } }).lean();
+        const posts = await Post.find({ schedule: { $lte: now } })
+            .select('title slug excerpt category schedule views thumbnail author')
+            .sort({ schedule: -1 })
+            .limit(100)
+            .lean();
         res.json(posts);
     } catch (err) {
         res.status(500).json({ error: "Server error" });
