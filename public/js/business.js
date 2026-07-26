@@ -10,44 +10,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const cacheTTL = 300000; // 5min
 
     async function fetchNewsPosts() {
-        // Check cache first
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-            const { data, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < cacheTTL) {
-                allNewsPosts = data;
-                renderPage(currentPage);
-                renderPagination();
-                return;
-            }
-        }
-
         try {
-            const url = 'https://wrytix.onrender.com/posts?category=business'; // Optimistic backend filter
-            const res = await fetchWithRetry(url);
-            const data = await res.json();
-            allNewsPosts = data
-                .filter(post => post.category?.toLowerCase() === "business") // Fallback client filter
-                .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
+            const data = await window.WrytixPosts.getPosts();
 
-            // Cache fresh data
-            localStorage.setItem(cacheKey, JSON.stringify({ data: allNewsPosts, timestamp: Date.now() }));
+            allNewsPosts = data
+                .filter(post => post.category.toLowerCase() === "business")
+                .sort((a, b) => new Date(b.schedule) - new Date(a.schedule));
 
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch business posts:", error);
-            // Fallback to cache or error UI
-            const cachedData = JSON.parse(localStorage.getItem(cacheKey) || '{}').data || [];
-            if (cachedData.length > 0) {
-                allNewsPosts = cachedData;
-                renderPage(currentPage);
-                renderPagination();
-            } else {
-                newsContainer.innerHTML = `
-          <p>Something went wrong loading the news. <button onclick="fetchNewsPosts()" class="retry-btn">Retry</button></p>
-        `;
-            }
+            console.error("Failed to fetch news posts:", error);
+            newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
 
@@ -89,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div>
           <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
           <!-- <small class="post-date">${date}</small> -->
-          <p>${post.content.slice(0, 100)}...</p>
+         <p>${(post.excerpt || '').slice(0, 120)}...</p>
         </div>
         ${post.thumbnail ? `<img src="${post.thumbnail}" alt="${post.title}" loading="lazy">` : ''}
       `;

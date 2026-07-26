@@ -8,8 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function fetchNewsPosts() {
         try {
-            const response = await fetch('https://wrytix.onrender.com/posts');
-            const data = await response.json();
+            const data = await window.WrytixPosts.getPosts();
 
             allNewsPosts = data
                 .filter(post => post.category.toLowerCase() === "technology")
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderPage(currentPage);
             renderPagination();
         } catch (error) {
-            console.error("Failed to fetch technology posts:", error);
+            console.error("Failed to fetch news posts:", error);
             newsContainer.innerHTML = `<p>Something went wrong loading the news.</p>`;
         }
     }
@@ -49,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div>
                      <h3><a href="../posts/view-post.html?slug=${post.slug}">${post.title}</a></h3>
                      <!--<small class="post-date">${date}</small>-->
-                    <p>${post.content.slice(0, 120)}...</p>
+                  <p>${(post.excerpt || '').slice(0, 120)}...</p>
                    
                 </div>
                 <img src="${post.thumbnail}" alt="${post.title}">
