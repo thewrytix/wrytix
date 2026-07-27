@@ -1,18 +1,16 @@
 const { Ad } = require('../models');
 const { logAction } = require('../utils/logger');
 
-const readAds = async () => {
+// Background job only — never called during a GET request
+const expireOldAds = async () => {
     const now = new Date();
-    const ads = await Ad.find().lean();
-    let updated = false;
-    for (let ad of ads) {
-        if (ad.endDate && new Date(ad.endDate) < now && ad.active) {
-            ad.active = false;
-            updated = true;
-            await Ad.updateOne({ _id: ad._id }, { active: false });
-        }
+    const result = await Ad.updateMany(
+        { endDate: { $lt: now }, active: true },
+        { $set: { active: false } }
+    );
+    if (result.modifiedCount > 0) {
+        console.log(`Expired ${result.modifiedCount} ads`);
     }
-    return ads;
 };
 
 const createAd = async (req, res) => {
@@ -29,7 +27,8 @@ const createAd = async (req, res) => {
             company: req.body.company || '',
             html: req.body.html || "",
             text: req.body.text || "",
-            file: req.body.file || "",
+            file: req.body.file || "",       // should now be a Cloudinary URL from the frontend
+            thumbnail: req.body.thumbnail || "", // same
             active: !!req.body.active,
             createdAt: now
         };
@@ -51,21 +50,14 @@ const createAd = async (req, res) => {
 
 const getAds = async (req, res) => {
     try {
-        const ads = await readAds();
-        if (res) {
-            res.json(ads);
-        } else {
-            // Called from interval - no response, just return data
-            return ads;
-        }
+        const ads = await Ad.find()
+            .select('type category position startDate endDate link company html text file thumbnail active')
+            .lean();
+        res.set('Cache-Control', 'public, max-age=60');
+        res.json(ads);
     } catch (e) {
         console.error('Error fetching ads:', e);
-        if (res) {
-            res.status(500).json({ error: 'Failed to fetch ads' });
-        } else {
-            // For interval, just log - don't throw
-            console.error('Ad auto-refresh failed:', e);
-        }
+        res.status(500).json({ error: 'Failed to fetch ads' });
     }
 };
 
@@ -99,9 +91,9 @@ const updateAd = async (req, res) => {
             updatedAt: new Date()
         };
 
-        if (req.file) {
-            updatedAd.file = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-        }
+        // NOTE: no more multer file->base64 conversion here — file uploads now
+        // go directly to Cloudinary from the frontend, and req.body.file already
+        // contains the resulting URL. See frontend upload flow.
 
         await Ad.updateOne({ id: req.params.id }, updatedAd);
         await logAction(req.session.user?.username, 'ad-updated', updatedAd.id, {
@@ -142,4 +134,4 @@ const deleteAd = async (req, res) => {
     }
 };
 
-module.exports = { createAd, getAds, getAdById, updateAd, deleteAd };
+module.exports = { createAd, getAds, getAdById, updateAd, deleteAd, expireOldAds };

@@ -18,4 +18,8 @@ const AdSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+
+AdSchema.index({ category: 1, position: 1, active: 1 });
+
+
 module.exports = mongoose.model('Ad', AdSchema);
