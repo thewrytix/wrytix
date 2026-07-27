@@ -137,6 +137,10 @@
         const res = await fetch(url, { credentials: 'include' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         allLogs = await res.json();
+
+        // Ensure newest logs always appear first, regardless of backend order
+        allLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
         renderLogs();
       } catch (err) {
         console.error('Error loading logs:', err);
