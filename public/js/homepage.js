@@ -188,8 +188,7 @@ const AdSlider = ((trackId, containerId, category) => {
         }
 
         try {
-            const res = await fetch(`${API_BASE}/ads`);
-            const ads = await res.json();
+            const ads = await window.WrytixAds.getAds();
             const now = new Date();
 
             const filtered = ads.filter(ad =>
