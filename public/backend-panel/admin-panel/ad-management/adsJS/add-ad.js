@@ -1,3 +1,23 @@
+const CLOUDINARY_CLOUD_NAME = 'dbtgim7l0'; // same as posts
+const CLOUDINARY_UPLOAD_PRESET = 'wrytix_unsigned'; // same unsigned preset as posts
+
+async function uploadToCloudinary(file) {
+    const resourceType = file.type.startsWith('video') ? 'video' : 'image';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!res.ok) throw new Error('File upload failed');
+    const data = await res.json();
+    return data.secure_url;
+}
+
 document.getElementById('addAdForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -13,11 +33,16 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
     const text = document.getElementById('adText').value;
 
     const fileInput = document.getElementById('adFile');
-    let fileBase64 = null;
+    let fileUrl = null;
 
     if ((type === 'image' || type === 'video') && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        fileBase64 = await toBase64(file);
+        try {
+            fileUrl = await uploadToCloudinary(fileInput.files[0]);
+        } catch (err) {
+            console.error('Upload error:', err);
+            showError('Failed to upload file. Please try again.');
+            return;
+        }
     }
 
     const adData = {
@@ -30,7 +55,7 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
         link,
         html,
         text,
-        file: fileBase64,
+        file: fileUrl,
         active
     };
 
@@ -59,18 +84,9 @@ document.getElementById('addAdForm').addEventListener('submit', async function (
         console.error('Submission error:', err);
         showError('Submission failed. Please try again.');
     }
-
 });
 
-function toBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
-
+// Preview stays local/instant — no upload happens until submit
 document.getElementById('adFile').addEventListener('change', function () {
     const file = this.files[0];
     const preview = document.getElementById('filePreview');

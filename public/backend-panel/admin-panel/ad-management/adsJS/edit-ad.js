@@ -1,16 +1,36 @@
+const CLOUDINARY_CLOUD_NAME = 'dbtgim7l0';
+const CLOUDINARY_UPLOAD_PRESET = 'wrytix_unsigned';
+
+async function uploadToCloudinary(file) {
+    const resourceType = file.type.startsWith('video') ? 'video' : 'image';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!res.ok) throw new Error('File upload failed');
+    const data = await res.json();
+    return data.secure_url;
+}
+
 const adId = new URLSearchParams(window.location.search).get('id');
 const previewEl = document.getElementById('preview');
+let currentAdFileUrl = null; // tracks the existing Cloudinary URL, carried forward if no new file is picked
 
 function renderPreview(ad) {
     previewEl.innerHTML = '';
     const previewContainer = document.getElementById('previewContainer');
 
-    // Clear previous preview
     previewContainer.innerHTML = '';
     previewEl.innerHTML = '';
 
     if (ad.type === 'image') {
-        if (ad.file && ad.file.startsWith('data:image')) {
+        if (ad.file) {
             previewEl.innerHTML = `<img src="${ad.file}" alt="Ad Preview" style="max-width:100%; max-height:200px;">`;
             previewContainer.innerHTML = `<img src="${ad.file}" style="max-width:100%; max-height:200px;">`;
         } else {
@@ -18,7 +38,7 @@ function renderPreview(ad) {
         }
     }
     else if (ad.type === 'video') {
-        if (ad.file && ad.file.startsWith('data:video')) {
+        if (ad.file) {
             previewEl.innerHTML = `<video controls src="${ad.file}" style="max-width:100%; max-height:200px;"></video>`;
             previewContainer.innerHTML = `<video controls src="${ad.file}" style="max-width:100%; max-height:200px;"></video>`;
         } else {
@@ -36,37 +56,42 @@ function renderPreview(ad) {
     }
 }
 
-
-
 document.getElementById('editAdForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
     const adFileInput = document.getElementById('adFile');
+    let fileUrl = currentAdFileUrl; // default: keep existing file unless a new one is uploaded
 
-    // Add all form fields to FormData
-    formData.append('id', document.getElementById('adId').value);
-    formData.append('type', document.getElementById('adType').value);
-    formData.append('category', document.getElementById('adCategory').value);
-    formData.append('position', document.getElementById('adPosition').value);
-    formData.append('startDate', document.getElementById('startDate').value);
-    formData.append('endDate', document.getElementById('endDate').value);
-    formData.append('active', document.getElementById('adActive').checked);
-    formData.append('html', document.getElementById('adHtml').value);
-    formData.append('text', document.getElementById('adText').value);
-    formData.append('link', document.getElementById('adLink').value);
-    formData.append('company', document.getElementById('adCompany').value);
-
-
-    // Handle file upload if a new file was selected
     if (adFileInput.files[0]) {
-        formData.append('file', adFileInput.files[0]);
+        try {
+            fileUrl = await uploadToCloudinary(adFileInput.files[0]);
+        } catch (err) {
+            console.error('Upload error:', err);
+            showError('Failed to upload new file. Please try again.');
+            return;
+        }
     }
+
+    const adData = {
+        id: document.getElementById('adId').value,
+        type: document.getElementById('adType').value,
+        category: document.getElementById('adCategory').value,
+        position: document.getElementById('adPosition').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        active: document.getElementById('adActive').checked,
+        html: document.getElementById('adHtml').value,
+        text: document.getElementById('adText').value,
+        link: document.getElementById('adLink').value,
+        company: document.getElementById('adCompany').value,
+        file: fileUrl
+    };
 
     try {
         const response = await fetch(`https://wrytix.onrender.com/ads/${adId}`, {
             method: 'PUT',
-            body: formData,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(adData),
             credentials: 'include'
         });
 
@@ -84,23 +109,20 @@ document.getElementById('editAdForm').addEventListener('submit', async (e) => {
     }
 });
 
+// Preview stays local/instant — no upload happens until submit
 document.getElementById('adFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const previewContainer = document.getElementById('previewContainer');
-        if (file.type.startsWith('image/')) {
-            previewContainer.innerHTML = `<img src="${event.target.result}" style="max-width:100%; max-height:200px;">`;
-        } else if (file.type.startsWith('video/')) {
-            previewContainer.innerHTML = `<video controls src="${event.target.result}" style="max-width:100%; max-height:200px;"></video>`;
-        }
-    };
-    reader.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    const previewContainer = document.getElementById('previewContainer');
+
+    if (file.type.startsWith('image/')) {
+        previewContainer.innerHTML = `<img src="${url}" style="max-width:100%; max-height:200px;">`;
+    } else if (file.type.startsWith('video/')) {
+        previewContainer.innerHTML = `<video controls src="${url}" style="max-width:100%; max-height:200px;"></video>`;
+    }
 });
-
-
 
 async function loadAd() {
     if (!adId) {
@@ -109,23 +131,21 @@ async function loadAd() {
     }
 
     try {
-        // Load ad data
-        const adRes = await fetch(`https://wrytix.onrender.com/ads/${adId}`,  {
-            credentials: 'include'  // ← This is present here
+        const adRes = await fetch(`https://wrytix.onrender.com/ads/${adId}`, {
+            credentials: 'include'
         });
         if (!adRes.ok) throw new Error('Failed to load ad');
         const ad = await adRes.json();
 
-        // Load categories
+        currentAdFileUrl = ad.file || null; // remember existing file URL for submit-without-replace case
+
         const categoriesRes = await fetch('https://wrytix.onrender.com/ads');
         const allAds = await categoriesRes.json();
         const categories = [...new Set(allAds.map(a => a.category))];
         const positions = [...new Set(allAds.map(a => a.position))];
 
-        // Populate form
         document.getElementById('adId').value = ad.id;
 
-        // Populate type dropdown
         const typeSelect = document.getElementById('adType');
         typeSelect.innerHTML = `
             <option value="image" ${ad.type === 'image' ? 'selected' : ''}>Image</option>
@@ -134,19 +154,16 @@ async function loadAd() {
             <option value="text" ${ad.type === 'text' ? 'selected' : ''}>Text</option>
         `;
 
-        // Populate category dropdown
         const categorySelect = document.getElementById('adCategory');
         categorySelect.innerHTML = categories.map(cat =>
             `<option value="${cat}" ${cat === ad.category ? 'selected' : ''}>${cat}</option>`
         ).join('');
 
-        // Populate category dropdown
         const positionSelect = document.getElementById('adPosition');
         positionSelect.innerHTML = positions.map(cat =>
             `<option value="${cat}" ${cat === ad.position ? 'selected' : ''}>${cat}</option>`
         ).join('');
 
-        // Fill other fields
         document.getElementById('adHtml').value = ad.html || '';
         document.getElementById('adText').value = ad.text || '';
         document.getElementById('adLink').value = ad.link || '';
@@ -163,4 +180,3 @@ async function loadAd() {
 }
 
 document.addEventListener('DOMContentLoaded', loadAd);
-
