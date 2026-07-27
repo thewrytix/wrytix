@@ -161,91 +161,27 @@
 
     async function loadDashboardStats() {
         try {
-            // Fetch posts from backend
-            const response = await fetch('https://wrytix.onrender.com/posts/all', {
+            const response = await fetch('https://wrytix.onrender.com/posts/dashboard-stats', {
                 credentials: 'include'
             });
-            const posts = await response.json();
+            const stats = await response.json();
 
-            const now = new Date();
-            const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-            const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            document.getElementById('totalPosts').textContent = stats.total;
+            document.getElementById('livePosts').textContent = stats.live;
+            document.getElementById('scheduledPosts').textContent = stats.scheduled;
+            document.getElementById('trendingCount').textContent = stats.trendingCount;
+            document.getElementById('popularCount').textContent = stats.popularCount;
+            document.getElementById('totalViews').textContent = stats.totalViews;
 
-            // Get thresholds dynamically
-            const trendingViewsThreshold = getDynamicThreshold(posts, 0.1); // top 10%
-            const popularViewsThreshold = getDynamicThreshold(posts, 0.05); // top 5%
+            renderTrendingAndPopularLists(stats.trendingPosts, stats.popularPosts);
 
-            const total = posts.length;
-            const live = posts.filter(p => {
-                const d = new Date(p.schedule);
-                return !isNaN(d.getTime()) && d <= now;
-            }).length;
-            const scheduled = total - live;
-
-            // Trending: Within 2 weeks OR in top 10% of views
-            const trendingPosts = posts.filter(post => {
-                const postDate = new Date(post.schedule);
-                const lastViewed = post.lastViewed ? new Date(post.lastViewed) : null;
-
-                // Check if within 2 weeks based on schedule OR last viewed date
-                const isRecent = postDate >= twoWeeksAgo || (lastViewed && lastViewed >= twoWeeksAgo);
-
-                return (
-                    isRecent ||
-                    // Or older but in top 10% of views
-                    post.views >= trendingViewsThreshold
-                );
-            });
-
-            // Popular: Within 30 days OR in top 5% of views
-            const popularPosts = posts.filter(post => {
-                const postDate = new Date(post.schedule);
-                const lastViewed = post.lastViewed ? new Date(post.lastViewed) : null;
-
-                // Check if within 30 days based on schedule OR last viewed date
-                const isRecent = postDate >= oneMonthAgo || (lastViewed && lastViewed >= oneMonthAgo);
-
-                return (
-                    isRecent ||
-                    // Or older but in top 5% of views
-                    post.views >= popularViewsThreshold
-                );
-            }).sort((a, b) => (b.views || 0) - (a.views || 0));
-
-            const totalViews = posts.reduce((sum, post) => sum + (post.views || 0), 0);
-
-            // Update stats UI
-            document.getElementById('totalPosts').textContent = total;
-            document.getElementById('livePosts').textContent = live;
-            document.getElementById('scheduledPosts').textContent = scheduled;
-            document.getElementById('trendingCount').textContent = trendingPosts.length;
-            document.getElementById('popularCount').textContent = popularPosts.length;
-            document.getElementById('totalViews').textContent = totalViews;
-
-            // Render sidebar lists if they exist
-            renderTrendingAndPopularLists(trendingPosts, popularPosts);
-
-            return {
-                liveCount: live,
-                scheduledCount: scheduled,
-                trendingCount: trendingPosts.length,
-                popularCount: popularPosts.length,
-                totalViews,
-                posts,
-                trendingPosts,
-                popularPosts
-            };
-
+            return stats;
         } catch (error) {
             console.error('Failed to load dashboard stats:', error);
             alert('Failed to load data from backend. Check console for details.');
             return {
-                liveCount: 0,
-                scheduledCount: 0,
-                trendingCount: 0,
-                popularCount: 0,
-                totalViews: 0,
-                posts: []
+                total: 0, live: 0, scheduled: 0, trendingCount: 0, popularCount: 0,
+                totalViews: 0, trendingPosts: [], popularPosts: [], recentActivity: []
             };
         }
     }
@@ -334,7 +270,7 @@
         }
 
         const stats = await loadDashboardStats();
-        renderRecentActivity(stats.posts);
+        renderRecentActivity(stats.recentActivity); // was stats.posts
     };
 
     // Toggle headline editor if the element exists
