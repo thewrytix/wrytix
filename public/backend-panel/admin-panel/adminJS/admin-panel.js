@@ -20,7 +20,7 @@ async function verifyAndSetSession(requiredRole = 'admin') {
             console.debug('Server session expired, using local session');
         }
     } catch (err) {
-        console.log('Server verification failed, using local session');
+        console.log('Server verificatiofn failed, using local session');
     }
 
     // Set UI elements

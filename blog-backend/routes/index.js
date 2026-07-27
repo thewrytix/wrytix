@@ -10,6 +10,7 @@ const footballDataRoutes = require('./footballData');
 const exchangeRateRoutes = require('./exchangeRates');
 const categoryRoutes = require('./category');
 const contactRoutes = require('./contact');
+const headlineRoutes = require('./headline');
 
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.use(exchangeRateRoutes);
 router.use(marketDataRoutes);
 router.use('/standings', footballDataRoutes);
 router.use(contactRoutes);
+router.use(headlineRoutes);
 
 module.exports = router;

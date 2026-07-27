@@ -1,23 +1,6 @@
 const { User, PendingUser, PendingDeletion, Log } = require('../models');
 const { logAction } = require('../utils/logger');
 
-let headline = "Welcome to Wrytix – Tips, Stories, Tech & Lifestyle! 🚀 | Check out our latest post on boosting productivity | Don't miss our trending business hacks!";
-
-const getHeadline = (req, res) => {
-    res.json({ text: headline });
-};
-
-const updateHeadline = (req, res) => {
-    const { text } = req.body;
-    if (typeof text === "string" && text.trim() !== "") {
-        headline = text.trim();
-        logAction(req.session.user?.username, 'update-headline', headline);
-        return res.status(200).json({ message: "Headline updated successfully" });
-    }
-    logAction(req.session.user?.username, 'update-headline-failed', 'invalid input');
-    res.status(400).json({ error: "Invalid headline text" });
-};
-
 const approveUser = async (req, res) => {
     try {
         const { pendingUserId } = req.body;
@@ -253,11 +236,12 @@ const getLogs = async (req, res) => {
             query.actor = { $regex: req.query.actor, $options: 'i' };
         }
 
-        let logs = await Log.find(query).lean();
+        let logsQuery = Log.find(query).sort({ timestamp: -1 }); // newest-first at the source, per your last request
         if (req.query.limit) {
-            logs = logs.slice(0, parseInt(req.query.limit));
+            logsQuery = logsQuery.limit(parseInt(req.query.limit));
         }
 
+        const logs = await logsQuery.lean();
         res.json(logs);
     } catch (err) {
         await logAction(req.session.user?.username, 'logs-fetch-failed', 'system', {
@@ -281,8 +265,6 @@ const clearLogs = async (req, res) => {
 };
 
 module.exports = {
-    getHeadline,
-    updateHeadline,
     approveUser,
     approveUserById,
     createPendingDeletion,

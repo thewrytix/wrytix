@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const {
-    getHeadline,
-    updateHeadline,
     approveUser,
     approveUserById,
     createPendingDeletion,
@@ -19,8 +17,6 @@ const { getFileById } = require('../utils/fileHelpers');
 
 const router = express.Router();
 
-router.get('/headline', getHeadline);
-router.put('/headline', requireAdmin, updateHeadline);
 router.post('/approve-user', requireAdmin, approveUser);
 router.post('/pendingUsers/:id/approve', requireAdmin, approveUserById);
 router.post('/pendingDeletions', verifySession, createPendingDeletion);
