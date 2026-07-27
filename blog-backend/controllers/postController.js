@@ -334,6 +334,22 @@ const getTrendingPosts = async (req, res) => {
     }
 };
 
+// postController.js
+
+const getAllPostsLean = async (req, res) => {
+    try {
+        const posts = await Post.find()
+            .select('title slug category author schedule views featured')
+            .sort({ schedule: -1 })
+            .lean();
+
+        res.set('Cache-Control', 'private, max-age=15');
+        res.json(posts);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 const getRelatedPosts = async (req, res) => {
     try {
         const { slug } = req.params;
@@ -488,6 +504,7 @@ module.exports = {
     getRelatedPosts,
     getTrendingPosts,
     getPopularPosts,
+    getAllPostsLean,
     getDashboardStats,
     getHomepageCategoryPosts,
     incrementPostView,

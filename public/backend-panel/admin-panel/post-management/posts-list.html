@@ -208,15 +208,13 @@
     }
 
     async function loadPosts() {
-
         try {
-            const res = await fetch('https://wrytix.onrender.com/posts/all',{
+            const res = await fetch('https://wrytix.onrender.com/posts/all-lean', {
                 credentials: 'include'
             });
             if (!res.ok) throw new Error('Failed to load');
             allPosts = await res.json();
             renderPosts(allPosts);
-
         } catch (err) {
             console.error(err);
             allPosts = JSON.parse(localStorage.getItem('posts')) || [];

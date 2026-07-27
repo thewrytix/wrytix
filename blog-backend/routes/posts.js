@@ -8,6 +8,7 @@ const {
     getAllPosts,
     getPostBySlug,
     incrementPostView,
+    getAllPostsLean,
     createPost,
     updatePost,
     deletePost,
@@ -39,6 +40,7 @@ router.get('/posts/popular', getPopularPosts);
 router.get('/posts/:slug/related', getRelatedPosts);
 router.get('/posts/dashboard-stats', requireRole(['author', 'editor', 'admin']), getDashboardStats);
 router.get('/posts/all', requireRole(['author', 'editor', 'admin']), getAllPosts);
+router.get('/posts/all-lean', requireRole(['author', 'editor', 'admin']), getAllPostsLean);
 router.get('/posts/:slug', getPostBySlug);
 router.post('/posts/:slug/view', incrementPostView);
 router.post('/posts', requireRole(['editor', 'admin']), createPost);
