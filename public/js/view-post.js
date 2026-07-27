@@ -180,14 +180,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // Step 6: Fetch + render related posts — fetch call now inlined directly here, as requested
-    console.log("[related-posts] Fetching:", `${API_BASE}/posts/${slug}/related`); // TEMP DEBUG — confirms this code path runs
     const relatedList = document.getElementById("related-list");
     try {
         const relatedRes = await fetch(`${API_BASE}/posts/${slug}/related`);
-        console.log("[related-posts] Response status:", relatedRes.status); // TEMP DEBUG
         if (!relatedRes.ok) throw new Error(`API: ${relatedRes.status}`);
         const relatedPosts = await relatedRes.json();
-        console.log("[related-posts] Data:", relatedPosts); // TEMP DEBUG
 
         if (relatedList) {
             relatedList.innerHTML = relatedPosts.length > 0
@@ -197,7 +194,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 : "<li>No related posts found.</li>";
         }
     } catch (err) {
-        console.error("[related-posts] Failed to load:", err);
         if (relatedList) {
             relatedList.innerHTML = "<li>Unable to load related posts.</li>";
         }
