@@ -4,10 +4,10 @@ let allFilteredAds = [];
 
 function getAdPreview(ad) {
     try {
-        if (ad.type === 'image' && ad.file?.startsWith('data:image') && ad.file.length > 100) {
-            return `<img src="${ad.file}" alt="Ad Preview" style="max-width: 80px; max-height: 60px;" />`;
+        if (ad.type === 'image' && ad.file) {
+            return `<img src="${ad.file}" alt="Ad Preview" style="max-width: 80px; max-height: 60px;" loading="lazy" />`;
         }
-        if (ad.type === 'video' && ad.file?.startsWith('data:video')) {
+        if (ad.type === 'video' && ad.file) {
             return `<video src="${ad.file}" style="max-width:100px;max-height:60px;" muted autoplay loop></video>`;
         }
         if (ad.type === 'html' && ad.html) {
