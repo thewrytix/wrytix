@@ -187,8 +187,73 @@ const getPostBySlug = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+// postController.js
 
-// postController.js — new endpoints, each returns only what that view needs
+const getDashboardStats = async (req, res) => {
+    try {
+        const now = new Date();
+        const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        // Lean pool used only to compute dynamic view-thresholds (same logic as before, cheap fields only)
+        const allLean = await Post.find()
+            .select('title slug schedule views lastViewed')
+            .lean();
+
+        const total = allLean.length;
+        const live = allLean.filter(p => {
+            const d = new Date(p.schedule);
+            return !isNaN(d.getTime()) && d <= now;
+        }).length;
+        const scheduled = total - live;
+        const totalViews = allLean.reduce((sum, p) => sum + (p.views || 0), 0);
+
+        const getDynamicThreshold = (posts, percentage) => {
+            if (posts.length === 0) return 0;
+            const sorted = [...posts].sort((a, b) => b.views - a.views);
+            const index = Math.max(Math.floor(sorted.length * percentage), 0);
+            return sorted[index]?.views || 0;
+        };
+
+        const trendingThreshold = getDynamicThreshold(allLean, 0.1);
+        const popularThreshold = getDynamicThreshold(allLean, 0.05);
+
+        const isRecent = (post, cutoff) => {
+            const scheduleDate = new Date(post.schedule);
+            const lastViewed = post.lastViewed ? new Date(post.lastViewed) : null;
+            return scheduleDate >= cutoff || (lastViewed && lastViewed >= cutoff);
+        };
+
+        const trendingPosts = allLean
+            .filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 10);
+
+        const popularPosts = allLean
+            .filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 10);
+
+        const recentActivity = [...allLean]
+            .sort((a, b) => new Date(b.schedule) - new Date(a.schedule))
+            .slice(0, 5);
+
+        res.set('Cache-Control', 'private, max-age=30'); // short cache — admin data, not public CDN-cached
+        res.json({
+            total,
+            live,
+            scheduled,
+            trendingCount: trendingPosts.length,
+            popularCount: popularPosts.length,
+            totalViews,
+            trendingPosts,
+            popularPosts,
+            recentActivity
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+};
 
 const getFeaturedPosts = async (req, res) => {
     const posts = await Post.find({ featured: true, schedule: { $lte: new Date() } })
@@ -423,6 +488,7 @@ module.exports = {
     getRelatedPosts,
     getTrendingPosts,
     getPopularPosts,
+    getDashboardStats,
     getHomepageCategoryPosts,
     incrementPostView,
     createPost,

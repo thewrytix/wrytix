@@ -21,6 +21,7 @@ const {
     getPostsByCategory,
     getTrendingPosts,
     getPopularPosts,
+    getDashboardStats,
     getRelatedPosts,
 } = require('../controllers/postController');
 const { requireRole} = require('../middleware/auth');
@@ -36,6 +37,7 @@ router.get('/posts/category/:category', getPostsByCategory);
 router.get('/posts/trending', getTrendingPosts);
 router.get('/posts/popular', getPopularPosts);
 router.get('/posts/:slug/related', getRelatedPosts);
+router.get('/posts/dashboard-stats', requireRole(['author', 'editor', 'admin']), getDashboardStats);
 router.get('/posts/all', requireRole(['author', 'editor', 'admin']), getAllPosts);
 router.get('/posts/:slug', getPostBySlug);
 router.post('/posts/:slug/view', incrementPostView);
