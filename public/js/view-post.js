@@ -6,12 +6,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     const blogTemplate = `
                 <section class="blog-posts">
                     <article data-category="">
-                        <nav class="breadcrumbs" id="breadcrumbs"></nav>
-                        <h1 id="post-title"> </h1>
-                        <img id="post-thumbnail" src="" alt="" style="width:100%; max-height:400px; object-fit:cover; margin: 16px 0; border-radius: 8px;" >
-                        <p><strong>By <span id="post-author"></span> | <span id="post-date"></span></strong></p>
-                        <div id="post-content"> </div>
-                        <div class="source">Source: <span id="post-source"> </span></div>
+                        <nav class="breadcrumbs" id="breadcrumbs">
+                            <div class="text-skeleton skeleton" style="width:220px;height:16px;"></div>
+                        </nav>
+                        <h1 id="post-title">
+                            <div class="text-skeleton skeleton" style="width:80%;height:32px;"></div>
+                        </h1>
+                        <div id="post-thumbnail-wrapper" class="image-skeleton skeleton" style="width:100%;height:400px;border-radius:8px;margin:16px 0;overflow:hidden;">
+                            <img id="post-thumbnail" src="" alt="" style="display:none;width:100%; max-height:400px; object-fit:cover; border-radius: 8px;">
+                        </div>
+                        <p>
+                            <strong>
+                                By <span id="post-author"><span class="text-skeleton skeleton" style="width:80px;display:inline-block;height:14px;"></span></span>
+                                | <span id="post-date"><span class="text-skeleton skeleton" style="width:100px;display:inline-block;height:14px;"></span></span>
+                            </strong>
+                        </p>
+                        <div id="post-content">
+                            <div class="text-skeleton skeleton" style="width:100%;height:20px;margin-bottom:10px;"></div>
+                            <div class="text-skeleton skeleton" style="width:95%;height:20px;margin-bottom:10px;"></div>
+                            <div class="text-skeleton skeleton" style="width:90%;height:20px;margin-bottom:10px;"></div>
+                            <div class="text-skeleton skeleton" style="width:97%;height:20px;margin-bottom:10px;"></div>
+                            <div class="text-skeleton skeleton" style="width:60%;height:20px;"></div>
+                        </div>
+                        <div class="source">Source: <span id="post-source"></span></div>
                     </article>
 
                     <div class="share-post">
@@ -92,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
         }
 
-        // Step 2: Render the post
+        // Step 2: Render the post — assigning textContent/innerHTML naturally clears skeleton markup
         document.title = post.title;
         document.getElementById("post-title").textContent = post.title;
         document.getElementById("post-author").textContent = post.author || "Unknown";
@@ -100,8 +117,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             ? new Date(post.schedule).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
             : "N/A";
 
+        // Thumbnail: swap skeleton wrapper for the real image
+        const thumbWrapper = document.getElementById("post-thumbnail-wrapper");
+        const thumbImg = document.getElementById("post-thumbnail");
         if (post.thumbnail) {
-            document.getElementById("post-thumbnail").src = post.thumbnail;
+            thumbImg.src = post.thumbnail;
+            thumbImg.onload = () => {
+                thumbWrapper.classList.remove('skeleton', 'image-skeleton');
+                thumbWrapper.style.background = 'none';
+                thumbImg.style.display = 'block';
+            };
+        } else {
+            thumbWrapper.classList.remove('skeleton', 'image-skeleton');
+            thumbWrapper.style.background = 'none';
+            thumbWrapper.style.height = 'auto';
         }
 
         document.getElementById("post-content").innerHTML = post.content;
@@ -177,9 +206,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         console.error("Error loading post:", error);
         document.getElementById("post-title").textContent = "Failed to load post";
         document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
+        document.getElementById("post-thumbnail-wrapper").classList.remove('skeleton', 'image-skeleton');
     }
 
-    // Step 6: Fetch + render related posts — fetch call now inlined directly here, as requested
+    // Step 6: Fetch + render related posts
     const relatedList = document.getElementById("related-list");
     try {
         const relatedRes = await fetch(`${API_BASE}/posts/${slug}/related`);

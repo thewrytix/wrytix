@@ -10,11 +10,12 @@ const buildAdminStats = async () => {
     const now = new Date();
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const [posts, ads, userCount, pendingUserCount] = await Promise.all([
+    const [posts, ads, users, pendingUserCount] = await Promise.all([
         Post.find().select('title slug schedule views lastViewed').lean(),
-        Ad.find().select('active endDate').lean(),
-        User.countDocuments(),
+        Ad.find().select('type company category active startDate endDate').lean(),
+        User.find().select('status role').lean(),
         PendingUser.countDocuments()
     ]);
 
@@ -39,6 +40,44 @@ const buildAdminStats = async () => {
     const recentActivity = [...posts]
         .sort((a, b) => new Date(b.schedule) - new Date(a.schedule)).slice(0, 5);
 
+    // Ads: recent 5 + expiring within 7 days
+    const recentAds = [...ads]
+        .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+        .slice(0, 5)
+        .map(ad => ({
+            type: ad.type,
+            company: ad.company,
+            category: ad.category,
+            status: new Date(ad.endDate) < now ? 'Expired' : (ad.active ? 'Active' : 'Inactive'),
+            startDate: ad.startDate,
+            endDate: ad.endDate
+        }));
+
+    const expiringAds = ads
+        .filter(ad => {
+            const end = new Date(ad.endDate);
+            return end >= now && end <= sevenDaysFromNow;
+        })
+        .map(ad => {
+            const daysLeft = Math.ceil((new Date(ad.endDate) - now) / (1000 * 60 * 60 * 24));
+            return {
+                company: ad.company,
+                type: ad.type,
+                category: ad.category,
+                endsIn: daysLeft === 0 ? 'Today' : `${daysLeft} day(s)`,
+                endDate: ad.endDate
+            };
+        })
+        .sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+
+    // Users: role + status breakdown
+    const usersByRole = {
+        viewer: users.filter(u => u.role === 'viewer').length,
+        author: users.filter(u => u.role === 'author').length,
+        editor: users.filter(u => u.role === 'editor').length,
+        admin: users.filter(u => u.role === 'admin').length
+    };
+
     return {
         role: 'admin',
         totalPosts: posts.length,
@@ -50,12 +89,19 @@ const buildAdminStats = async () => {
         trendingPosts,
         popularPosts,
         recentActivity,
-        totalUsers: userCount,
+
+        totalUsers: users.length,
+        activeUsers: users.filter(u => u.status === 'active').length,
+        inactiveUsers: users.filter(u => u.status === 'inactive').length,
         pendingUsers: pendingUserCount,
+        usersByRole,
+
         totalAds: ads.length,
         activeAds: ads.filter(a => a.active).length,
         inactiveAds: ads.filter(a => !a.active).length,
-        expiredAds: ads.filter(a => new Date(a.endDate) < now).length
+        expiredAds: ads.filter(a => new Date(a.endDate) < now).length,
+        recentAds,
+        expiringAds
     };
 };
 

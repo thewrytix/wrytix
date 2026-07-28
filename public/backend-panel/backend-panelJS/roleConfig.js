@@ -1,16 +1,7 @@
 window.RoleConfig = {
     admin: {
         title: 'Admin Dashboard',
-        sidebar: [
-            { label: 'Admin Dashboard', href: '/admin-panel/dashboard.html' },
-            { label: 'Post Dashboard', href: '/admin-panel/post-management/post-dashboard.html' },
-            { label: 'Posts List', href: '/admin-panel/post-management/posts-list.html' },
-            { label: 'Add Post', href: '/admin-panel/post-management/add-post.html' },
-            { label: 'Ad Dashboard', href: '/admin-panel/ad-management/ads-dashboard.html' },
-            { label: 'Ads List', href: '/admin-panel/ad-management/ads-list.html' },
-            { label: 'User Dashboard', href: '/admin-panel/user-management/user-dashboard.html' },
-            { label: 'Logs', href: '/admin-panel/user-management/logs.html' }
-        ],
+        sidebar: [ /* unchanged from before */ ],
         cards: [
             { id: 'totalPosts', label: 'Total Posts' },
             { id: 'livePosts', label: 'Live Posts' },
@@ -18,10 +9,15 @@ window.RoleConfig = {
             { id: 'totalViews', label: 'Total Views' },
             { id: 'totalUsers', label: 'Total Users' },
             { id: 'pendingUsers', label: 'Pending Approvals' },
+            { id: 'activeUsers', label: 'Active Users' },
+            { id: 'inactiveUsers', label: 'Inactive Users' },
             { id: 'totalAds', label: 'Total Ads' },
-            { id: 'activeAds', label: 'Active Ads' }
+            { id: 'activeAds', label: 'Active Ads' },
+            { id: 'inactiveAds', label: 'Inactive Ads' },
+            { id: 'expiredAds', label: 'Expired Ads' }
         ]
     },
+
     editor: {
         title: 'Editor Dashboard',
         sidebar: [

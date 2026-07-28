@@ -390,6 +390,49 @@
     color: var(--text-color);
 }
 
+
+     /* Reusable version of #recentActivity styling, for multiple list-sections per page */
+     .dashboard-list-section {
+         margin-top: 30px;
+         background: var(--neutral-color);
+         padding: 15px;
+         border-radius: 10px;
+         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+         max-width: 600px;
+         width: 100%;
+         max-height: 300px;
+         overflow-y: auto;
+     }
+
+     .dashboard-list-section h2 {
+         margin-bottom: 15px;
+         font-size: 1.5rem;
+         color: var(--primary-color);
+     }
+
+     .dashboard-list-section ul {
+         list-style: none;
+     }
+
+     .dashboard-list-section ul li {
+         padding: 12px 0;
+         border-bottom: 1px solid var(--neutral-color);
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+     }
+
+     .dashboard-list-section ul li:last-child {
+         border-bottom: none;
+     }
+
+     /* Layout wrapper so multiple list-sections sit side by side on wide screens */
+     .dashboard-sidebar-lists {
+         display: grid;
+         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+         gap: 1.5rem;
+         margin-top: 1rem;
+     }
      /* ====== Forms ====== */
 
 form label {
