@@ -1,0 +1,124 @@
+const { Post, Ad, User, PendingUser, PostSubmission } = require('../models');
+
+const getDynamicThreshold = (posts, percentage) => {
+    if (posts.length === 0) return 0;
+    const sorted = [...posts].sort((a, b) => b.views - a.views);
+    return sorted[Math.max(Math.floor(sorted.length * percentage), 0)]?.views || 0;
+};
+
+const buildAdminStats = async () => {
+    const now = new Date();
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [posts, ads, userCount, pendingUserCount] = await Promise.all([
+        Post.find().select('title slug schedule views lastViewed').lean(),
+        Ad.find().select('active endDate').lean(),
+        User.countDocuments(),
+        PendingUser.countDocuments()
+    ]);
+
+    const live = posts.filter(p => new Date(p.schedule) <= now).length;
+    const trendingThreshold = getDynamicThreshold(posts, 0.1);
+    const popularThreshold = getDynamicThreshold(posts, 0.05);
+
+    const isRecent = (p, cutoff) => {
+        const d = new Date(p.schedule);
+        const lv = p.lastViewed ? new Date(p.lastViewed) : null;
+        return d >= cutoff || (lv && lv >= cutoff);
+    };
+
+    const trendingPosts = posts
+        .filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
+        .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+
+    const popularPosts = posts
+        .filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
+        .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+
+    const recentActivity = [...posts]
+        .sort((a, b) => new Date(b.schedule) - new Date(a.schedule)).slice(0, 5);
+
+    return {
+        role: 'admin',
+        totalPosts: posts.length,
+        livePosts: live,
+        scheduledPosts: posts.length - live,
+        totalViews: posts.reduce((s, p) => s + (p.views || 0), 0),
+        trendingCount: trendingPosts.length,
+        popularCount: popularPosts.length,
+        trendingPosts,
+        popularPosts,
+        recentActivity,
+        totalUsers: userCount,
+        pendingUsers: pendingUserCount,
+        totalAds: ads.length,
+        activeAds: ads.filter(a => a.active).length,
+        inactiveAds: ads.filter(a => !a.active).length,
+        expiredAds: ads.filter(a => new Date(a.endDate) < now).length
+    };
+};
+
+const buildEditorStats = async () => {
+    const now = new Date();
+
+    const [posts, submissions] = await Promise.all([
+        Post.find().select('title slug schedule views').lean(),
+        PostSubmission.find().select('title status submittedBy createdAt').lean()
+    ]);
+
+    const live = posts.filter(p => new Date(p.schedule) <= now).length;
+    const topViewed = [...posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+    const recentSubmissions = [...submissions]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
+    return {
+        role: 'editor',
+        totalPosts: posts.length,
+        livePosts: live,
+        scheduledPosts: posts.length - live,
+        totalViews: posts.reduce((s, p) => s + (p.views || 0), 0),
+        pendingApprovals: submissions.filter(s => s.status === 'pending').length,
+        topViewed,
+        recentSubmissions
+    };
+};
+
+const buildAuthorStats = async (username) => {
+    const [mySubmissions, myPublished] = await Promise.all([
+        PostSubmission.find({ submittedBy: username })
+            .select('title status createdAt').lean(),
+        Post.find({ submittedBy: username })
+            .select('title slug views schedule').lean()
+    ]);
+
+    return {
+        role: 'author',
+        totalPosts: mySubmissions.length + myPublished.length,
+        approved: myPublished.length,
+        pending: mySubmissions.filter(s => s.status === 'pending').length,
+        rejected: mySubmissions.filter(s => s.status === 'rejected').length,
+        myPosts: myPublished
+    };
+};
+
+const getDashboardStats = async (req, res) => {
+    try {
+        const user = req.session.user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        let stats;
+        if (user.role === 'admin') stats = await buildAdminStats();
+        else if (user.role === 'editor') stats = await buildEditorStats();
+        else if (user.role === 'author') stats = await buildAuthorStats(user.username);
+        else return res.status(403).json({ error: 'Forbidden' });
+
+        res.set('Cache-Control', 'private, max-age=30');
+        res.json(stats);
+    } catch (err) {
+        console.error('Dashboard stats error:', err);
+        res.status(500).json({ error: 'Failed to load dashboard stats' });
+    }
+};
+
+module.exports = { getDashboardStats };
