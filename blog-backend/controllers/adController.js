@@ -51,7 +51,7 @@ const createAd = async (req, res) => {
 const getAds = async (req, res) => {
     try {
         const ads = await Ad.find()
-            .select('type category position startDate endDate link company html text file thumbnail active')
+            .select('id type category position startDate endDate link company html text file thumbnail active')
             .lean();
         res.set('Cache-Control', 'public, max-age=60');
         res.json(ads);
