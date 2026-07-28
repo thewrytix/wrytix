@@ -20,6 +20,7 @@ const router = express.Router();
 
 
 router.use(authRoutes);
+router.use(headlineRoutes);
 router.use(postRoutes);
 router.use(userRoutes);
 router.use(categoryRoutes);
@@ -30,6 +31,6 @@ router.use(exchangeRateRoutes);
 router.use(marketDataRoutes);
 router.use('/standings', footballDataRoutes);
 router.use(contactRoutes);
-router.use(headlineRoutes);
+
 
 module.exports = router;
