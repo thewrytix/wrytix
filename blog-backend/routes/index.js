@@ -11,7 +11,7 @@ const exchangeRateRoutes = require('./exchangeRates');
 const categoryRoutes = require('./category');
 const contactRoutes = require('./contact');
 const headlineRoutes = require('./headline');
-
+const dashboardRoutes = require('./dashboard');
 
 const router = express.Router();
 
@@ -22,6 +22,7 @@ const router = express.Router();
 router.use(authRoutes);
 router.use(headlineRoutes);
 router.use(postRoutes);
+router.use(dashboardRoutes);
 router.use(userRoutes);
 router.use(categoryRoutes);
 router.use(adRoutes);
