@@ -20,46 +20,48 @@ const UserSchema = new Schema({
     approvedAt: { type: Date },
 });
 
-const PostSchema = new Schema({
+const PostSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     slug: { type: String, required: true, unique: true },
     title: { type: String, required: true },
     author: { type: String, required: true }, // Add author
     category: { type: String, required: true }, // Add category
-    thumbnail: { type: String }, // Add for base64 thumbnail
+    thumbnail: { type: String, required: true }, // Add for base64 thumbnail
     content: { type: String, required: true }, // Make content required
-    source: { type: String }, // Add source
     excerpt: { type: String, maxlength: 200 }, // NEW: Optional summary for meta descriptions
-    featured: { type: Boolean, default: false }, // Add featured
+    source: { type: String, required: true },
+    featured: { type: Boolean, default: false }, //
     schedule: { type: Date },
+    submittedBy: { type: String },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date }, // NEW: Add this to match your pre-save hook
-    submittedBy: { type: String },
     isPublished: { type: Boolean, default: false },
     approvedBy: { type: String },
     approvedAt: { type: Date },
     views: { type: Number, default: 0 },
     lastViewed: { type: Date },
+
 });
 
 
-
-const AdSchema = new Schema({
+const AdSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
-    type: { type: String },
-    category: { type: String },
+    type: { type: String, enum: ['image', 'video', 'embed', 'text'], required: true },
+    content: { type: String }, // optional now
+    link: { type: String },
+    html: { type: String },
+    text: { type: String},
+    file: { type: String },
+    category: { type: String, required: true },
     position: { type: String},
-    startDate: { type: Date },
-    endDate: { type: Date },
-    link: { type: String, default: '' },
     company: { type: String, default: '' },
-    html: { type: String, default: '' },
-    text: { type: String, default: '' },
-    file: { type: String, default: '' },
-    active: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date },
+    thumbnail: { type: String },
+    active: { type: Boolean, default: true },
+    startDate: { type: Date, default: Date.now },
+    endDate: { type: Date },
+    createdAt: { type: Date, default: Date.now }
 });
+
 
 const CommentSchema = new Schema({
     slug: { type: String, required: true },
