@@ -152,6 +152,16 @@ const CategorySchema = new Schema({
 });
 
 
+//Headline Schema
+const HeadlineSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    link: { type: String },
+    category: { type: String },
+    active: { type: Boolean, default: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+
 module.exports = {
     User: mongoose.model('User', UserSchema),
     Post: mongoose.model('Post', PostSchema),
@@ -161,5 +171,6 @@ module.exports = {
     PendingDeletion: mongoose.model('PendingDeletion', PendingDeletionSchema),
     PostSubmission: mongoose.model('PostSubmission', PostSubmissionSchema),
     Log: mongoose.model('Log', LogSchema),
-    Category: mongoose.model('Category', CategorySchema) // ✅ new Category model
+    Category: mongoose.model('Category', CategorySchema),// ✅ new Category model
+    Headline: mongoose.model('Headline', HeadlineSchema)
 };
