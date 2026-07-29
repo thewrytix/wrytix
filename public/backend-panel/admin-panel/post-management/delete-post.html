@@ -101,7 +101,7 @@
 
   async function loadPosts() {
     try {
-      const res = await fetch('https://wrytix.onrender.com/posts/all',{
+      const res = await fetch('https://wrytix.onrender.com/posts/all-lean',{
         credentials: 'include'
       });
       allPosts = await res.json();
