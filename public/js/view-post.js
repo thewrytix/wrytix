@@ -15,12 +15,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div id="post-thumbnail-wrapper" class="image-skeleton skeleton" style="width:100%;height:400px;border-radius:8px;margin:16px 0;overflow:hidden;">
                             <img id="post-thumbnail" src="" alt="" style="display:none;width:100%; max-height:400px; object-fit:cover; border-radius: 8px;">
                         </div>
-                        <p>
-                            <strong>
-                                By <span id="post-author"><span class="text-skeleton skeleton" style="width:80px;display:inline-block;height:14px;"></span></span>
-                                | <span id="post-date"><span class="text-skeleton skeleton" style="width:100px;display:inline-block;height:14px;"></span></span>
-                            </strong>
+
+                        <p id="post-meta-line" style="display:none;">
+                            <strong>By <span id="post-author"></span> | <span id="post-date"></span></strong>
                         </p>
+                        <p id="post-meta-skeleton">
+                            <span class="text-skeleton skeleton" style="width:180px;height:16px;display:inline-block;"></span>
+                        </p>
+
                         <div id="post-content">
                             <div class="text-skeleton skeleton" style="width:100%;height:20px;margin-bottom:10px;"></div>
                             <div class="text-skeleton skeleton" style="width:95%;height:20px;margin-bottom:10px;"></div>
@@ -28,7 +30,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <div class="text-skeleton skeleton" style="width:97%;height:20px;margin-bottom:10px;"></div>
                             <div class="text-skeleton skeleton" style="width:60%;height:20px;"></div>
                         </div>
-                        <div class="source">Source: <span id="post-source"></span></div>
+
+                        <div class="source" id="post-source-line" style="display:none;">Source: <span id="post-source"></span></div>
                     </article>
 
                     <div class="share-post">
@@ -109,13 +112,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             desc = post.content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
         }
 
-        // Step 2: Render the post — assigning textContent/innerHTML naturally clears skeleton markup
+        // Step 2: Render the post
         document.title = post.title;
         document.getElementById("post-title").textContent = post.title;
+
+        // Meta line (By / date): swap skeleton for real content
         document.getElementById("post-author").textContent = post.author || "Unknown";
         document.getElementById("post-date").textContent = post.schedule
             ? new Date(post.schedule).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
             : "N/A";
+        document.getElementById("post-meta-skeleton").style.display = "none";
+        document.getElementById("post-meta-line").style.display = "block";
 
         // Thumbnail: swap skeleton wrapper for the real image
         const thumbWrapper = document.getElementById("post-thumbnail-wrapper");
@@ -172,6 +179,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             twitterImg.setAttribute('content', post.thumbnail || '');
         }
 
+        // Source line: swap skeleton for real content
         const sourceEl = document.getElementById("post-source");
         if (post.source && post.source.startsWith('http')) {
             sourceEl.innerHTML = `<a href="${post.source}" target="_blank">${post.source}</a>`;
@@ -180,6 +188,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             sourceEl.textContent = "N/A";
         }
+        document.getElementById("post-source-line").style.display = "block";
 
         // Step 3: Render breadcrumbs
         const breadcrumbsContainer = document.getElementById("breadcrumbs");
@@ -207,6 +216,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("post-title").textContent = "Failed to load post";
         document.getElementById("post-content").innerHTML = "<p>Unable to retrieve post content.</p>";
         document.getElementById("post-thumbnail-wrapper").classList.remove('skeleton', 'image-skeleton');
+        document.getElementById("post-meta-skeleton").style.display = "none";
     }
 
     // Step 6: Fetch + render related posts
