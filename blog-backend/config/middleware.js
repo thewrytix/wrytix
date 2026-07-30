@@ -34,7 +34,7 @@ const corsOptions = {
         "https://wrytix.netlify.app",
         "https://wry-tix.com",
         "https://www.wry-tix.com",
-        "http://localhost:5500"
+        "http://localhost:63342"
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

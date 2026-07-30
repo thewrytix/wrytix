@@ -428,24 +428,6 @@ const incrementPostView = async (req, res) => {
 };
 
 
-const createPostSubmission = async (req, res) => {
-    try {
-        const newPost = {
-            id: Date.now().toString(),
-            ...req.body,
-            status: 'pending',
-            submittedBy: req.session.user.username,
-            editorComments: '',
-            createdAt: new Date()
-        };
-        await PostSubmission.create(newPost);
-        await logAction(req.session.user.username, 'post-submitted', newPost.title);
-        res.status(201).json({ message: 'Post submitted for approval', post: newPost });
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to submit post' });
-    }
-};
-
 const getPostSubmissions = async (req, res) => {
     const submissions = await PostSubmission.find().lean();
     res.json(submissions);
@@ -462,11 +444,21 @@ const updatePostSubmission = async (req, res) => {
         const submission = await PostSubmission.findOne({ id: req.params.id }).lean();
         if (!submission) return res.status(404).json({ error: 'Submission not found' });
 
+        const user = req.session.user;
+
+        // Editors can only act on submissions assigned to them; admin can act on any
+        if (user.role === 'editor' && submission.assignedEditor !== user.username) {
+            await logAction(user.username, 'post-approval-denied', submission.title, {
+                reason: 'Not assigned to this editor'
+            });
+            return res.status(403).json({ error: 'This submission is not assigned to you' });
+        }
+
         const update = req.body;
         await PostSubmission.updateOne({ id: req.params.id }, update);
 
         const logType = update.status === 'approved' ? 'post-approved' : update.status === 'rejected' ? 'post-rejected' : 'post-updated';
-        await logAction(req.session.user.username, logType, submission.title);
+        await logAction(user.username, logType, submission.title);
 
         if (update.status === 'approved') {
             const finalPost = { ...submission, ...update, isPublished: new Date(submission.schedule) <= new Date() };
@@ -494,9 +486,199 @@ const deletePostSubmission = async (req, res) => {
     }
 };
 
+// Author submits a post — route to their lineManager, or admin if none
+const createPostSubmission = async (req, res) => {
+    try {
+        const author = req.session.user;
+        const authorRecord = await User.findOne({ username: author.username }).lean();
+
+        const newSubmission = {
+            id: Date.now().toString(),
+            ...req.body,
+            status: 'pending',
+            submittedBy: author.username,
+            assignedEditor: authorRecord?.lineManager || null, // null = falls to admin, per spec
+            editorComments: '',
+            createdAt: new Date()
+        };
+
+        await PostSubmission.create(newSubmission);
+        await logAction(author.username, 'post-submitted', newSubmission.title, {
+            assignedEditor: newSubmission.assignedEditor || 'admin (no line manager)'
+        });
+
+        res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to submit post' });
+    }
+};
+
+// Editor's approval queue — only their assigned authors' submissions; admin sees everything + unassigned
+const getPendingApproval = async (req, res) => {
+    try {
+        const user = req.session.user;
+        let query = { status: 'pending' };
+
+        if (user.role === 'editor') {
+            // Editor sees: submissions explicitly assigned to them
+            query.assignedEditor = user.username;
+        }
+        // Admin: no additional filter — sees everything, including assignedEditor: null
+
+        const submissions = await PostSubmission.find(query)
+            .select('title submittedBy assignedEditor category createdAt status')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json(submissions);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load pending approvals' });
+    }
+};
+
+// Author's own posts — both submissions and published, server-filtered (no client-side filtering of /posts/all anymore)
+const getMyPosts = async (req, res) => {
+    try {
+        const username = req.session.user.username;
+
+        const [submissions, published] = await Promise.all([
+            PostSubmission.find({ submittedBy: username })
+                .select('title status createdAt category editorComments')
+                .sort({ createdAt: -1 })
+                .lean(),
+            Post.find({ submittedBy: username })
+                .select('title slug views schedule category')
+                .sort({ schedule: -1 })
+                .lean()
+        ]);
+
+        res.json({ submissions, published });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load your posts' });
+    }
+};
+
+const getManagedPosts = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const { status = 'all', page = 1, search = '', category = '', author = '' } = req.query;
+        const limit = 20;
+        const skip = (parseInt(page) - 1) * limit;
+        const now = new Date();
+
+        // "pending" pulls from PostSubmission; everything else pulls from Post
+        if (status === 'pending') {
+            let query = { status: 'pending' };
+
+            if (user.role === 'editor') query.assignedEditor = user.username;
+            if (user.role === 'author') query.submittedBy = user.username;
+            // admin: no extra filter — sees everything including unassigned
+
+            if (search) query.title = { $regex: search, $options: 'i' };
+            if (category) query.category = category;
+            if (author && user.role !== 'author') query.submittedBy = author;
+
+            const [items, total] = await Promise.all([
+                PostSubmission.find(query)
+                    .select('title slug category submittedBy assignedEditor createdAt status')
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                PostSubmission.countDocuments(query)
+            ]);
+
+            return res.json({
+                items: items.map(i => ({ ...i, source: 'submission' })),
+                total,
+                page: parseInt(page),
+                totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        // Published posts: all / live / scheduled
+        let query = {};
+        if (user.role === 'author') query.submittedBy = user.username;
+
+        if (status === 'live') query.schedule = { $lte: now };
+        if (status === 'scheduled') query.schedule = { $gt: now };
+
+        if (search) query.title = { $regex: search, $options: 'i' };
+        if (category) query.category = category;
+        if (author && user.role !== 'author') query.author = author;
+
+        const [items, total] = await Promise.all([
+            Post.find(query)
+                .select('title slug category author schedule views featured')
+                .sort({ schedule: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Post.countDocuments(query)
+        ]);
+
+        res.json({
+            items: items.map(i => ({ ...i, source: 'post' })),
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        console.error('getManagedPosts error:', err);
+        res.status(500).json({ error: 'Failed to load posts' });
+    }
+};
+
+const bulkDeletePosts = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const { items } = req.body; // [{ slug, source: 'post' }, { slug, source: 'submission' }]
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'No items provided' });
+        }
+
+        const postSlugs = items.filter(i => i.source === 'post').map(i => i.slug);
+        const submissionSlugs = items.filter(i => i.source === 'submission').map(i => i.slug);
+
+        let deletedPosts = 0;
+        let deletedSubmissions = 0;
+
+        if (postSlugs.length > 0) {
+            let filter = { slug: { $in: postSlugs } };
+            if (user.role === 'author') filter.submittedBy = user.username; // authors can only delete their own
+
+            const result = await Post.deleteMany(filter);
+            deletedPosts = result.deletedCount;
+        }
+
+        if (submissionSlugs.length > 0) {
+            let filter = { slug: { $in: submissionSlugs } };
+            if (user.role === 'author') filter.submittedBy = user.username;
+            if (user.role === 'editor') filter.assignedEditor = user.username;
+
+            const result = await PostSubmission.deleteMany(filter);
+            deletedSubmissions = result.deletedCount;
+        }
+
+        await logAction(user.username, 'bulk-delete-posts', 'multiple', {
+            deletedPosts, deletedSubmissions
+        });
+
+        res.json({ message: 'Bulk delete complete', deletedPosts, deletedSubmissions });
+    } catch (err) {
+        console.error('bulkDeletePosts error:', err);
+        res.status(500).json({ error: 'Bulk delete failed' });
+    }
+};
+
+
 
 module.exports = {
-    getPosts,
+    getManagedPosts,
+    bulkDeletePosts,
+    getMyPosts,
+    getPendingApproval,
     getAllPosts,
     getPostBySlug,
     getFeaturedPosts,
@@ -515,5 +697,6 @@ module.exports = {
     getPostSubmissions,
     getPostSubmissionById,
     updatePostSubmission,
-    deletePostSubmission
+    deletePostSubmission,
+    getPosts,
 };

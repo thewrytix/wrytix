@@ -9,6 +9,9 @@ const UserSchema = new mongoose.Schema({
     pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
     role: { type: String, enum: ['admin', 'editor', 'author', 'viewer'], default: 'viewer' },
     status: { type: String, enum: ['active', 'inactive', 'pending', 'suspended'], default: 'pending' },
+    assignedCategories: { type: [String], default: [] },  // e.g. ['news','sports'] — for editors
+    lineManager: { type: String, default: null },           // username of assigned editor — for authors
+    createdBy: { type: String, default: null },               // username of editor who submitted this PendingUser, if any
     createdAt: { type: Date, default: Date.now },
     pdfFilename: { type: String },
     pdfOriginalName: { type: String }

@@ -215,6 +215,43 @@ const getPendingUserById = async (req, res) => {
     res.json(safeUser);
 };
 
+// Editor submits a new user for approval (author role only, per spec)
+const submitPendingUser = async (req, res) => {
+    try {
+        const editor = req.session.user;
+
+        if (editor.role === 'editor' && req.body.role !== 'author') {
+            return res.status(403).json({ error: 'Editors can only submit users with the author role' });
+        }
+
+        const newPendingUser = {
+            ...req.body,
+            createdBy: editor.username,
+            status: 'pending',
+            createdAt: new Date()
+        };
+
+        await PendingUser.create(newPendingUser);
+        await logAction(editor.username, 'user-submission-created', req.body.username || req.body.email);
+
+        res.status(201).json({ message: 'User submitted for approval' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to submit user' });
+    }
+};
+
+// Editor's own submissions view — "view only the users they have submitted"
+const getMyPendingUsers = async (req, res) => {
+    try {
+        const editor = req.session.user;
+        const pending = await PendingUser.find({ createdBy: editor.username })
+            .select('username email role status createdAt')
+            .lean();
+        res.json(pending);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load your submitted users' });
+    }
+};
 const createPendingUser = async (req, res) => {
     try {
         const { fullName, username, email, password, role } = req.body;
@@ -332,6 +369,53 @@ const deletePendingUser = async (req, res) => {
     }
 };
 
+// controllers/userController.js
+const assignLineManager = async (req, res) => {
+    try {
+        const { username, lineManager } = req.body; // lineManager = editor's username, or null to unassign
+
+        const author = await User.findOne({ username });
+        if (!author || author.role !== 'author') {
+            return res.status(400).json({ error: 'Target user must be an author' });
+        }
+
+        if (lineManager) {
+            const editor = await User.findOne({ username: lineManager });
+            if (!editor || editor.role !== 'editor') {
+                return res.status(400).json({ error: 'lineManager must be an existing editor' });
+            }
+        }
+
+        author.lineManager = lineManager || null;
+        await author.save();
+
+        await logAction(req.session.user.username, 'author-assigned', username, { lineManager });
+        res.json({ message: 'Line manager assigned', author });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to assign line manager' });
+    }
+};
+
+const assignEditorCategories = async (req, res) => {
+    try {
+        const { username, categories } = req.body; // categories = array of strings
+
+        const editor = await User.findOne({ username });
+        if (!editor || editor.role !== 'editor') {
+            return res.status(400).json({ error: 'Target user must be an editor' });
+        }
+
+        editor.assignedCategories = Array.isArray(categories) ? categories : [];
+        await editor.save();
+
+        await logAction(req.session.user.username, 'editor-categories-assigned', username, { categories });
+        res.json({ message: 'Categories assigned', editor });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to assign categories' });
+    }
+};
+
+
 module.exports = {
     getUsers,
     getUserById,
@@ -341,5 +425,9 @@ module.exports = {
     getPendingUsers,
     getPendingUserById,
     createPendingUser,
-    deletePendingUser
+    deletePendingUser,
+    submitPendingUser,
+    getMyPendingUsers,
+    assignLineManager,
+    assignEditorCategories
 };

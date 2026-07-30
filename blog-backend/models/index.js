@@ -163,6 +163,31 @@ const HeadlineSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+const VisitSchema = new mongoose.Schema({
+    path: String,              // e.g. '/posts/some-slug' or '/'
+    userId: { type: String, default: null }, // null = anonymous
+    ip: String,
+    userAgent: String,
+    timestamp: { type: Date, default: Date.now }
+});
+
+const MaintenanceTaskSchema = new mongoose.Schema({
+    title: String,
+    description: String,
+    priority: { type: String, enum: ['low', 'medium', 'urgent'], default: 'medium' },
+    status: { type: String, enum: ['open', 'done'], default: 'open' },
+    createdBy: String,
+    createdAt: { type: Date, default: Date.now }
+});
+
+const SystemConfigSchema = new mongoose.Schema({
+    maintenanceMode: { type: Boolean, default: false },
+    updatedBy: String,
+    updatedAt: { type: Date, default: Date.now }
+});
+
+
+
 
 module.exports = {
     User: mongoose.model('User', UserSchema),
@@ -173,6 +198,9 @@ module.exports = {
     PendingDeletion: mongoose.model('PendingDeletion', PendingDeletionSchema),
     PostSubmission: mongoose.model('PostSubmission', PostSubmissionSchema),
     Log: mongoose.model('Log', LogSchema),
-    Category: mongoose.model('Category', CategorySchema),// ✅ new Category model
-    Headline: mongoose.model('Headline', HeadlineSchema)
+    Category: mongoose.model('Category', CategorySchema),
+    Headline: mongoose.model('Headline', HeadlineSchema),
+    Visit: mongoose.model('Visit', VisitSchema),
+    MaintenanceTask:mongoose.model('MaintenanceTask', MaintenanceTaskSchema) ,
+    SystemConfig: mongoose.model('SystemConfig', SystemConfigSchema),
 };

@@ -1,4 +1,8 @@
 const { logAction } = require('../utils/logger');
+const { SystemConfig } = require('../models');
+
+
+
 
 const verifySession = (req, res, next) => {
     if (req.session && req.session.user) {
@@ -55,4 +59,25 @@ const requireEditorOrAdmin = (req, res, next) => {
     return res.status(403).json({ error: 'Forbidden' });
 };
 
-module.exports = { verifySession, requireRole, requireAdmin, requireLogin, requireEditorOrAdmin };
+const blockIfMaintenanceMode = async (req, res, next) => {
+    try {
+        const user = req.session?.user;
+        if (user && ['admin', 'viewer'].includes(user.role)) {
+            return next(); // admin and viewer always allowed
+        }
+
+        const config = await SystemConfig.findOne().lean();
+        if (config?.maintenanceMode) {
+            return res.status(503).json({
+                error: 'The admin panel is currently under maintenance. Please try again later.'
+            });
+        }
+
+        next();
+    } catch (err) {
+        // Fail open rather than lock everyone out if this check itself errors
+        console.error('Maintenance mode check failed:', err);
+        next();
+    }
+};
+module.exports = { verifySession, requireRole, requireAdmin, requireLogin, requireEditorOrAdmin, blockIfMaintenanceMode };

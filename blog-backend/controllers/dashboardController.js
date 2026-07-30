@@ -1,4 +1,4 @@
-const { Post, Ad, User, PendingUser, PostSubmission } = require('../models');
+const { Post, PostSubmission, Ad, User, PendingUser, Visit } = require('../models');
 
 const getDynamicThreshold = (posts, percentage) => {
     if (posts.length === 0) return 0;
@@ -11,12 +11,15 @@ const buildAdminStats = async () => {
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const [posts, ads, users, pendingUserCount] = await Promise.all([
+    const [posts, ads, users, pendingUserCount, pendingApprovals, visitsToday] = await Promise.all([
         Post.find().select('title slug schedule views lastViewed').lean(),
         Ad.find().select('type company category active startDate endDate').lean(),
         User.find().select('status role').lean(),
-        PendingUser.countDocuments()
+        PendingUser.countDocuments(),
+        PostSubmission.countDocuments({ status: 'pending' }),
+        Visit.countDocuments({ timestamp: { $gte: yesterday } })
     ]);
 
     const live = posts.filter(p => new Date(p.schedule) <= now).length;
@@ -29,48 +32,30 @@ const buildAdminStats = async () => {
         return d >= cutoff || (lv && lv >= cutoff);
     };
 
-    const trendingPosts = posts
-        .filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
+    const trendingPosts = posts.filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
         .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
-
-    const popularPosts = posts
-        .filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
+    const popularPosts = posts.filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
         .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+    const recentActivity = [...posts].sort((a, b) => new Date(b.schedule) - new Date(a.schedule)).slice(0, 5);
 
-    const recentActivity = [...posts]
-        .sort((a, b) => new Date(b.schedule) - new Date(a.schedule)).slice(0, 5);
-
-    // Ads: recent 5 + expiring within 7 days
-    const recentAds = [...ads]
-        .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
-        .slice(0, 5)
+    const recentAds = [...ads].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 5)
         .map(ad => ({
-            type: ad.type,
-            company: ad.company,
-            category: ad.category,
+            type: ad.type, company: ad.company, category: ad.category,
             status: new Date(ad.endDate) < now ? 'Expired' : (ad.active ? 'Active' : 'Inactive'),
-            startDate: ad.startDate,
-            endDate: ad.endDate
+            startDate: ad.startDate, endDate: ad.endDate
         }));
 
-    const expiringAds = ads
-        .filter(ad => {
-            const end = new Date(ad.endDate);
-            return end >= now && end <= sevenDaysFromNow;
-        })
-        .map(ad => {
-            const daysLeft = Math.ceil((new Date(ad.endDate) - now) / (1000 * 60 * 60 * 24));
-            return {
-                company: ad.company,
-                type: ad.type,
-                category: ad.category,
-                endsIn: daysLeft === 0 ? 'Today' : `${daysLeft} day(s)`,
-                endDate: ad.endDate
-            };
-        })
-        .sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+    const expiringAds = ads.filter(ad => {
+        const end = new Date(ad.endDate);
+        return end >= now && end <= sevenDaysFromNow;
+    }).map(ad => {
+        const daysLeft = Math.ceil((new Date(ad.endDate) - now) / (1000 * 60 * 60 * 24));
+        return {
+            company: ad.company, type: ad.type, category: ad.category,
+            endsIn: daysLeft === 0 ? 'Today' : `${daysLeft} day(s)`, endDate: ad.endDate
+        };
+    }).sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
 
-    // Users: role + status breakdown
     const usersByRole = {
         viewer: users.filter(u => u.role === 'viewer').length,
         author: users.filter(u => u.role === 'author').length,
@@ -86,9 +71,7 @@ const buildAdminStats = async () => {
         totalViews: posts.reduce((s, p) => s + (p.views || 0), 0),
         trendingCount: trendingPosts.length,
         popularCount: popularPosts.length,
-        trendingPosts,
-        popularPosts,
-        recentActivity,
+        trendingPosts, popularPosts, recentActivity,
 
         totalUsers: users.length,
         activeUsers: users.filter(u => u.status === 'active').length,
@@ -100,23 +83,29 @@ const buildAdminStats = async () => {
         activeAds: ads.filter(a => a.active).length,
         inactiveAds: ads.filter(a => !a.active).length,
         expiredAds: ads.filter(a => new Date(a.endDate) < now).length,
-        recentAds,
-        expiringAds
+        recentAds, expiringAds,
+
+        pendingApprovals,
+        visitsToday
     };
 };
 
-const buildEditorStats = async () => {
+const buildEditorStats = async (username) => {
     const now = new Date();
 
-    const [posts, submissions] = await Promise.all([
+    const [posts, mySubmissionQueue, myAssignedAuthorsCount] = await Promise.all([
         Post.find().select('title slug schedule views').lean(),
-        PostSubmission.find().select('title status submittedBy createdAt').lean()
+        PostSubmission.find({ assignedEditor: username })
+            .select('title status submittedBy category createdAt')
+            .sort({ createdAt: -1 })
+            .lean(),
+        User.countDocuments({ role: 'author', lineManager: username })
     ]);
 
     const live = posts.filter(p => new Date(p.schedule) <= now).length;
     const topViewed = [...posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
-    const recentSubmissions = [...submissions]
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    const pending = mySubmissionQueue.filter(s => s.status === 'pending');
+    const recentSubmissions = mySubmissionQueue.slice(0, 5);
 
     return {
         role: 'editor',
@@ -124,7 +113,8 @@ const buildEditorStats = async () => {
         livePosts: live,
         scheduledPosts: posts.length - live,
         totalViews: posts.reduce((s, p) => s + (p.views || 0), 0),
-        pendingApprovals: submissions.filter(s => s.status === 'pending').length,
+        pendingApprovals: pending.length,
+        myAuthorsCount: myAssignedAuthorsCount,
         topViewed,
         recentSubmissions
     };
@@ -133,9 +123,9 @@ const buildEditorStats = async () => {
 const buildAuthorStats = async (username) => {
     const [mySubmissions, myPublished] = await Promise.all([
         PostSubmission.find({ submittedBy: username })
-            .select('title status createdAt').lean(),
+            .select('title status createdAt category').lean(),
         Post.find({ submittedBy: username })
-            .select('title slug views schedule').lean()
+            .select('title slug views schedule category').lean()
     ]);
 
     return {
@@ -155,7 +145,7 @@ const getDashboardStats = async (req, res) => {
 
         let stats;
         if (user.role === 'admin') stats = await buildAdminStats();
-        else if (user.role === 'editor') stats = await buildEditorStats();
+        else if (user.role === 'editor') stats = await buildEditorStats(user.username);
         else if (user.role === 'author') stats = await buildAuthorStats(user.username);
         else return res.status(403).json({ error: 'Forbidden' });
 

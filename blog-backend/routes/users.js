@@ -1,10 +1,18 @@
 const express = require('express');
-const { getUsers, getUserById, createUser, updateUser, deleteUser, getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser } = require('../controllers/userController');
+const { getUsers, getUserById, createUser, updateUser, deleteUser, getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
+    assignLineManager,
+    assignEditorCategories
+} = require('../controllers/userController');
 const { requireAdmin, requireEditorOrAdmin } = require('../middleware/auth');
 const { upload } = require('../config/middleware');
+const { getVisitAnalytics } = require('../controllers/analyticsController');
+
 
 const router = express.Router();
 
+router.get('/users/analytics', requireAdmin, getVisitAnalytics);
+router.put('/users/assign-line-manager', requireAdmin, assignLineManager);
+router.put('/users/assign-categories', requireAdmin, assignEditorCategories);
 router.get('/users', requireAdmin, getUsers);
 router.get('/users/:id', requireAdmin, getUserById);
 router.post('/users', requireAdmin, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }]), createUser);

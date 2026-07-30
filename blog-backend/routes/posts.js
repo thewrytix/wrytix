@@ -24,17 +24,28 @@ const {
     getPopularPosts,
     getDashboardStats,
     getRelatedPosts,
+    getMyPosts,
+    getPendingApproval,
+    getManagedPosts,
+    bulkDeletePosts,
 } = require('../controllers/postController');
-const { requireRole} = require('../middleware/auth');
-const { Post } = require('../models'); // Add this: Import Post model directly
+const { requireRole, blockIfMaintenanceMode, requireLogin} = require('../middleware/auth');
+const { Post } = require('../models');
+const {logVisit} = require("../middleware/visitLogger"); // Add this: Import Post model directly
 
 const router = express.Router();
 
-// Your existing API routes...
-router.get('/posts', getPosts);
+
+router.get('/posts/manage', requireLogin, blockIfMaintenanceMode, getManagedPosts);
+router.post('/posts/bulk-delete', requireLogin, blockIfMaintenanceMode, bulkDeletePosts);
+router.get('/posts', getPosts); // author's own posts view
+router.get('/posts/mine', requireLogin, blockIfMaintenanceMode, getMyPosts);
+router.get('/posts/pending-approval', requireRole(['editor', 'admin']), blockIfMaintenanceMode, getPendingApproval);
+router.get('/posts/:slug', logVisit, getPostBySlug);           // viewing a post = a visit
+router.get('/posts/category/:category', logVisit, getPostsByCategory); // browsing a category = a visit
+router.post('/postSubmissions', blockIfMaintenanceMode, createPostSubmission);
 router.get('/posts/homepage-categories', getHomepageCategoryPosts);
 router.get('/posts/featured', getFeaturedPosts);
-router.get('/posts/category/:category', getPostsByCategory);
 router.get('/posts/trending', getTrendingPosts);
 router.get('/posts/popular', getPopularPosts);
 router.get('/posts/:slug/related', getRelatedPosts);
