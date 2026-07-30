@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs'); // Add this for reading the template file
+const fs = require('fs');
 const escapeHtml = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator');
 const {
@@ -29,42 +29,41 @@ const {
     getManagedPosts,
     bulkDeletePosts,
 } = require('../controllers/postController');
-const { requireRole, blockIfMaintenanceMode, requireLogin} = require('../middleware/auth');
+const { requireRole, blockIfMaintenanceMode, requireLogin } = require('../middleware/auth');
 const { Post } = require('../models');
-const {logVisit} = require("../middleware/visitLogger"); // Add this: Import Post model directly
+const { logVisit } = require("../middleware/visitLogger");
 
 const router = express.Router();
 
+// -------------------------------------------------------------------
+// 1️⃣  ALL STATIC / EXPLICIT ROUTES (no colon parameters)
+//     (These must come BEFORE any /:slug wildcard)
+// -------------------------------------------------------------------
 
+// Dashboard & management (require auth)
 router.get('/posts/manage', requireLogin, blockIfMaintenanceMode, getManagedPosts);
 router.post('/posts/bulk-delete', requireLogin, blockIfMaintenanceMode, bulkDeletePosts);
-router.get('/posts', getPosts); // author's own posts view
 router.get('/posts/mine', requireLogin, blockIfMaintenanceMode, getMyPosts);
 router.get('/posts/pending-approval', requireRole(['editor', 'admin']), blockIfMaintenanceMode, getPendingApproval);
-router.get('/posts/:slug', logVisit, getPostBySlug);           // viewing a post = a visit
-router.get('/posts/category/:category', logVisit, getPostsByCategory); // browsing a category = a visit
-router.post('/postSubmissions', blockIfMaintenanceMode, createPostSubmission);
-router.get('/posts/homepage-categories', getHomepageCategoryPosts);
+router.get('/posts/dashboard-stats', requireRole(['author', 'editor', 'admin']), getDashboardStats);
+
+// Public listings (exact paths)
+router.get('/posts', getPosts);                           // author's own posts
 router.get('/posts/featured', getFeaturedPosts);
 router.get('/posts/trending', getTrendingPosts);
 router.get('/posts/popular', getPopularPosts);
-router.get('/posts/:slug/related', getRelatedPosts);
-router.get('/posts/dashboard-stats', requireRole(['author', 'editor', 'admin']), getDashboardStats);
+router.get('/posts/homepage-categories', getHomepageCategoryPosts);
 router.get('/posts/all', requireRole(['author', 'editor', 'admin']), getAllPosts);
 router.get('/posts/all-lean', requireRole(['author', 'editor', 'admin']), getAllPostsLean);
-router.get('/posts/:slug', getPostBySlug);
-router.post('/posts/:slug/view', incrementPostView);
-router.post('/posts', requireRole(['editor', 'admin']), createPost);
-router.put('/posts/:slug', requireRole(['editor', 'admin']), updatePost);
-router.delete('/posts/:slug', requireRole(['editor', 'admin']), deletePost);
+
+// Post submissions (auth required)
 router.post('/postSubmissions', requireRole(['author']), createPostSubmission);
 router.get('/postSubmissions', requireRole(['author', 'editor', 'admin']), getPostSubmissions);
 router.get('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), getPostSubmissionById);
 router.put('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), updatePostSubmission);
 router.delete('/postSubmissions/:id', requireRole(['author', 'editor', 'admin']), deletePostSubmission);
 
-// NEW: Dynamic rendering for post view page
-
+// View‑post HTML page (specific path)
 router.get('/posts/view-post.html', async (req, res) => {
     const slug = req.query.slug;
     if (!slug) return res.status(400).send('<h1>Post slug required</h1>');
@@ -80,7 +79,6 @@ router.get('/posts/view-post.html', async (req, res) => {
 
         const canonicalUrl = `https://wry-tix.com/posts/view-post.html?slug=${encodeURIComponent(slug)}`;
 
-        // Minimal HTML: just meta tags for crawlers, + instant redirect for real browsers
         const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -110,8 +108,8 @@ router.get('/posts/view-post.html', async (req, res) => {
         res.status(500).send('<h1>Server error loading post</h1>');
     }
 });
-// Routes to manage static posts
 
+// Static post generation
 router.post('/generate-all-static', async (req, res) => {
     try {
         await staticGenerator.generateAllStaticPosts();
@@ -121,14 +119,12 @@ router.post('/generate-all-static', async (req, res) => {
     }
 });
 
-
 router.post('/generate-static/:slug', async (req, res) => {
     try {
         const post = await Post.findOne({ slug: req.params.slug }).lean();
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
-
         const filePath = await staticGenerator.generateStaticPost(post);
         res.json({
             message: 'Static post generated',
@@ -140,6 +136,24 @@ router.post('/generate-static/:slug', async (req, res) => {
     }
 });
 
+// -------------------------------------------------------------------
+// 2️⃣  ROUTES WITH PARAMETERS BUT MORE SPECIFIC THAN /:slug
+//     (these still need to come before the bare /:slug)
+// -------------------------------------------------------------------
 
+router.get('/posts/category/:category', logVisit, getPostsByCategory);
+router.get('/posts/:slug/related', getRelatedPosts);
+router.post('/posts/:slug/view', incrementPostView);
+
+// CRUD operations on a specific post (these use :slug)
+router.post('/posts', requireRole(['editor', 'admin']), createPost);
+router.put('/posts/:slug', requireRole(['editor', 'admin']), updatePost);
+router.delete('/posts/:slug', requireRole(['editor', 'admin']), deletePost);
+
+// -------------------------------------------------------------------
+// 3️⃣  THE CATCH‑ALL :slug ROUTE – MUST BE LAST
+// -------------------------------------------------------------------
+
+router.get('/posts/:slug', logVisit, getPostBySlug);
 
 module.exports = router;
