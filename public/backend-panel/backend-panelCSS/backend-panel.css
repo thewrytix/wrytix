@@ -218,7 +218,21 @@
 .admin-sidebar nav ul li a.active {
     background-color: var(--primary-color);
     color: var(--neutral-color);
+    
+    
 }
+
+     .admin-sidebar nav ul li a i {
+         color: var(--border-color);
+         margin-right: 8px;
+         width: 18px;
+         text-align: center;
+     }
+
+     .admin-sidebar nav ul li a:hover i,
+     .admin-sidebar nav ul li a.active i {
+         color: var(--neutral-color);
+     }
 
 
 
@@ -860,4 +874,183 @@ form button {
      @keyframes fadeIn {
          from { opacity: 0; transform: scaleY(0.95); }
          to { opacity: 1; transform: scaleY(1); }
+     }
+
+
+     /* ====== Posts Toolbar (Add button + heading row) ====== */
+     .posts-toolbar {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         flex-wrap: wrap;
+         gap: 1rem;
+         margin-bottom: 1rem;
+     }
+
+     .btn-add-post {
+         background: var(--status-green);
+         color: var(--neutral-color);
+         border: none;
+         padding: 10px 20px;
+         border-radius: var(--border-radius-md);
+         font-weight: var(--font-weight-bold);
+         cursor: pointer;
+         transition: background-color var(--transition-fast);
+     }
+
+     .btn-add-post:hover {
+         filter: brightness(0.92);
+     }
+
+     /* ====== Status Tabs ====== */
+     .status-tabs {
+         display: flex;
+         gap: 0.5rem;
+         flex-wrap: wrap;
+         margin-bottom: 1rem;
+     }
+
+     .status-tab {
+         padding: 8px 16px;
+         border-radius: 20px;
+         border: 1px solid var(--border-color);
+         background: var(--neutral-color);
+         color: var(--text-color);
+         cursor: pointer;
+         font-weight: var(--font-weight-bold);
+         font-size: var(--font-size-sm);
+         transition: background-color var(--transition-fast), color var(--transition-fast);
+     }
+
+     .status-tab.active {
+         background: var(--primary-color);
+         color: var(--neutral-color);
+         border-color: var(--primary-color);
+     }
+
+     .status-tab:hover:not(.active) {
+         background: var(--background-light);
+     }
+
+     /* ====== Bulk Actions Bar ====== */
+     .bulk-bar {
+         display: none;
+         align-items: center;
+         gap: 1rem;
+         background: #fff3cd;
+         border: 1px solid var(--status-neutral);
+         padding: 0.8rem 1.2rem;
+         border-radius: var(--border-radius-md);
+         margin-bottom: 1rem;
+     }
+
+     .bulk-bar.visible {
+         display: flex;
+     }
+
+     .bulk-bar span {
+         font-weight: var(--font-weight-bold);
+     }
+
+     .bulk-bar button {
+         padding: 6px 14px;
+         border: none;
+         border-radius: var(--border-radius-sm);
+         cursor: pointer;
+         font-weight: var(--font-weight-bold);
+         transition: background-color var(--transition-fast);
+     }
+
+     .bulk-bar .btn-bulk-delete {
+         background: var(--status-red);
+         color: var(--neutral-color);
+     }
+
+     .bulk-bar .btn-bulk-clear {
+         background: var(--border-color);
+         color: var(--text-color);
+     }
+
+     .row-checkbox {
+         width: 18px;
+         height: 18px;
+         cursor: pointer;
+     }
+
+     /* ====== Modal (Add/Edit) ====== */
+     .modal-overlay {
+         display: none;
+         position: fixed;
+         top: 0; left: 0; right: 0; bottom: 0;
+         background: rgba(0, 0, 0, 0.5);
+         z-index: 1000;
+         align-items: flex-start;
+         justify-content: center;
+         overflow-y: auto;
+         padding: 2rem 1rem;
+     }
+
+     .modal-overlay.visible {
+         display: flex;
+     }
+
+     .modal-box {
+         background: var(--background-light);
+         border-radius: var(--border-radius-lg);
+         max-width: 800px;
+         width: 100%;
+         padding: 2rem;
+         position: relative;
+         box-shadow: var(--shadow-lg);
+     }
+
+     .modal-close {
+         position: absolute;
+         top: 1rem;
+         right: 1.2rem;
+         background: none;
+         border: none;
+         font-size: var(--font-size-xl);
+         color: var(--text-color);
+         cursor: pointer;
+         line-height: 1;
+     }
+
+     .modal-close:hover {
+         color: var(--secondary-color);
+     }
+
+     .modal-box h2 {
+         color: var(--primary-color);
+     }
+
+     /* Rich text editor container inside modal, matches form input styling */
+     .rich-editor {
+         min-height: 200px;
+         border: 1px solid var(--border-color);
+         border-radius: var(--border-radius-md);
+         padding: 1rem;
+         background: var(--neutral-color);
+         margin-bottom: var(--spacing-md);
+     }
+
+     .rich-editor:focus {
+         border-color: var(--text-color);
+         outline: none;
+     }
+
+     .modal-actions {
+         margin-top: 1.5rem;
+         display: flex;
+         gap: 1rem;
+     }
+
+     .btn-modal-cancel {
+         background: var(--border-color);
+         color: var(--text-color);
+         border: none;
+         padding: 10px 20px;
+         border-radius: var(--border-radius-md);
+         cursor: pointer;
+         font-weight: var(--font-weight-bold);
      }
