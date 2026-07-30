@@ -415,6 +415,84 @@ const assignEditorCategories = async (req, res) => {
     }
 };
 
+const getManagedUsers = async (req, res) => {
+    try {
+        const admin = req.session.user;
+        const { status = 'all', page = 1, search = '', role = '' } = req.query;
+        const limit = 20;
+        const skip = (parseInt(page) - 1) * limit;
+
+        // "pending" pulls from PendingUser instead of User
+        if (status === 'pending') {
+            let query = {};
+            if (admin.role === 'editor') query.createdBy = admin.username; // editor sees only their own submissions
+
+            if (search) query.username = { $regex: search, $options: 'i' };
+
+            const [items, total] = await Promise.all([
+                PendingUser.find(query)
+                    .select('username email role createdAt createdBy')
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                PendingUser.countDocuments(query)
+            ]);
+
+            return res.json({
+                items: items.map(i => ({ ...i, source: 'pending' })),
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        let query = {};
+        if (status === 'active') query.status = 'active';
+        if (status === 'inactive') query.status = { $ne: 'active' };
+        if (search) query.username = { $regex: search, $options: 'i' };
+        if (role) query.role = role;
+
+        const [items, total] = await Promise.all([
+            User.find(query)
+                .select('username email role status createdAt lineManager assignedCategories')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            User.countDocuments(query)
+        ]);
+
+        res.json({
+            items: items.map(i => ({ ...i, source: 'user' })),
+            total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        console.error('getManagedUsers error:', err);
+        res.status(500).json({ error: 'Failed to load users' });
+    }
+};
+
+const bulkDeleteUsers = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'No ids provided' });
+        }
+
+        const result = await User.deleteMany({ _id: { $in: ids } });
+
+        await logAction(req.session.user?.username, 'bulk-delete-users', 'multiple', {
+            deletedCount: result.deletedCount
+        });
+
+        res.json({ message: 'Bulk delete complete', deletedCount: result.deletedCount });
+    } catch (err) {
+        console.error('bulkDeleteUsers error:', err);
+        res.status(500).json({ error: 'Bulk delete failed' });
+    }
+};
+
+
+
 
 module.exports = {
     getUsers,
@@ -429,5 +507,7 @@ module.exports = {
     submitPendingUser,
     getMyPendingUsers,
     assignLineManager,
-    assignEditorCategories
+    assignEditorCategories,
+    getManagedUsers,
+    bulkDeleteUsers
 };

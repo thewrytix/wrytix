@@ -871,6 +871,12 @@ form button {
          display: none;
      }
 
+
+      .tooltip { font-size: 0.9rem; color: #666; margin-top: 0.2rem; }
+   
+      
+
+
      @keyframes fadeIn {
          from { opacity: 0; transform: scaleY(0.95); }
          to { opacity: 1; transform: scaleY(1); }
