@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const https = require('https');
 const { MaintenanceTask, SystemConfig, User } = require('../models');
 const { logAction } = require('../utils/logger');
 
@@ -6,27 +7,87 @@ const { logAction } = require('../utils/logger');
    System Health
    ============================================ */
 
+
+
+// Ping a URL and measure response time, with a timeout so a hung service doesn't hang the whole health check
+const checkEndpoint = (url, timeoutMs = 5000) => {
+    return new Promise((resolve) => {
+        const start = Date.now();
+        const req = https.get(url, { timeout: timeoutMs }, (res) => {
+            const duration = Date.now() - start;
+            res.resume(); // drain response, don't need the body
+            resolve({
+                status: res.statusCode < 500 ? 'up' : 'down',
+                statusCode: res.statusCode,
+                responseTimeMs: duration
+            });
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+            resolve({ status: 'down', statusCode: null, responseTimeMs: timeoutMs, error: 'timeout' });
+        });
+
+        req.on('error', (err) => {
+            resolve({ status: 'down', statusCode: null, responseTimeMs: Date.now() - start, error: err.message });
+        });
+    });
+};
+
+const checkCloudinary = async () => {
+    try {
+        // Lightweight check: Cloudinary's status/ping isn't a public unauthenticated endpoint,
+        // so we check reachability of the API host itself as a proxy for "is Cloudinary reachable"
+        const result = await checkEndpoint('https://api.cloudinary.com/v1_1/ping', 5000);
+        return result;
+    } catch (err) {
+        return { status: 'down', error: err.message };
+    }
+};
+
 const getSystemHealth = async (req, res) => {
     try {
         const mongoStatus = mongoose.connection.readyState === 1 ? 'up' : 'down';
         const uptimeSeconds = Math.floor(process.uptime());
         const memoryUsage = process.memoryUsage();
 
+        // Internal endpoints — self-checks against our own running server
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const endpointsToCheck = [
+            { name: 'Posts API', url: `${baseUrl}/posts` },
+            { name: 'Ads API', url: `${baseUrl}/ads` },
+            { name: 'Dashboard Stats', url: `${baseUrl}/dashboard-stats` }
+        ];
+
+        const [endpointResults, cloudinaryResult] = await Promise.all([
+            Promise.all(endpointsToCheck.map(async (ep) => {
+                const result = await checkEndpoint(ep.url);
+                return { name: ep.name, ...result };
+            })),
+            checkCloudinary()
+        ]);
+
         res.json({
             express: 'up',
             mongodb: mongoStatus,
+            cloudinary: cloudinaryResult.status,
+            cloudinaryResponseTimeMs: cloudinaryResult.responseTimeMs || null,
             uptimeSeconds,
             memory: {
                 rssMB: Math.round(memoryUsage.rss / 1024 / 1024),
                 heapUsedMB: Math.round(memoryUsage.heapUsed / 1024 / 1024),
                 heapTotalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024)
             },
+            endpoints: endpointResults,
             timestamp: new Date()
         });
     } catch (err) {
+        console.error('System health check error:', err);
         res.status(500).json({ error: 'Failed to load system health' });
     }
 };
+
+
 
 /* ============================================
    Maintenance Mode

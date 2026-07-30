@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Logs - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        .btn-details {
+            padding: 4px 8px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix</h2>
+        <nav><ul id="sidebarLinks"></ul></nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1><i class="fa-solid fa-list"></i> Activity Logs</h1>
+
+        <div class="filter-section">
+            <input type="text" id="searchActor" placeholder="Search by actor..." />
+            <input type="text" id="searchTarget" placeholder="Search target..." />
+            <input type="date" id="filterDate" />
+            <select id="filterAction">
+                <option value="">All Actions</option>
+                <option value="user-add">User Added</option>
+                <option value="user-approve">User Approved</option>
+                <option value="user-delete">User Deleted</option>
+                <option value="post-submit">Post Submitted</option>
+                <option value="post-approve">Post Approved</option>
+                <option value="post-reject">Post Rejected</option>
+                <option value="bulk-delete">Bulk Delete</option>
+                <option value="maintenance-mode">Maintenance Mode</option>
+                <option value="task">Task</option>
+            </select>
+            <button id="resetFilters">Reset Filters</button>
+            <button id="clearLogs">Clear All Logs</button>
+        </div>
+
+        <table id="logsTable" class="log-table">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>IP</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+            </tr>
+            </thead>
+            <tbody id="logTableBody">
+            <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+        </table>
+
+        <div id="pagination" class="pagination-controls"></div>
+    </main>
+</div>
+
+<script src="../js/roleConfig.js"></script>
+<script src="js/logs.js"></script>
+</body>
+</html>

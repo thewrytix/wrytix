@@ -19,29 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(loadHealth, REFRESH_INTERVAL_MS);
 });
 
-function renderSidebar(links) {
-    document.getElementById('sidebarLinks').innerHTML = links.map(link => `
-        <li><a href="${link.href}"><i class="fa-solid ${link.icon}"></i> ${link.label}</a></li>
-    `).join('');
-}
 
-async function loadHealth() {
-    try {
-        const res = await fetch(`${API_BASE}/system/health`, { credentials: 'include' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const health = await res.json();
-
-        renderHealthCards(health);
-        renderMetrics(health);
-
-        document.getElementById('lastChecked').textContent =
-            `Last checked: ${new Date(health.timestamp).toLocaleTimeString()}`;
-    } catch (err) {
-        console.error('Failed to load system health:', err);
-        document.getElementById('healthCards').innerHTML =
-            '<p style="color:red;">Failed to load system health data.</p>';
-    }
-}
 
 function statusColor(status) {
     if (status === 'up') return 'green';
@@ -60,6 +38,13 @@ function renderHealthCards(health) {
             title: 'MongoDB',
             status: health.mongodb,
             desc: health.mongodb === 'up' ? 'Connected' : 'Connection issue detected'
+        },
+        {
+            title: 'Cloudinary',
+            status: health.cloudinary,
+            desc: health.cloudinary === 'up'
+                ? `Reachable (${health.cloudinaryResponseTimeMs}ms)`
+                : 'Unreachable — check network/service status'
         }
     ];
 
@@ -73,6 +58,56 @@ function renderHealthCards(health) {
         </div>
     `).join('');
 }
+
+function renderEndpointChecks(endpoints) {
+    const container = document.getElementById('endpointChecks');
+    if (!container || !endpoints) return;
+
+    container.innerHTML = endpoints.map(ep => {
+        // Auth-protected endpoints correctly return 401/403 when healthy — not a failure
+        const isAuthProtected = ep.statusCode === 401 || ep.statusCode === 403;
+        const displayStatus = ep.status === 'up' ? (isAuthProtected ? 'up (auth-protected)' : 'up') : 'down';
+
+        return `
+            <div class="health-card">
+                <div class="status-dot ${statusColor(ep.status)}"></div>
+                <div class="health-card-info">
+                    <h3>${ep.name}</h3>
+                    <p>${displayStatus} — ${ep.responseTimeMs}ms${ep.statusCode ? ` (HTTP ${ep.statusCode})` : ''}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function loadHealth() {
+    try {
+        const res = await fetch(`${API_BASE}/system/health`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const health = await res.json();
+
+        renderHealthCards(health);
+        renderEndpointChecks(health.endpoints);
+        renderMetrics(health);
+
+        document.getElementById('lastChecked').textContent =
+            `Last checked: ${new Date(health.timestamp).toLocaleTimeString()}`;
+    } catch (err) {
+        console.error('Failed to load system health:', err);
+        document.getElementById('healthCards').innerHTML =
+            '<p style="color:red;">Failed to load system health data.</p>';
+    }
+}
+
+
+
+
+function renderSidebar(links) {
+    document.getElementById('sidebarLinks').innerHTML = links.map(link => `
+        <li><a href="${link.href}"><i class="fa-solid ${link.icon}"></i> ${link.label}</a></li>
+    `).join('');
+}
+
 
 function formatUptime(seconds) {
     const days = Math.floor(seconds / 86400);
