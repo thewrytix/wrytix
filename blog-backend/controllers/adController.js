@@ -134,4 +134,86 @@ const deleteAd = async (req, res) => {
     }
 };
 
-module.exports = { createAd, getAds, getAdById, updateAd, deleteAd, expireOldAds };
+
+const getManagedAds = async (req, res) => {
+    try {
+        const { status = 'all', page = 1, search = '', category = '' } = req.query;
+        const limit = 20;
+        const skip = (parseInt(page) - 1) * limit;
+        const now = new Date();
+
+        let query = {};
+
+        if (status === 'active') query.active = true;
+        if (status === 'inactive') query.active = false;
+        if (status === 'expired') query.endDate = { $lt: now };
+
+        if (search) query.company = { $regex: search, $options: 'i' };
+        if (category) query.category = category;
+
+        const [items, total] = await Promise.all([
+            Ad.find(query)
+                .select('id type category position startDate endDate link company html text file thumbnail active')
+                .sort({ startDate: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            Ad.countDocuments(query)
+        ]);
+
+        res.json({
+            items,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        console.error('getManagedAds error:', err);
+        res.status(500).json({ error: 'Failed to load ads' });
+    }
+};
+
+const bulkDeleteAds = async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'No ids provided' });
+        }
+
+        const result = await Ad.deleteMany({ id: { $in: ids } });
+
+        await logAction(req.session.user?.username, 'bulk-delete-ads', 'multiple', {
+            deletedCount: result.deletedCount
+        });
+
+        res.json({ message: 'Bulk delete complete', deletedCount: result.deletedCount });
+    } catch (err) {
+        console.error('bulkDeleteAds error:', err);
+        res.status(500).json({ error: 'Bulk delete failed' });
+    }
+};
+
+const bulkToggleAdsStatus = async (req, res) => {
+    try {
+        const { ids, active } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'No ids provided' });
+        }
+
+        const result = await Ad.updateMany({ id: { $in: ids } }, { $set: { active: !!active } });
+
+        await logAction(req.session.user?.username, 'bulk-toggle-ads', 'multiple', {
+            modifiedCount: result.modifiedCount, active
+        });
+
+        res.json({ message: 'Bulk update complete', modifiedCount: result.modifiedCount });
+    } catch (err) {
+        console.error('bulkToggleAdsStatus error:', err);
+        res.status(500).json({ error: 'Bulk update failed' });
+    }
+};
+
+
+module.exports = { createAd, getAds, getAdById, updateAd, deleteAd, expireOldAds,getManagedAds,
+    bulkDeleteAds,
+    bulkToggleAdsStatus };
