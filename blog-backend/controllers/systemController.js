@@ -56,6 +56,7 @@ const getSystemHealth = async (req, res) => {
         const endpointsToCheck = [
             { name: 'Posts API', url: `${baseUrl}/posts` },
             { name: 'Ads API', url: `${baseUrl}/ads` },
+            { name: 'Users API', url: `${baseUrl}/users` },
             { name: 'Dashboard Stats', url: `${baseUrl}/dashboard-stats` }
         ];
 
