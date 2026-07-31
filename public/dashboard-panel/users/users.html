@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Users - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h2><span class="sidebar-label">Wrytix</span></h2>
+            <button id="sidebarCollapseBtn" class="sidebar-collapse-btn"><i class="fa-solid fa-bars"></i></button>
+        </div>
+        <nav><ul id="sidebarLinks"></ul></nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="posts-toolbar">
+            <h1 style="margin:0;">Users</h1>
+            <button class="btn-add-post" id="openAddModalBtn"><i class="fa-solid fa-plus"></i> Add User</button>
+        </div>
+
+        <div class="status-tabs" id="statusTabs">
+            <button class="status-tab active" data-status="all">All</button>
+            <button class="status-tab" data-status="active">Active</button>
+            <button class="status-tab" data-status="inactive">Inactive</button>
+            <button class="status-tab" data-status="pending">Pending Approval</button>
+        </div>
+
+        <div id="searchContainer">
+            <input type="text" id="searchInput" placeholder="Search username..." />
+            <select  id="filterRoleSelect">
+                <option value="">All Roles</option>
+                <option value="viewer">Viewer</option>
+                <option value="author">Author</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button id="searchBtn">Search</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+            <span id="bulkCount">0 selected</span>
+            <button class="btn-bulk-delete" id="bulkDeleteBtn"><i class="fa-solid fa-trash"></i> Delete Selected</button>
+            <button class="btn-bulk-clear" id="clearSelectionBtn">Clear</button>
+        </div>
+
+        <table class="user-table">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllCheckbox" /></th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Line Manager</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="usersTableBody">
+            <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+        </table>
+
+        <div id="pagination" class="pagination-controls"></div>
+    </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="userModal">
+    <div class="modal-box">
+        <button class="modal-close" id="closeModalBtn">&times;</button>
+        <h2 id="modalTitle">Add New User</h2>
+
+        <form id="userForm">
+            <input type="hidden" id="userFormMode" value="add" />
+            <input type="hidden" id="userFormId" value="" />
+
+            <label for="fullNameInput">Full Name</label>
+            <input type="text" id="fullNameInput" required />
+
+            <label for="usernameInput">Username</label>
+            <input type="text" id="usernameInput" required />
+            <div id="username-status" class="tooltip"></div>
+
+            <label for="emailInput">Email</label>
+            <input type="email" id="emailInput" required />
+            <div id="email-status" class="tooltip"></div>
+
+            <div style="position: relative;" id="passwordFieldWrapper">
+                <label for="passwordInput">Password</label>
+                <input type="password" id="passwordInput" style="padding-right: 40px;" />
+                <i id="togglePassword" class="fas fa-eye-slash" style="position: absolute; top: 38px; right: 10px; cursor: pointer; color: #888;"></i>
+            </div>
+
+            <label for="roleInput">Role</label>
+            <select id="roleInput" required>
+                <option value="">Select Role</option>
+                <option value="viewer">Viewer - Can only view posts</option>
+                <option value="author">Author - Can write and submit posts</option>
+                <option value="editor">Editor - Can manage author posts</option>
+                <option value="admin">Admin - Full system control</option>
+            </select>
+
+            <div id="lineManagerField" style="display:none;">
+                <label for="lineManagerInput">Line Manager (Editor)</label>
+                <input type="text" id="lineManagerInput" placeholder="editor's username" />
+            </div>
+
+            <div id="categoriesField" style="display:none;">
+                <label for="categoriesInput">Assigned Categories (comma-separated)</label>
+                <input type="text" id="categoriesInput" placeholder="news, sports, business" />
+            </div>
+
+            <label for="avatarInput">Profile Picture (Optional, JPEG/PNG/GIF)</label>
+            <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/gif" />
+
+            <label for="documentInput">Attach Document (Optional, PDF only)</label>
+            <input type="file" id="documentInput" accept="application/pdf" />
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-add-post">Save</button>
+                <button type="button" class="btn-modal-cancel" id="cancelModalBtn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/roleConfig.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="js/users.js"></script>
+</body>
+</html>

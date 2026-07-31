@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Posts - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="../css/formatting_toolbar.css" />
+    <style>
+        .posts-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .status-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--neutral-color);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-tab.active {
+            background: var(--primary-color);
+            color: var(--neutral-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-add-post {
+            background: var(--status-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .bulk-bar {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .bulk-bar.visible { display: flex; }
+
+        .bulk-bar button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: flex-start;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+        }
+
+        .modal-overlay.visible { display: flex; }
+
+        .modal-box {
+            background: var(--background-light);
+            border-radius: 10px;
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.2rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .row-checkbox { width: 18px; height: 18px; }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix</h2>
+        <nav><ul id="sidebarLinks"></ul></nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="posts-toolbar">
+            <h1 style="margin:0;">Posts</h1>
+            <button class="btn-add-post" id="openAddModalBtn"><i class="fa-solid fa-plus"></i> Add Post</button>
+        </div>
+
+        <div class="status-tabs" id="statusTabs">
+            <button class="status-tab active" data-status="all">All</button>
+            <button class="status-tab" data-status="live">Live</button>
+            <button class="status-tab" data-status="scheduled">Scheduled</button>
+            <button class="status-tab" data-status="pending">Pending Approval</button>
+        </div>
+
+        <div id="searchContainer">
+            <input type="text" id="searchInput" placeholder="Search title..." />
+            <input type="text" id="filterCategory" placeholder="Filter by category..." />
+            <input type="text" id="filterAuthor" placeholder="Filter by author..." style="display:none;" />
+            <button id="searchBtn">Search</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+            <span id="bulkCount">0 selected</span>
+            <button style="background:var(--status-red);color:white;" id="bulkDeleteBtn"><i class="fa-solid fa-trash"></i> Delete Selected</button>
+            <button style="background:var(--border-color);" id="clearSelectionBtn">Clear</button>
+        </div>
+
+        <table class="posts-table">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllCheckbox" /></th>
+                <th>Title</th>
+                <th>Category</th>
+                <th id="authorColHeader">Author</th>
+                <th>Status</th>
+                <th id="viewsColHeader">Views</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="postsTableBody">
+            <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+        </table>
+
+        <div id="pagination" class="pagination-controls"></div>
+    </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="postModal">
+    <div class="modal-box">
+        <button class="modal-close" id="closeModalBtn">&times;</button>
+        <h2 id="modalTitle">Add New Post</h2>
+
+        <form id="postForm">
+            <input type="hidden" id="postFormMode" value="add" /> <!-- add | edit -->
+            <input type="hidden" id="postFormSlug" value="" />
+            <input type="hidden" id="postFormSource" value="" /> <!-- post | submission -->
+
+            <label for="postTitleInput">Title</label>
+            <input type="text" id="postTitleInput" required />
+
+            <label for="postAuthorInput">Author</label>
+            <input type="text" id="postAuthorInput" required />
+
+            <label for="postCategoryInput">Category</label>
+            <select id="postCategoryInput" required>
+                <option value="">Select a category</option>
+                <option value="news">News</option>
+                <option value="business">Business</option>
+                <option value="foreign">Foreign</option>
+                <option value="sports">Sports</option>
+                <option value="technology">Technology</option>
+                <option value="lifestyle">Lifestyle</option>
+            </select>
+
+            <label for="postThumbnailInput">Thumbnail Image</label>
+            <input type="file" id="postThumbnailInput" accept="image/*" />
+            <div id="thumbnailPreviewContainer" style="display:none;">
+                <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc; border-radius:4px;" />
+            </div>
+
+            <label>Content</label>
+            <div id="postContentEditable" contenteditable="true" class="rich-editor" style="min-height:200px;border:1px solid var(--border-color);border-radius:6px;padding:1rem;background:white;"></div>
+
+            <label for="postSourceInput" style="margin-top:1rem;">Source</label>
+            <input type="text" id="postSourceInput" />
+
+            <label><input type="checkbox" id="postFeaturedInput" /> Mark as Featured</label>
+
+            <label for="postScheduleInput">Schedule Publish</label>
+            <input type="datetime-local" id="postScheduleInput" />
+
+            <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+                <button type="submit" class="btn-add-post">Save</button>
+                <button type="button" id="cancelModalBtn" style="background:var(--border-color);border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/roleConfig.js"></script>
+<script src="../js/richEditor.js"></script>
+<script src="js/posts.js"></script>
+</body>
+</html>

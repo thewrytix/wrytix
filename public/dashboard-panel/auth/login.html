@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="../css/login.css" />
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <div class="logo-container">
+            <div class="logo-icon">W</div>
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Sign in to access Wrytix Backend Panel</p>
+        </div>
+
+        <form id="loginForm" autocomplete="off">
+            <div class="input-group">
+                <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        placeholder="Username"
+                />
+                <span class="input-icon">👤</span>
+            </div>
+
+            <div class="input-group">
+                <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        placeholder="Password"
+                />
+                <span class="input-icon">🔒</span>
+            </div>
+
+            <button type="submit">Sign In</button>
+        </form>
+    </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="js/login.js"></script>
+
+
+</body>
+</html>

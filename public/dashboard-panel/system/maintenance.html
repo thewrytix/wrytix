@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Maintenance Mode - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        .maintenance-toggle-card {
+            background: var(--neutral-color);
+            border-radius: 10px;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            border-radius: 34px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 24px;
+            width: 24px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--status-red);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(28px);
+        }
+
+        .maintenance-status-text {
+            font-weight: 600;
+        }
+
+        .maintenance-status-text.on { color: var(--status-red); }
+        .maintenance-status-text.off { color: var(--status-green); }
+
+        .task-form {
+            background: var(--neutral-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .task-form-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .task-form-row input,
+        .task-form-row select {
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .task-form-row input[type="text"] { flex: 2; min-width: 200px; }
+        .task-form-row select { flex: 1; min-width: 120px; }
+
+        .task-list {
+            margin-top: 1.5rem;
+        }
+
+        .task-item {
+            background: var(--neutral-color);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--border-color);
+        }
+
+        .task-item.priority-low { border-left-color: var(--status-green); }
+        .task-item.priority-medium { border-left-color: var(--status-neutral); }
+        .task-item.priority-urgent { border-left-color: var(--status-red); }
+
+        .task-item.done { opacity: 0.6; text-decoration: line-through; }
+
+        .task-info h4 { margin-bottom: 4px; }
+        .task-info p { font-size: 0.85rem; color: var(--text-light); }
+
+        .task-actions button {
+            margin-left: 0.5rem;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            margin-left: 8px;
+        }
+        .priority-badge.low { background: var(--status-green); }
+        .priority-badge.medium { background: var(--status-neutral); }
+        .priority-badge.urgent { background: var(--status-red); }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <h2>Wrytix</h2>
+        <nav><ul id="sidebarLinks"></ul></nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1><i class="fa-solid fa-wrench"></i> Maintenance Mode & Tasks</h1>
+
+        <div class="maintenance-toggle-card">
+            <div>
+                <h3>Admin Panel Maintenance Mode</h3>
+                <p>When enabled, editors and authors are suspended from accessing the admin panel.</p>
+                <p class="maintenance-status-text" id="maintenanceStatusText">Checking...</p>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="maintenanceToggle" />
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        <section class="task-form">
+            <h2>Add Task</h2>
+            <div class="task-form-row">
+                <input type="text" id="taskTitle" placeholder="Task title" />
+                <select id="taskPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="urgent">Urgent</option>
+                </select>
+                <button id="addTaskBtn" class="btn approve"><i class="fa-solid fa-plus"></i> Add</button>
+            </div>
+            <textarea id="taskDescription" placeholder="Description (optional)" rows="2" style="width:100%;margin-top:1rem;padding:0.6rem;border-radius:6px;border:1px solid var(--border-color);"></textarea>
+        </section>
+
+        <section class="task-list" id="taskList">
+            <p>Loading tasks...</p>
+        </section>
+    </main>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/guard.js"></script>
+<script src="../js/roleConfig.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="js/maintenance.js"></script>
+</body>
+</html>

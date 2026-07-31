@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Visit Analytics - Wrytix Admin</title>
+    <link rel="stylesheet" href="../css/backend-panel.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        .analytics-filters {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .range-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .range-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--neutral-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: var(--font-weight-bold);
+            font-size: var(--font-size-sm);
+        }
+
+        .range-tab.active {
+            background: var(--primary-color);
+            color: var(--neutral-color);
+            border-color: var(--primary-color);
+        }
+
+        .custom-range {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-range.visible {
+            display: flex;
+        }
+
+        .custom-range input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .custom-range button {
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: var(--neutral-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .analytics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-section {
+            background: var(--neutral-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h2><span class="sidebar-label">Wrytix</span></h2>
+            <button id="sidebarCollapseBtn" class="sidebar-collapse-btn"><i class="fa-solid fa-bars"></i></button>
+        </div>
+        <nav><ul id="sidebarLinks"></ul></nav>
+    </aside>
+
+    <main class="admin-main">
+        <div class="top-bar">
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">Loading...</button>
+                <div class="profile-menu" id="profileMenu">
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <h1><i class="fa-solid fa-chart-line"></i> Visit Analytics</h1>
+
+        <div class="analytics-filters">
+            <div class="range-tabs" id="rangeTabs">
+                <button class="range-tab" data-range="daily">Daily</button>
+                <button class="range-tab active" data-range="weekly">Weekly</button>
+                <button class="range-tab" data-range="monthly">Monthly</button>
+                <button class="range-tab" data-range="yearly">Yearly</button>
+                <button class="range-tab" data-range="custom">Custom</button>
+            </div>
+
+            <div class="custom-range" id="customRangeInputs">
+                <input type="date" id="fromDate" />
+                <span>to</span>
+                <input type="date" id="toDate" />
+                <button id="applyCustomRangeBtn">Apply</button>
+            </div>
+        </div>
+
+        <div class="analytics-summary" id="analyticsSummary">
+            <div class="stat-box">
+                <h2 id="totalVisitsValue">0</h2>
+                <p>Total Visits</p>
+            </div>
+            <div class="stat-box">
+                <h2 id="anonymousVisitsValue">0</h2>
+                <p>Anonymous Visits</p>
+            </div>
+            <div class="stat-box">
+                <h2 id="loggedInVisitsValue">0</h2>
+                <p>Logged-in Visits</p>
+            </div>
+        </div>
+
+        <section class="chart-section">
+            <h2>Visits Over Time</h2>
+            <canvas id="visitsChart" height="90"></canvas>
+        </section>
+    </main>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/guard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="../js/roleConfig.js"></script>
+<script src="../js/sidebar.js"></script>
+<script src="js/analytics.js"></script>
+</body>
+</html>
