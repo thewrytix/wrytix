@@ -23,15 +23,17 @@ const readCategories = async () => {
 const create = async (req, res) => {
     try {
         const { name, editor, authors } = req.body;
-        if (!name || !editor) {
-            await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Name or editor missing' });
-            return res.status(400).json({ error: 'Name and editor are required' });
+        if (!name) {
+            await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Name missing' });
+            return res.status(400).json({ error: 'Name is required' });
         }
 
-        const editorUser = await User.findOne({ id: editor });
-        if (!editorUser || editorUser.role !== 'editor') {
-            await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Invalid or non-editor user' });
-            return res.status(400).json({ error: 'Invalid or non-editor user selected' });
+        if (editor) {
+            const editorUser = await User.findOne({ id: editor });
+            if (!editorUser || editorUser.role !== 'editor') {
+                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Invalid or non-editor user' });
+                return res.status(400).json({ error: 'Invalid or non-editor user selected' });
+            }
         }
 
         if (authors && authors.length) {
@@ -45,7 +47,7 @@ const create = async (req, res) => {
         const category = {
             id: Date.now().toString(),
             name: name.trim(),
-            editor,
+            editor: editor || null,
             authors: authors || [],
             createdAt: new Date(),
             updatedAt: new Date()
