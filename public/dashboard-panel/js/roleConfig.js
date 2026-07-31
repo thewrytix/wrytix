@@ -2,7 +2,7 @@ window.RoleConfig = {
     admin: {
         title: 'Admin Dashboard',
         sidebar: [
-            { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
+            { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html' },
             {
                 label: 'Posts', icon: 'fa-newspaper',
                 children: [
@@ -10,21 +10,25 @@ window.RoleConfig = {
                   
                 ]
             },
-            { label: 'Ads', href: '/admin-panel/ads/ads.html', icon: 'fa-rectangle-ad' },
+            { label: 'Ads', icon: 'fa-rectangle-ad',
+                children: [
+                    { label:' All Ads', href: '../ads/ads.html' },
+                
+                  ]},
             {
                 label: 'Users', icon: 'fa-users',
                 children: [
-                    { label: 'All Users', href: '/admin-panel/users/users.html?status=all' },
-                    { label: 'Pending Approval', href: '/admin-panel/users/users.html?status=pending' },
-                    { label: 'Analytics', href: '/admin-panel/users/analytics.html' }
+                    { label: 'All Users', href: '../users/users.html?status=all' },
+                    { label: 'Categories', href: '../users/categories.html' },
+                    { label: 'Analytics', href: '../users/analytics.html' }
                 ]
             },
             {
                 label: 'System', icon: 'fa-server',
                 children: [
-                    { label: 'Health', href: '/admin-panel/system/system-health.html' },
-                    { label: 'Maintenance & Tasks', href: '/admin-panel/system/maintenance.html' },
-                    { label: 'Logs', href: '/admin-panel/system/logs.html' }
+                    { label: 'Health', href: '../system/system-health.html' },
+                    { label: 'Maintenance & Tasks', href: '../system/maintenance.html' },
+                    { label: 'Logs', href: '../system/logs.html' }
                 ]
             }
         ],
@@ -43,18 +47,18 @@ window.RoleConfig = {
     editor: {
         title: 'Editor Dashboard',
         sidebar: [
-            { label: 'Dashboard', href: '/dashboard/dashboard.html', icon: 'fa-gauge' },
+            { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
             {
                 label: 'Posts', icon: 'fa-newspaper',
                 children: [
-                    { label: 'All Posts', href: '/admin-panel/posts/posts.html?status=all' },
-                    { label: 'Pending Approval', href: '/admin-panel/posts/posts.html?status=pending' }
+                    { label: 'Posts', href: '../posts/posts.html?status=all' },
+                   
                 ]
             },
             {
                 label: 'Users', icon: 'fa-users',
                 children: [
-                    { label: 'My Submitted Users', href: '/admin-panel/users/users.html?status=pending' }
+                    { label: 'My Submitted Users',href: '../users/users.html?status=all'  }
                 ]
             }
         ],
@@ -69,8 +73,8 @@ window.RoleConfig = {
     author: {
         title: 'Author Dashboard',
         sidebar: [
-            { label: 'Dashboard', href: '/dashboard/dashboard.html', icon: 'fa-gauge' },
-            { label: 'Posts', href: '/admin-panel/posts/posts.html', icon: 'fa-newspaper' }
+            { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
+            { label: 'My Posts', href: '../posts/posts.html?status=all' },
         ],
         cards: [
             { id: 'totalPosts', label: 'Total Submitted' },

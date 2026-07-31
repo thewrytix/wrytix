@@ -1,3 +1,4 @@
+
 let currentUser = null;
 let currentStatus = 'all';
 let currentPage = 1;
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentUser = JSON.parse(userData);
     renderSidebar(window.RoleConfig[currentUser.role].sidebar);
+    setupSidebarCollapse()
     document.getElementById('profileBtn').textContent = currentUser.username;
 
     // Authors don't need author filter/column, or the pending-visible-to-others distinction

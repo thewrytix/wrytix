@@ -59,15 +59,20 @@ function renderCards(cardDefs, stats) {
 
 function renderRoleSpecificSections(stats) {
     if (stats.role === 'admin') {
+
         renderPostList('trending-posts-list', stats.trendingPosts);
         renderPostList('popular-posts-list', stats.popularPosts);
         renderActivityList(stats.recentActivity);
         renderUserBreakdown(stats.usersByRole);
         renderRecentAdsTable(stats.recentAds);
         renderExpiringAdsTable(stats.expiringAds);
+
     } else if (stats.role === 'editor') {
         renderPostList('top-viewed-list', stats.topViewed);
+        renderPostList('trending-list', stats.trendingPosts);
+        renderPostList('popular-list', stats.popularPosts);
         renderSubmissionList(stats.recentSubmissions);
+
     } else if (stats.role === 'author') {
         renderPostList('my-posts-list', stats.myPosts);
     }

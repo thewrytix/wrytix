@@ -1,5 +1,5 @@
 /**
- * sidebar.js — shared sidebar renderer with collapsible groups and
+ * sideBar.js — shared sidebar renderer with collapsible groups and
  * a collapsible whole-sidebar (icon-only) mode, persisted in localStorage.
  */
 function renderSidebar(links) {

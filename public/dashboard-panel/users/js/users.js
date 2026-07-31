@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderSidebar(window.RoleConfig[currentUser.role].sidebar);
+    setupSidebarCollapse()
     document.getElementById('profileBtn').textContent = currentUser.username;
 
     setupEventListeners();

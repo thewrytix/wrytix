@@ -115,8 +115,9 @@ const buildEditorStats = async (username) => {
         totalViews: posts.reduce((s, p) => s + (p.views || 0), 0),
         pendingApprovals: pending.length,
         myAuthorsCount: myAssignedAuthorsCount,
-        topViewed,
-        recentSubmissions
+        trendingCount: trendingPosts.length,
+        popularCount: popularPosts.length,
+        recentSubmissions, trendingPosts, popularPosts, topViewed,
     };
 };
 

@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderSidebar(window.RoleConfig.admin.sidebar);
+    setupSidebarCollapse()
     document.getElementById('profileBtn').textContent = user.username;
 
     loadMaintenanceStatus();
