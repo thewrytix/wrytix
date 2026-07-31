@@ -143,15 +143,17 @@ const LogSchema = new Schema({
 });
 
 
+
 // Category Schema
-const CategorySchema = new Schema({
-    id: { type: String, required: true, unique: true }, // UUID or custom ID
-    name: { type: String, required: true, unique: true }, // category name
-    editor: { type: String, required: true }, // editor ID or username
-    authors: { type: [String], default: [] }, // list of author IDs or usernames
+const CategorySchema = new mongoose.Schema({
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true, unique: true },
+    editor: { type: String, default: null }, // no longer required — can be unassigned until admin sets one
+    authors: { type: [String], default: [] },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date },
 });
+
 
 
 //Headline Schema
@@ -185,6 +187,7 @@ const SystemConfigSchema = new mongoose.Schema({
     updatedBy: String,
     updatedAt: { type: Date, default: Date.now }
 });
+
 
 
 
