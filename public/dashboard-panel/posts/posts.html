@@ -17,10 +17,7 @@
             margin-bottom: 1rem;
         }
 
-        .status-tabs {
-            display: flex;
-            gap: 0.5rem;
-        }
+        .status-tabs { display: flex; gap: 0.5rem; }
 
         .status-tab {
             padding: 8px 16px;
@@ -69,7 +66,7 @@
             font-weight: 600;
         }
 
-        /* Modal */
+        /* Modal — widened, with internal scroll */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -87,10 +84,12 @@
         .modal-box {
             background: var(--background-light);
             border-radius: 10px;
-            max-width: 800px;
+            max-width: 960px;
             width: 100%;
             padding: 2rem;
             position: relative;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
         }
 
         .modal-close {
@@ -104,6 +103,16 @@
         }
 
         .row-checkbox { width: 18px; height: 18px; }
+
+        .featured-badge {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +149,17 @@
 
         <div id="searchContainer">
             <input type="text" id="searchInput" placeholder="Search title..." />
-            <input type="text" id="filterCategory" placeholder="Filter by category..." />
+
+            <select id="filterCategory">
+                <option value="">All Categories</option>
+            </select>
+
+            <select id="filterFeatured">
+                <option value="">All Posts</option>
+                <option value="true">Featured Only</option>
+                <option value="false">Not Featured</option>
+            </select>
+
             <input type="text" id="filterAuthor" placeholder="Filter by author..." style="display:none;" />
             <button id="searchBtn">Search</button>
             <button id="resetBtn">Reset</button>
@@ -160,12 +179,13 @@
                 <th>Category</th>
                 <th id="authorColHeader">Author</th>
                 <th>Status</th>
+                <th>Featured</th>
                 <th id="viewsColHeader">Views</th>
                 <th>Actions</th>
             </tr>
             </thead>
             <tbody id="postsTableBody">
-            <tr><td colspan="7">Loading...</td></tr>
+            <tr><td colspan="8">Loading...</td></tr>
             </tbody>
         </table>
 
@@ -180,9 +200,9 @@
         <h2 id="modalTitle">Add New Post</h2>
 
         <form id="postForm">
-            <input type="hidden" id="postFormMode" value="add" /> <!-- add | edit -->
+            <input type="hidden" id="postFormMode" value="add" />
             <input type="hidden" id="postFormSlug" value="" />
-            <input type="hidden" id="postFormSource" value="" /> <!-- post | submission -->
+            <input type="hidden" id="postFormSource" value="" />
 
             <label for="postTitleInput">Title</label>
             <input type="text" id="postTitleInput" required />
@@ -193,22 +213,80 @@
             <label for="postCategoryInput">Category</label>
             <select id="postCategoryInput" required>
                 <option value="">Select a category</option>
-                <option value="news">News</option>
-                <option value="business">Business</option>
-                <option value="foreign">Foreign</option>
-                <option value="sports">Sports</option>
-                <option value="technology">Technology</option>
-                <option value="lifestyle">Lifestyle</option>
             </select>
 
-            <label for="postThumbnailInput">Thumbnail Image</label>
+            <label for="postThumbnailInput">Thumbnail Image <span style="font-weight:normal;">(required)</span></label>
             <input type="file" id="postThumbnailInput" accept="image/*" />
             <div id="thumbnailPreviewContainer" style="display:none;">
                 <img id="thumbnailPreview" style="max-width:200px; border:1px solid #ccc; border-radius:4px;" />
             </div>
 
             <label>Content</label>
-            <div id="postContentEditable" contenteditable="true" class="rich-editor" style="min-height:200px;border:1px solid var(--border-color);border-radius:6px;padding:1rem;background:white;"></div>
+            <div class="formatting-toolbar">
+                <button type="button" title="Undo" onclick="formatText('undo')"><i class="fa-solid fa-rotate-left"></i></button>
+                <button type="button" title="Redo" onclick="formatText('redo')"><i class="fa-solid fa-rotate-right"></i></button>
+
+                <button type="button" title="Bold" onclick="formatText('bold')"><i class="fa-solid fa-bold"></i></button>
+                <button type="button" title="Italic" onclick="formatText('italic')"><i class="fa-solid fa-italic"></i></button>
+                <button type="button" title="Underline" onclick="formatText('underline')"><i class="fa-solid fa-underline"></i></button>
+                <button type="button" title="Strikethrough" onclick="formatText('strikeThrough')"><i class="fa-solid fa-strikethrough"></i></button>
+
+                <select onchange="formatText('fontName', this.value)" title="Font Family">
+                    <option value="">Font</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+
+                <select onchange="formatText('fontSize', this.value)" title="Font Size">
+                    <option value="">Size</option>
+                    <option value="1">Small</option>
+                    <option value="3">Normal</option>
+                    <option value="5">Large</option>
+                    <option value="7">X-Large</option>
+                </select>
+
+                <label>
+                    <input type="color" id="fontColorPicker" title="Font Color" style="height: 30px; width: 25px; border:none; background: transparent; padding: 0;" />
+                </label>
+                <label>
+                    <input type="color" id="bgColorPicker" title="Background Color" style="height: 30px; width: 25px; border:none; background: transparent; padding: 0;" />
+                </label>
+
+                <button type="button" title="Bullets" onclick="formatText('insertUnorderedList')"><i class="fa-solid fa-list-ul"></i></button>
+                <button type="button" title="Numbers" onclick="formatText('insertOrderedList')"><i class="fa-solid fa-list-ol"></i></button>
+
+                <select onchange="applyHeading(this)" title="Select Header">
+                    <option value="">Header</option>
+                    <option value="h1">H1</option>
+                    <option value="h2">H2</option>
+                    <option value="h3">H3</option>
+                    <option value="h4">H4</option>
+                </select>
+
+                <button type="button" title="Blockquote" onclick="applyBlockquote()"><i class="fa-solid fa-quote-left"></i></button>
+
+                <button type="button" title="Link" onclick="formatText('createLink')"><i class="fa-solid fa-link"></i></button>
+                <button type="button" title="Image" onclick="insertImage()"><i class="fa-solid fa-image"></i></button>
+                <button type="button" title="Insert Table" onclick="insertTable()"><i class="fa-solid fa-table"></i></button>
+                <button type="button" title="Insert Video" onclick="insertVideo()"><i class="fa-solid fa-video"></i></button>
+
+                <button type="button" title="Align left" onclick="formatText('justifyLeft')"><i class="fa-solid fa-align-left"></i></button>
+                <button type="button" title="Align center" onclick="formatText('justifyCenter')"><i class="fa-solid fa-align-center"></i></button>
+                <button type="button" title="Align right" onclick="formatText('justifyRight')"><i class="fa-solid fa-align-right"></i></button>
+                <button type="button" title="Align justify" onclick="formatText('justifyFull')"><i class="fa-solid fa-align-justify"></i></button>
+
+                <button type="button" title="Inline Code" onclick="formatText('formatBlock', '<code>')"><i class="fa-solid fa-code"></i></button>
+                <button type="button" title="Subscript" onclick="formatText('subscript')"><i class="fa-solid fa-subscript"></i></button>
+                <button type="button" title="Superscript" onclick="formatText('superscript')"><i class="fa-solid fa-superscript"></i></button>
+
+                <button type="button" title="Clear Formatting" onclick="formatText('removeFormat')"><i class="fa-solid fa-eraser"></i></button>
+
+                <input type="file" id="imageUploader" accept="image/*" style="display:none" />
+            </div>
+
+            <div id="postContent" contenteditable="true" class="rich-editor" style="min-height:220px;border:1px solid var(--border-color);border-radius:6px;padding:1rem;background:white;"></div>
 
             <label for="postSourceInput" style="margin-top:1rem;">Source</label>
             <input type="text" id="postSourceInput" />
@@ -219,6 +297,7 @@
             <input type="datetime-local" id="postScheduleInput" />
 
             <div style="margin-top:1.5rem;display:flex;gap:1rem;">
+                <button type="button" id="previewPostBtn" style="background:var(--primary-color);color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Preview</button>
                 <button type="submit" class="btn-add-post">Save</button>
                 <button type="button" id="cancelModalBtn" style="background:var(--border-color);border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Cancel</button>
             </div>
@@ -229,9 +308,7 @@
 <script src="../js/config.js"></script>
 <script src="../js/guard.js"></script>
 <script src="../js/roleConfig.js"></script>
-<script src="js/posts.js"></script>
 <script src="../js/sideBar.js"></script>
-<script src="../js/richEditor.js"></script>
-
+<script src="js/posts.js"></script>
 </body>
 </html>

@@ -149,9 +149,9 @@ async function clearAllLogs() {
         });
         if (!res.ok) throw new Error('Failed to clear logs.');
         await fetchLogs();
-        alert('✅ All logs cleared!');
+        showSuccess('All logs cleared!')
     } catch (err) {
-        console.error(err);
-        alert('Failed to clear logs.');
+     showError('Failed to clear logs.');
+
     }
 }

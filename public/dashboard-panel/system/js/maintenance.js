@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const user = JSON.parse(userData);
     if (user.role !== 'admin') {
-        alert('Access denied. Admins only.');
+        showToast('Access denied. Admins only.', 'error');
         window.location.href = '/login.html';
         return;
     }
@@ -36,16 +36,26 @@ async function loadMaintenanceStatus() {
         const res = await fetch(`${API_BASE}/system/maintenance`, { credentials: 'include' });
         const data = await res.json();
         updateMaintenanceUI(data.maintenanceMode);
+
     } catch (err) {
         console.error('Failed to load maintenance status:', err);
+        showError('Failed to update maintenance mode.');
+
     }
 }
 
 function updateMaintenanceUI(isOn) {
     document.getElementById('maintenanceToggle').checked = isOn;
     const statusText = document.getElementById('maintenanceStatusText');
-    statusText.textContent = isOn ? 'MAINTENANCE MODE: ON' : 'Maintenance Mode: OFF';
+    statusText.textContent = isOn ? showSuccess() : 'Maintenance Mode: OFF';
     statusText.className = `maintenance-status-text ${isOn ? 'on' : 'off'}`;
+
+if (isOn) {
+    showSuccess('Maintenance mode enabled');
+
+} else {
+    showError('Maintenance mode disabled');
+}
 }
 
 async function handleMaintenanceToggle(e) {
@@ -70,11 +80,14 @@ async function handleMaintenanceToggle(e) {
             credentials: 'include'
         });
 
+
+
         if (!res.ok) throw new Error('Failed to update maintenance mode');
         updateMaintenanceUI(newValue);
     } catch (err) {
         console.error('Toggle failed:', err);
-        alert('Failed to update maintenance mode.');
+
+        showError('Failed to update maintenance mode.');
         e.target.checked = !newValue;
     }
 }
@@ -87,7 +100,8 @@ async function loadTasks() {
         allTasks = await res.json();
         renderTasks();
     } catch (err) {
-        console.error('Failed to load tasks:', err);
+
+        showError('Failed to load tasks:');
         document.getElementById('taskList').innerHTML = '<p style="color:red;">Failed to load tasks.</p>';
     }
 }
@@ -131,7 +145,7 @@ async function handleAddTask() {
     const priority = document.getElementById('taskPriority').value;
 
     if (!title) {
-        alert('Task title is required.');
+        showError('Task title is required.');
         return;
     }
 
@@ -145,14 +159,15 @@ async function handleAddTask() {
 
         if (!res.ok) throw new Error('Failed to create task');
 
+        // Clear form
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDescription').value = '';
         document.getElementById('taskPriority').value = 'medium';
 
         await loadTasks();
+        showSuccess('Task created successfully!');   // ✅ added
     } catch (err) {
-        console.error('Add task failed:', err);
-        alert('Failed to add task.');
+        showError('Add task failed:');
     }
 }
 
@@ -166,9 +181,10 @@ async function toggleTaskStatus(id, newStatus) {
         });
         if (!res.ok) throw new Error('Failed to update task');
         await loadTasks();
+        // ✅ add success toast
+        showSuccess(`Task marked as ${newStatus === 'done' ? 'done' : 'open'}!`);
     } catch (err) {
-        console.error('Update task failed:', err);
-        alert('Failed to update task.');
+        showError('Update task failed:');
     }
 }
 
@@ -182,8 +198,9 @@ async function deleteTask(id) {
         });
         if (!res.ok) throw new Error('Failed to delete task');
         await loadTasks();
+        showSuccess('Task deleted successfully!');
     } catch (err) {
         console.error('Delete task failed:', err);
-        alert('Failed to delete task.');
+        showError('Failed to delete task.');
     }
 }

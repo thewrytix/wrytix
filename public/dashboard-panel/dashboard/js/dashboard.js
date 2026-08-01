@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = JSON.parse(userData);
     const config = window.RoleConfig[user.role];
     if (!config) {
-        alert('Access denied. contact admin.');
+
+        showError('Access denied, cotact the administrator');
         window.location.href = '/login.html';
         return;
     }
@@ -206,7 +207,8 @@ function setupHeadlineEditor() {
             setTimeout(() => (message.style.display = 'none'), 2000);
         } catch (err) {
             console.error('Error saving headline:', err);
-            alert('Failed to update headline.');
+
+            showError('Failed to update headline.');
         }
     });
 }

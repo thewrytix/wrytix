@@ -577,6 +577,11 @@ const getManagedPosts = async (req, res) => {
             if (search) query.title = { $regex: search, $options: 'i' };
             if (category) query.category = category;
             if (author && user.role !== 'author') query.submittedBy = author;
+            // controllers/postController.js — inside getManagedPosts, published-posts branch
+            if (status === 'live') query.schedule = { $lte: now };
+            if (status === 'scheduled') query.schedule = { $gt: now };
+            if (req.query.featured === 'true') query.featured = true;
+            if (req.query.featured === 'false') query.featured = false;
 
             const [items, total] = await Promise.all([
                 PostSubmission.find(query)

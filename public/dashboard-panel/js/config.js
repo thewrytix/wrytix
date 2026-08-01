@@ -1,11 +1,8 @@
 const API_BASE = "https://wrytix.onrender.com";
-
 const CLOUDINARY_CLOUD_NAME = 'dbtgim7l0';
 const CLOUDINARY_UPLOAD_PRESET = 'wrytix_unsigned';
 
-
-
-//////////////////// Toast helpers//////////////////////////
+//////////////////// Toast helpers //////////////////////////
 function showToast(message, type = 'success', duration = 3000) {
     // Remove existing toast first
     const existingToast = document.querySelector('.alert');
@@ -48,8 +45,16 @@ function showSuccess(message) {
     showToast(message, 'success', 3000);
 }
 
+function showStatus(message) {
+    showToast(message, 'status', 3000);
+}
+
 function showError(message) {
     showToast(message, 'error', 5000);
+}
+
+function showInfo(message) {
+    showToast(message, 'info', 3000);
 }
 
 // Toast styling
@@ -73,7 +78,9 @@ toastStyle.textContent = `
   }
 
   .alert.success { background: #28a745; }
-  .alert.error { background: #dc3545; }
+  .alert.status { background: #17a2b8; }  /* blue */
+  .alert.info   { background: #17a2b8; }  /* same as status, you can change */
+  .alert.error  { background: #dc3545; }
 
   @keyframes slideIn {
     from { opacity: 0; top: 0px; transform: translateX(-50%) translateY(-10px); }

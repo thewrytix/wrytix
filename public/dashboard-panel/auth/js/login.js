@@ -45,7 +45,6 @@ loginForm.addEventListener('submit', async function (e) {
             showError('Invalid username or password.');
         }
     } catch (err) {
-        console.error('Login failed:', err);
         showError('Server error. Try again.');
     }
 });

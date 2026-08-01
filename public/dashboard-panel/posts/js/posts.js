@@ -1,33 +1,45 @@
-
 let currentUser = null;
 let currentStatus = 'all';
 let currentPage = 1;
 let currentItems = [];
-let selectedKeys = new Set(); // "source:slug" strings
+let selectedKeys = new Set();
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const userData = localStorage.getItem('user');
     if (!userData) { window.location.href = '/login.html'; return; }
 
     currentUser = JSON.parse(userData);
     renderSidebar(window.RoleConfig[currentUser.role].sidebar);
-    setupSidebarCollapse()
+    setupSidebarCollapse();
     document.getElementById('profileBtn').textContent = currentUser.username;
 
-    // Authors don't need author filter/column, or the pending-visible-to-others distinction
     if (currentUser.role === 'author') {
         document.getElementById('authorColHeader').style.display = 'none';
         document.getElementById('filterAuthor').style.display = 'none';
     }
 
+    await loadCategoryOptions();
     setupEventListeners();
     loadPosts();
 });
 
-function renderSidebar(links) {
-    document.getElementById('sidebarLinks').innerHTML = links.map(link => `
-        <li><a href="${link.href}"><i class="fa-solid ${link.icon}"></i> ${link.label}</a></li>
-    `).join('');
+async function loadCategoryOptions() {
+    try {
+        const res = await fetch(`${API_BASE}/category`, { credentials: 'include' });
+        const categories = await res.json();
+
+        const filterSelect = document.getElementById('filterCategory');
+        const modalSelect = document.getElementById('postCategoryInput');
+
+        const optionsHtml = categories.map(cat =>
+            `<option value="${cat.name.toLowerCase()}">${cat.name}</option>`
+        ).join('');
+
+        filterSelect.innerHTML = '<option value="">All Categories</option>' + optionsHtml;
+        modalSelect.innerHTML = '<option value="">Select a category</option>' + optionsHtml;
+    } catch (err) {
+        console.error('Failed to load categories:', err);
+    }
 }
 
 function setupEventListeners() {
@@ -46,6 +58,7 @@ function setupEventListeners() {
     document.getElementById('resetBtn').addEventListener('click', () => {
         document.getElementById('searchInput').value = '';
         document.getElementById('filterCategory').value = '';
+        document.getElementById('filterFeatured').value = '';
         document.getElementById('filterAuthor').value = '';
         currentPage = 1;
         loadPosts();
@@ -73,23 +86,21 @@ function setupEventListeners() {
 
     document.getElementById('postThumbnailInput').addEventListener('change', handleThumbnailPreview);
     document.getElementById('postForm').addEventListener('submit', handleFormSubmit);
-
-    document.getElementById('postTitleInput').addEventListener('input', () => {
-        // auto-suggest source filename if needed elsewhere; slug handled server-side on create
-    });
+    document.getElementById('previewPostBtn').addEventListener('click', handlePreview);
 }
 
 /* ============ Load & Render ============ */
 
 async function loadPosts() {
     const tbody = document.getElementById('postsTableBody');
-    tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     const params = new URLSearchParams({
         status: currentStatus,
         page: currentPage,
         search: document.getElementById('searchInput').value.trim(),
-        category: document.getElementById('filterCategory').value.trim(),
+        category: document.getElementById('filterCategory').value,
+        featured: document.getElementById('filterFeatured').value,
         author: document.getElementById('filterAuthor').value.trim()
     });
 
@@ -103,7 +114,7 @@ async function loadPosts() {
         renderPagination(data.page, data.totalPages);
     } catch (err) {
         console.error('Failed to load posts:', err);
-        tbody.innerHTML = '<tr><td colspan="7">Failed to load posts.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">Failed to load posts.</td></tr>';
     }
 }
 
@@ -111,7 +122,7 @@ function renderTable(items) {
     const tbody = document.getElementById('postsTableBody');
 
     if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No posts found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">No posts found.</td></tr>';
         return;
     }
 
@@ -130,6 +141,7 @@ function renderTable(items) {
         }
 
         const authorDisplay = item.author || item.submittedBy || 'Unknown';
+        const featuredBadge = item.featured ? `<span class="featured-badge">Featured</span>` : '—';
 
         return `
             <tr>
@@ -138,10 +150,10 @@ function renderTable(items) {
                 <td>${item.category || 'Uncategorized'}</td>
                 <td>${authorDisplay}</td>
                 <td>${statusLabel}</td>
+                <td>${featuredBadge}</td>
                 <td>${item.views || 0}</td>
                 <td class="action-buttons">
                     <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
-                    <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>
                 </td>
             </tr>
         `;
@@ -210,32 +222,14 @@ async function handleBulkDelete() {
             credentials: 'include'
         });
 
-        if (!res.ok) throw new Error('Bulk delete failed');
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Bulk delete failed');
+
         selectedKeys.clear();
         await loadPosts();
     } catch (err) {
-        console.error('Bulk delete error:', err);
-        alert('Bulk delete failed.');
-    }
-}
-
-async function handleSingleDelete(key) {
-    if (!confirm('Delete this post?')) return;
-    const [source, slug] = key.split(':');
-
-    try {
-        const res = await fetch(`${API_BASE}/posts/bulk-delete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: [{ source, slug }] }),
-            credentials: 'include'
-        });
-
-        if (!res.ok) throw new Error('Delete failed');
-        await loadPosts();
-    } catch (err) {
-        console.error('Delete error:', err);
-        alert('Delete failed.');
+        console.error(err);
+        alert(err.message);
     }
 }
 
@@ -250,7 +244,7 @@ function openModal(mode) {
 function closeModal() {
     document.getElementById('postModal').classList.remove('visible');
     document.getElementById('postForm').reset();
-    document.getElementById('postContentEditable').innerHTML = '';
+    document.getElementById('postContent').innerHTML = '';
     document.getElementById('thumbnailPreviewContainer').style.display = 'none';
 }
 
@@ -266,7 +260,6 @@ function openEditModal(key) {
     document.getElementById('postCategoryInput').value = item.category || '';
     document.getElementById('postFeaturedInput').checked = !!item.featured;
 
-    // Content/source/schedule aren't in the lean list response — fetch full record for edit
     fetchFullPostForEdit(item);
 }
 
@@ -279,7 +272,7 @@ async function fetchFullPostForEdit(item) {
         const res = await fetch(url, { credentials: 'include' });
         const full = await res.json();
 
-        document.getElementById('postContentEditable').innerHTML = full.content || '';
+        document.getElementById('postContent').innerHTML = full.content || '';
         document.getElementById('postSourceInput').value = full.source || '';
         if (full.thumbnail) {
             document.getElementById('thumbnailPreview').src = full.thumbnail;
@@ -319,37 +312,66 @@ async function uploadToCloudinary(file) {
 const slugify = text =>
     text.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-');
 
-async function handleFormSubmit(e) {
-    e.preventDefault();
-
-    const mode = document.getElementById('postFormMode').value;
+async function collectFormData() {
     const title = document.getElementById('postTitleInput').value.trim();
     const author = document.getElementById('postAuthorInput').value.trim();
     const category = document.getElementById('postCategoryInput').value;
-    const content = document.getElementById('postContentEditable').innerHTML.trim();
+    const content = document.getElementById('postContent').innerHTML.trim();
     const source = document.getElementById('postSourceInput').value.trim();
     const featured = document.getElementById('postFeaturedInput').checked;
     const schedule = document.getElementById('postScheduleInput').value;
 
     const thumbnailInput = document.getElementById('postThumbnailInput');
-    let thumbnail;
+    let thumbnail = document.getElementById('thumbnailPreview').src.startsWith('http')
+        ? document.getElementById('thumbnailPreview').src // keep existing on edit if no new file chosen
+        : '';
+
     if (thumbnailInput.files[0]) {
-        try {
-            thumbnail = await uploadToCloudinary(thumbnailInput.files[0]);
-        } catch (err) {
-            alert('Thumbnail upload failed.');
-            return;
-        }
+        thumbnail = await uploadToCloudinary(thumbnailInput.files[0]);
     }
 
-    const payload = { title, author, category, content, source, featured, schedule };
-    if (thumbnail) payload.thumbnail = thumbnail;
+    return { title, author, category, thumbnail, content, source, featured, schedule };
+}
+
+async function handlePreview() {
+    const data = await collectFormData();
+
+    if (!data.title || !data.category || !data.content) {
+        alert('Please fill in title, category, and content before previewing.');
+        return;
+    }
+
+    localStorage.setItem('previewPost', JSON.stringify(data));
+    window.open('preview.html', '_blank');
+}
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const mode = document.getElementById('postFormMode').value;
+
+    let payload;
+    try {
+        payload = await collectFormData();
+    } catch (err) {
+        alert('Thumbnail upload failed. Please try again.');
+        return;
+    }
+
+    if (!payload.title || !payload.author || !payload.category || !payload.content) {
+        alert('Please complete all required fields.');
+        return;
+    }
+
+    if (!payload.thumbnail) {
+        alert('A thumbnail image is required.');
+        return;
+    }
 
     try {
         let res;
         if (mode === 'add') {
-            payload.slug = slugify(title);
-            // Authors submit for approval; editors/admins publish directly
+            payload.slug = slugify(payload.title);
             const endpoint = currentUser.role === 'author' ? '/postSubmissions' : '/posts';
             res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
@@ -369,12 +391,17 @@ async function handleFormSubmit(e) {
             });
         }
 
-        if (!res.ok) throw new Error('Save failed');
+        const resData = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            const msg = resData?.error || resData?.message || `Save failed (${res.status})`;
+            throw new Error(msg);
+        }
 
         closeModal();
         await loadPosts();
     } catch (err) {
         console.error('Save error:', err);
-        alert('Failed to save post.');
+        alert(err.message);
     }
 }
