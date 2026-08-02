@@ -3,6 +3,7 @@ let currentStatus = 'all';
 let currentPage = 1;
 let currentItems = [];
 let selectedKeys = new Set();
+let rejectTargetKey = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const userData = localStorage.getItem('user');
@@ -57,8 +58,6 @@ function renderStatusTabs() {
     });
 }
 
-
-
 async function loadCategoryOptions() {
     try {
         const res = await fetch(`${API_BASE}/category`, { credentials: 'include' });
@@ -74,13 +73,11 @@ async function loadCategoryOptions() {
         filterSelect.innerHTML = '<option value="">All Categories</option>' + optionsHtml;
         modalSelect.innerHTML = '<option value="">Select a category</option>' + optionsHtml;
     } catch (err) {
-        console.error('Failed to load categories:', err);
+        showError('Failed to load categories: ' + err.message);
     }
 }
 
 function setupEventListeners() {
-
-
     document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPosts(); });
     document.getElementById('resetBtn').addEventListener('click', () => {
         document.getElementById('searchInput').value = '';
@@ -114,9 +111,11 @@ function setupEventListeners() {
     document.getElementById('postThumbnailInput').addEventListener('change', handleThumbnailPreview);
     document.getElementById('postForm').addEventListener('submit', handleFormSubmit);
     document.getElementById('previewPostBtn').addEventListener('click', handlePreview);
+
+    // Reject modal
+    document.getElementById('confirmRejectBtn').addEventListener('click', confirmRejection);
+    document.getElementById('cancelRejectBtn').addEventListener('click', closeRejectModal);
 }
-
-
 
 /* ============ Load & Render ============ */
 
@@ -142,16 +141,20 @@ async function loadPosts() {
         renderTable(data.items);
         renderPagination(data.page, data.totalPages);
     } catch (err) {
-        console.error('Failed to load posts:', err);
+        showError('Failed to load posts: ' + err.message);
         tbody.innerHTML = '<tr><td colspan="8">Failed to load posts.</td></tr>';
     }
 }
 
 function renderTable(items) {
     const tbody = document.getElementById('postsTableBody');
+    const isAuthor = currentUser.role === 'author';
+    const isReviewer = currentUser.role === 'admin' || currentUser.role === 'editor';
+    const isPendingTab = currentStatus === 'pending';
 
     if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8">No posts found.</td></tr>';
+        const colspan = isAuthor ? 7 : 8;
+        tbody.innerHTML = `<tr><td colspan="${colspan}">No posts found.</td></tr>`;
         return;
     }
 
@@ -166,7 +169,7 @@ function renderTable(items) {
             statusLabel = `<span class="${statusClass}">${statusText}</span>`;
         } else {
             const isLive = new Date(item.schedule) <= new Date();
-            statusLabel = currentUser.role === 'author'
+            statusLabel = isAuthor
                 ? `<span class="status-live">Approved</span>`
                 : (isLive ? `<span class="status-live">Live</span>` : `<span class="status-scheduled">Scheduled</span>`);
         }
@@ -174,23 +177,48 @@ function renderTable(items) {
         const authorDisplay = item.author || item.submittedBy || 'Unknown';
         const featuredBadge = item.featured ? `<span class="featured-badge">Featured</span>` : '—';
 
-        const actions = item.status === 'rejected'
-            ? `<button class="btn-edit" onclick="showRejectReason('${key}')">View Reason</button>
-               <button class="btn-edit" onclick="openEditModal('${key}')">Edit &amp; Resubmit</button>`
-            : `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>`;
+        // Build action buttons based on role + context
+        let actions = '';
 
-        return `
-            <tr>
-                <td><input type="checkbox" class="row-checkbox" data-key="${key}" ${isChecked ? 'checked' : ''} /></td>
-                <td>${item.title}</td>
-                <td>${item.category || 'Uncategorized'}</td>
-                <td>${authorDisplay}</td>
-                <td>${statusLabel}</td>
-                <td>${featuredBadge}</td>
-                <td>${item.views || 0}</td>
-                <td class="action-buttons">${actions}</td>
-            </tr>
+        if (isReviewer && isPendingTab && item.source === 'submission') {
+            // Editor/admin reviewing a pending submission: Approve / Reject / Edit / Delete
+            actions = `
+                <button class="btn approve" onclick="approveSubmission('${key}')">Approve</button>
+                <button class="btn reject" onclick="openRejectModal('${key}')">Reject</button>
+                <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
+                <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>
+            `;
+        } else if (item.status === 'rejected') {
+            actions = `
+                <button class="btn-edit" onclick="showRejectReason('${key}')">View Reason</button>
+                <button class="btn-edit" onclick="openEditModal('${key}')">Edit &amp; Resubmit</button>
+                <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>
+            `;
+        } else {
+            actions = `
+                <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
+                <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>
+            `;
+        }
+
+        let rowHtml = `
+            <td><input type="checkbox" class="row-checkbox" data-key="${key}" ${isChecked ? 'checked' : ''} /></td>
+            <td>${item.title}</td>
+            <td>${item.category || 'Uncategorized'}</td>
         `;
+
+        if (!isAuthor) {
+            rowHtml += `<td>${authorDisplay}</td>`;
+        }
+
+        rowHtml += `
+            <td>${statusLabel}</td>
+            <td>${featuredBadge}</td>
+            <td>${item.views || 0}</td>
+            <td class="action-buttons">${actions}</td>
+        `;
+
+        return `<tr>${rowHtml}</tr>`;
     }).join('');
 
     document.querySelectorAll('.row-checkbox').forEach(cb => {
@@ -200,7 +228,7 @@ function renderTable(items) {
 
 function showRejectReason(key) {
     const item = currentItems.find(i => `${i.source}:${i.slug || i.id}` === key);
-    alert(item?.editorComments || 'No reason given.');
+    showInfo(item?.editorComments || 'No reason given.');
 }
 
 function renderPagination(page, totalPages) {
@@ -227,6 +255,69 @@ function renderPagination(page, totalPages) {
     nextBtn.disabled = page === totalPages;
     nextBtn.onclick = () => { currentPage = page + 1; loadPosts(); };
     container.appendChild(nextBtn);
+}
+
+/* ============ Approve / Reject (Editor & Admin) ============ */
+
+async function approveSubmission(key) {
+    if (!confirm('Approve and publish this post?')) return;
+    const [, slug] = key.split(':');
+
+    try {
+        const res = await fetch(`${API_BASE}/postSubmissions/${slug}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'approved' }),
+            credentials: 'include'
+        });
+
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Approve failed');
+
+        showSuccess('Post approved and published.');
+        await loadPosts();
+    } catch (err) {
+        showError('Failed to approve post: ' + err.message);
+    }
+}
+
+function openRejectModal(key) {
+    rejectTargetKey = key;
+    document.getElementById('rejectionReasonInput').value = '';
+    document.getElementById('rejectModal').classList.add('visible');
+}
+
+function closeRejectModal() {
+    rejectTargetKey = null;
+    document.getElementById('rejectModal').classList.remove('visible');
+}
+
+async function confirmRejection() {
+    const reason = document.getElementById('rejectionReasonInput').value.trim();
+    if (!reason) {
+        showError('Rejection reason is required.');
+        return;
+    }
+
+    const [, slug] = rejectTargetKey.split(':');
+
+    try {
+        const res = await fetch(`${API_BASE}/postSubmissions/${slug}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'rejected', editorComments: reason }),
+            credentials: 'include'
+        });
+
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Reject failed');
+
+        closeRejectModal();
+        showSuccess('Post rejected.');
+        await loadPosts();
+    } catch (err) {
+        showError('Failed to reject post: ' + err.message);
+    }
 }
 
 /* ============ Selection & Bulk Actions ============ */
@@ -266,11 +357,31 @@ async function handleBulkDelete() {
 
         selectedKeys.clear();
         await loadPosts();
-
-
+        showSuccess('Bulk deleted successfully.');
     } catch (err) {
-        console.error(err);
         showError(err.message);
+    }
+}
+
+async function handleSingleDelete(key) {
+    if (!confirm('Delete this post?')) return;
+    const [source, slug] = key.split(':');
+
+    try {
+        const res = await fetch(`${API_BASE}/posts/bulk-delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: [{ source, slug }] }),
+            credentials: 'include'
+        });
+
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Delete failed');
+
+        await loadPosts();
+        showSuccess('Post deleted.');
+    } catch (err) {
+        showError('Delete failed: ' + err.message);
     }
 }
 
@@ -315,6 +426,7 @@ async function fetchFullPostForEdit(item) {
 
         document.getElementById('postContent').innerHTML = full.content || '';
         document.getElementById('postSourceInput').value = full.source || '';
+        document.getElementById('postFeaturedInput').checked = !!full.featured;
         if (full.thumbnail) {
             document.getElementById('thumbnailPreview').src = full.thumbnail;
             document.getElementById('thumbnailPreviewContainer').style.display = 'block';
@@ -324,7 +436,7 @@ async function fetchFullPostForEdit(item) {
             document.getElementById('postScheduleInput').value = d.toISOString().slice(0, 16);
         }
     } catch (err) {
-        showError('Failed to load full post for edit:', err);
+        showError('Failed to load full post for edit: ' + err.message);
     }
 }
 
@@ -359,12 +471,12 @@ async function collectFormData() {
     const category = document.getElementById('postCategoryInput').value;
     const content = document.getElementById('postContent').innerHTML.trim();
     const source = document.getElementById('postSourceInput').value.trim();
-    const featured = document.getElementById('postFeaturedInput').checked;
+    const featured = document.getElementById('postFeaturedInput').checked; // boolean, can legitimately be false
     const schedule = document.getElementById('postScheduleInput').value;
 
     const thumbnailInput = document.getElementById('postThumbnailInput');
     let thumbnail = document.getElementById('thumbnailPreview').src.startsWith('http')
-        ? document.getElementById('thumbnailPreview').src // keep existing on edit if no new file chosen
+        ? document.getElementById('thumbnailPreview').src
         : '';
 
     if (thumbnailInput.files[0]) {
@@ -378,7 +490,7 @@ async function handlePreview() {
     const data = await collectFormData();
 
     if (!data.title || !data.category || !data.content) {
-        showError('Please fill in title, category, and content before previewing.')
+        showError('Please fill in title, category, and content before previewing.');
         return;
     }
 
@@ -395,20 +507,19 @@ async function handleFormSubmit(e) {
     try {
         payload = await collectFormData();
     } catch (err) {
-
         showError('Thumbnail upload failed. Please try again.');
         return;
     }
 
+    // FIXED: removed `featured` from this required-fields check —
+    // it's a boolean checkbox and `false` is a perfectly valid, common value
     if (!payload.title || !payload.author || !payload.category || !payload.content) {
-
         showError('Please complete all required fields.');
         return;
     }
 
     if (!payload.thumbnail) {
-
-        showError('A thumbnail image is required.')
+        showError('A thumbnail image is required.');
         return;
     }
 
@@ -417,17 +528,12 @@ async function handleFormSubmit(e) {
         if (mode === 'add') {
             payload.slug = slugify(payload.title);
             const endpoint = currentUser.role === 'author' ? '/postSubmissions' : '/posts';
-            console.log('Payload being sent:', payload);
             res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
-                credentials: 'include',
-
-
-            }
-            );
-
+                credentials: 'include'
+            });
         } else {
             const slug = document.getElementById('postFormSlug').value;
             const source = document.getElementById('postFormSource').value;
@@ -442,8 +548,6 @@ async function handleFormSubmit(e) {
 
         const resData = await res.json().catch(() => ({}));
 
-        console.log('Full server response:', resData);
-
         if (!res.ok) {
             const msg = resData?.error || resData?.message || `Save failed (${res.status})`;
             throw new Error(msg);
@@ -451,9 +555,8 @@ async function handleFormSubmit(e) {
 
         closeModal();
         await loadPosts();
-        showSuccess('Post upload successfully.');
+        showSuccess('Post saved successfully.');
     } catch (err) {
-        console.error('Server response:', err.message);
-        showError('Failed to save post', err);
+        showError('Failed to save post: ' + err.message);
     }
 }

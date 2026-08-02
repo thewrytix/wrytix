@@ -188,6 +188,20 @@
     </main>
 </div>
 
+<!-- Reject Modal -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-box" style="max-width:450px;">
+        <button class="modal-close" id="cancelRejectBtn">&times;</button>
+        <h2>Reject Post</h2>
+        <label for="rejectionReasonInput">Rejection Reason</label>
+        <textarea id="rejectionReasonInput" rows="4" placeholder="Enter rejection reason..." style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;"></textarea>
+        <div class="modal-actions">
+            <button type="button" id="confirmRejectBtn" style="background:var(--status-red);color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Reject</button>
+            <button type="button" id="cancelRejectBtn" style="background:var(--border-color);border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- Add/Edit Modal -->
 <div class="modal-overlay" id="postModal">
     <div class="modal-box">
