@@ -96,7 +96,7 @@ const buildEditorStats = async (username) => {
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const [posts, mySubmissionQueue, myAssignedAuthorsCount] = await Promise.all([
-        Post.find().select('title slug schedule views lastViewed').lean(), // add lastViewed to be consistent
+        Post.find().select('title slug schedule views lastViewed').lean(),
         PostSubmission.find({ assignedEditor: username })
             .select('title status submittedBy category createdAt')
             .sort({ createdAt: -1 })
@@ -109,6 +109,7 @@ const buildEditorStats = async (username) => {
     const pending = mySubmissionQueue.filter(s => s.status === 'pending');
     const recentSubmissions = mySubmissionQueue.slice(0, 5);
 
+    // 🔥 Compute trending and popular (same as admin)
     const trendingThreshold = getDynamicThreshold(posts, 0.1);
     const popularThreshold = getDynamicThreshold(posts, 0.05);
 
@@ -134,7 +135,7 @@ const buildEditorStats = async (username) => {
         trendingCount: trendingPosts.length,
         popularCount: popularPosts.length,
         recentSubmissions,
-        trendingPosts,
+        trendingPosts,  
         popularPosts,
         topViewed,
     };
