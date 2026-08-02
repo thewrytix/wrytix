@@ -490,7 +490,10 @@ const deletePostSubmission = async (req, res) => {
 const createPostSubmission = async (req, res) => {
     try {
         const author = req.session.user;
+        console.log('[createPostSubmission] session user:', author); // TEMP DEBUG
+
         const authorRecord = await User.findOne({ username: author.username }).lean();
+        console.log('[createPostSubmission] authorRecord found:', authorRecord); // TEMP DEBUG
 
         const newSubmission = {
             id: Date.now().toString(),
@@ -502,11 +505,14 @@ const createPostSubmission = async (req, res) => {
             createdAt: new Date()
         };
 
+        console.log('[createPostSubmission] saving submittedBy as:', newSubmission.submittedBy); // TEMP DEBUG
+
         await PostSubmission.create(newSubmission);
         await logAction(author.username, 'post-submitted', newSubmission.title);
         res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to submit post'});
+        console.error('createPostSubmission error:', err);
+        res.status(500).json({ error: 'Failed to submit post' });
     }
 };
 
