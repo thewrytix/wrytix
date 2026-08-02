@@ -227,9 +227,11 @@ async function handleBulkDelete() {
 
         selectedKeys.clear();
         await loadPosts();
+
+
     } catch (err) {
         console.error(err);
-        alert(err.message);
+        showError(err.message);
     }
 }
 
@@ -283,7 +285,7 @@ async function fetchFullPostForEdit(item) {
             document.getElementById('postScheduleInput').value = d.toISOString().slice(0, 16);
         }
     } catch (err) {
-        console.error('Failed to load full post for edit:', err);
+        showError('Failed to load full post for edit:', err);
     }
 }
 
@@ -337,7 +339,7 @@ async function handlePreview() {
     const data = await collectFormData();
 
     if (!data.title || !data.category || !data.content) {
-        alert('Please fill in title, category, and content before previewing.');
+        showError('Please fill in title, category, and content before previewing.')
         return;
     }
 
@@ -354,17 +356,20 @@ async function handleFormSubmit(e) {
     try {
         payload = await collectFormData();
     } catch (err) {
-        alert('Thumbnail upload failed. Please try again.');
+
+        showError('Thumbnail upload failed. Please try again.');
         return;
     }
 
     if (!payload.title || !payload.author || !payload.category || !payload.content) {
-        alert('Please complete all required fields.');
+
+        showError('Please complete all required fields.');
         return;
     }
 
     if (!payload.thumbnail) {
-        alert('A thumbnail image is required.');
+
+        showError('A thumbnail image is required.')
         return;
     }
 
@@ -373,12 +378,17 @@ async function handleFormSubmit(e) {
         if (mode === 'add') {
             payload.slug = slugify(payload.title);
             const endpoint = currentUser.role === 'author' ? '/postSubmissions' : '/posts';
+            console.log('Payload being sent:', payload);
             res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
-                credentials: 'include'
-            });
+                credentials: 'include',
+
+
+            }
+            );
+
         } else {
             const slug = document.getElementById('postFormSlug').value;
             const source = document.getElementById('postFormSource').value;
@@ -393,6 +403,8 @@ async function handleFormSubmit(e) {
 
         const resData = await res.json().catch(() => ({}));
 
+        console.log('Full server response:', resData);
+
         if (!res.ok) {
             const msg = resData?.error || resData?.message || `Save failed (${res.status})`;
             throw new Error(msg);
@@ -400,8 +412,9 @@ async function handleFormSubmit(e) {
 
         closeModal();
         await loadPosts();
+        showSuccess('Post upload successfully.');
     } catch (err) {
-        console.error('Save error:', err);
-        alert(err.message);
+        console.error('Server response:', err.message);
+        showError('Failed to save post', err);
     }
 }

@@ -497,19 +497,17 @@ const createPostSubmission = async (req, res) => {
             ...req.body,
             status: 'pending',
             submittedBy: author.username,
-            assignedEditor: authorRecord?.lineManager || null, // null = falls to admin, per spec
+            assignedEditor: authorRecord?.lineManager || null,
             editorComments: '',
             createdAt: new Date()
         };
 
         await PostSubmission.create(newSubmission);
-        await logAction(author.username, 'post-submitted', newSubmission.title, {
-            assignedEditor: newSubmission.assignedEditor || 'admin (no line manager)'
-        });
-
+        await logAction(author.username, 'post-submitted', newSubmission.title);
         res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to submit post' });
+        console.error('createPostSubmission error:', err); // ← add this
+        res.status(500).json({ error: 'Failed to submit post', details: err.message }); // ← temporarily expose details
     }
 };
 
