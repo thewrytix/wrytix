@@ -138,7 +138,7 @@ function updatePagination(totalPages) {
 window.showLogDetails = (logId) => {
     const log = allLogs.find(l => l.id === logId);
     if (!log) { alert('Log not found'); return; }
-    alert(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
+    showInfo(`Log Details:\n\n${JSON.stringify(log, null, 2)}`);
 };
 
 async function clearAllLogs() {

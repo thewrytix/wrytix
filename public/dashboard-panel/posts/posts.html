@@ -211,13 +211,14 @@
         <form id="postForm">
             <input type="hidden" id="postFormMode" value="add" />
             <input type="hidden" id="postFormSlug" value="" />
+            <input type="hidden" id="postFormSubmissionId" value="" />
             <input type="hidden" id="postFormSource" value="" />
 
             <label for="postTitleInput">Title</label>
             <input type="text" id="postTitleInput" required />
 
             <label for="postAuthorInput">Author</label>
-            <input type="text" id="postAuthorInput" required />
+            <input type="text" id="postAuthorInput" readonly required />
 
             <label for="postCategoryInput">Category</label>
             <select id="postCategoryInput" required>

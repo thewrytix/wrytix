@@ -2,7 +2,9 @@ window.RoleConfig = {
     admin: {
         title: 'Admin Dashboard',
         sidebar: [
-            { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html' },
+            { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html',
+
+            },
             {
                 label: 'Posts', icon: 'fa-newspaper',
                 children: [
@@ -84,3 +86,4 @@ window.RoleConfig = {
         ]
     }
 };
+

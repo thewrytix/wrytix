@@ -12,15 +12,15 @@ function renderSidebar(links) {
             return `
                 <li class="sidebar-group ${isOpenGroup ? 'open' : ''}">
                     <button class="sidebar-group-toggle" data-group="${index}">
-                        <i class="fa-solid ${item.icon}"></i>
+                        <i class="fa-solid ${item.icon}" id="sidebar-icons"></i>
                         <span class="sidebar-label">${item.label}</span>
                         <i class="fa-solid fa-chevron-down sidebar-caret"></i>
                     </button>
                     <ul class="sidebar-submenu">
                         ${item.children.map(child => `
                             <li>
-                                <a href="${child.href}" class="${currentPath === child.href ? 'active' : ''}">
-                                    ${child.label}
+                                <a href="${child.href}" class="${currentPath === child.href ? 'active' : ''}"  > 
+                                    ${child.label} 
                                 </a>
                             </li>
                         `).join('')}

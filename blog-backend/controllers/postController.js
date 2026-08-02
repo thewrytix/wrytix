@@ -700,7 +700,7 @@ const getManagedPosts = async (req, res) => {
 const bulkDeletePosts = async (req, res) => {
     try {
         const user = req.session.user;
-        const { items } = req.body; // [{ slug, source: 'post' }, { slug, source: 'submission' }]
+        const { items } = req.body;
 
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'No items provided' });
@@ -709,14 +709,16 @@ const bulkDeletePosts = async (req, res) => {
         const postSlugs = items.filter(i => i.source === 'post').map(i => i.slug);
         const submissionSlugs = items.filter(i => i.source === 'submission').map(i => i.slug);
 
+        // Authors can never delete published posts — only their own pending/rejected submissions
+        if (user.role === 'author' && postSlugs.length > 0) {
+            return res.status(403).json({ error: 'Authors cannot delete published posts' });
+        }
+
         let deletedPosts = 0;
         let deletedSubmissions = 0;
 
         if (postSlugs.length > 0) {
-            let filter = { slug: { $in: postSlugs } };
-            if (user.role === 'author') filter.submittedBy = user.username; // authors can only delete their own
-
-            const result = await Post.deleteMany(filter);
+            const result = await Post.deleteMany({ slug: { $in: postSlugs } });
             deletedPosts = result.deletedCount;
         }
 
@@ -729,10 +731,7 @@ const bulkDeletePosts = async (req, res) => {
             deletedSubmissions = result.deletedCount;
         }
 
-        await logAction(user.username, 'bulk-delete-posts', 'multiple', {
-            deletedPosts, deletedSubmissions
-        });
-
+        await logAction(user.username, 'bulk-delete-posts', 'multiple', { deletedPosts, deletedSubmissions });
         res.json({ message: 'Bulk delete complete', deletedPosts, deletedSubmissions });
     } catch (err) {
         console.error('bulkDeletePosts error:', err);

@@ -3,7 +3,7 @@ let currentStatus = 'all';
 let currentPage = 1;
 let currentItems = [];
 let selectedKeys = new Set();
-let rejectTargetKey = null;
+let rejectTargetItem = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const userData = localStorage.getItem('user');
@@ -24,6 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
     loadPosts();
 });
+
+function findItemByKey(key) {
+    return currentItems.find(i => `${i.source}:${i.slug || i.id}` === key);
+}
 
 function renderStatusTabs() {
     const container = document.getElementById('statusTabs');
@@ -112,7 +116,6 @@ function setupEventListeners() {
     document.getElementById('postForm').addEventListener('submit', handleFormSubmit);
     document.getElementById('previewPostBtn').addEventListener('click', handlePreview);
 
-    // Reject modal
     document.getElementById('confirmRejectBtn').addEventListener('click', confirmRejection);
     document.getElementById('cancelRejectBtn').addEventListener('click', closeRejectModal);
 }
@@ -177,11 +180,12 @@ function renderTable(items) {
         const authorDisplay = item.author || item.submittedBy || 'Unknown';
         const featuredBadge = item.featured ? `<span class="featured-badge">Featured</span>` : '—';
 
-        // Build action buttons based on role + context
+        // Authors can never delete published posts (source === 'post')
+        const canDelete = !(isAuthor && item.source === 'post');
+
         let actions = '';
 
         if (isReviewer && isPendingTab && item.source === 'submission') {
-            // Editor/admin reviewing a pending submission: Approve / Reject / Edit / Delete
             actions = `
                 <button class="btn approve" onclick="approveSubmission('${key}')">Approve</button>
                 <button class="btn reject" onclick="openRejectModal('${key}')">Reject</button>
@@ -197,12 +201,12 @@ function renderTable(items) {
         } else {
             actions = `
                 <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
-                <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>
+                ${canDelete ? `<button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>` : ''}
             `;
         }
 
         let rowHtml = `
-            <td><input type="checkbox" class="row-checkbox" data-key="${key}" ${isChecked ? 'checked' : ''} /></td>
+            <td>${canDelete ? `<input type="checkbox" class="row-checkbox" data-key="${key}" ${isChecked ? 'checked' : ''} />` : ''}</td>
             <td>${item.title}</td>
             <td>${item.category || 'Uncategorized'}</td>
         `;
@@ -227,7 +231,7 @@ function renderTable(items) {
 }
 
 function showRejectReason(key) {
-    const item = currentItems.find(i => `${i.source}:${i.slug || i.id}` === key);
+    const item = findItemByKey(key);
     showInfo(item?.editorComments || 'No reason given.');
 }
 
@@ -257,14 +261,15 @@ function renderPagination(page, totalPages) {
     container.appendChild(nextBtn);
 }
 
-/* ============ Approve / Reject (Editor & Admin) ============ */
+/* ============ Approve / Reject (Editor & Admin) — now using item.id, not slug ============ */
 
 async function approveSubmission(key) {
+    const item = findItemByKey(key);
+    if (!item) return;
     if (!confirm('Approve and publish this post?')) return;
-    const [, slug] = key.split(':');
 
     try {
-        const res = await fetch(`${API_BASE}/postSubmissions/${slug}`, {
+        const res = await fetch(`${API_BASE}/postSubmissions/${item.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'approved' }),
@@ -282,13 +287,15 @@ async function approveSubmission(key) {
 }
 
 function openRejectModal(key) {
-    rejectTargetKey = key;
+    const item = findItemByKey(key);
+    if (!item) return;
+    rejectTargetItem = item;
     document.getElementById('rejectionReasonInput').value = '';
     document.getElementById('rejectModal').classList.add('visible');
 }
 
 function closeRejectModal() {
-    rejectTargetKey = null;
+    rejectTargetItem = null;
     document.getElementById('rejectModal').classList.remove('visible');
 }
 
@@ -299,10 +306,8 @@ async function confirmRejection() {
         return;
     }
 
-    const [, slug] = rejectTargetKey.split(':');
-
     try {
-        const res = await fetch(`${API_BASE}/postSubmissions/${slug}`, {
+        const res = await fetch(`${API_BASE}/postSubmissions/${rejectTargetItem.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'rejected', editorComments: reason }),
@@ -390,6 +395,12 @@ async function handleSingleDelete(key) {
 function openModal(mode) {
     document.getElementById('modalTitle').textContent = mode === 'add' ? 'Add New Post' : 'Edit Post';
     document.getElementById('postFormMode').value = mode;
+
+    if (mode === 'add') {
+        // Author field auto-filled from the logged-in user, never manually typed
+        document.getElementById('postAuthorInput').value = currentUser.fullName || currentUser.username;
+    }
+
     document.getElementById('postModal').classList.add('visible');
 }
 
@@ -401,11 +412,12 @@ function closeModal() {
 }
 
 function openEditModal(key) {
-    const item = currentItems.find(i => `${i.source}:${i.slug || i.id}` === key);
+    const item = findItemByKey(key);
     if (!item) return;
 
     openModal('edit');
-    document.getElementById('postFormSlug').value = item.slug || item.id;
+    document.getElementById('postFormSlug').value = item.slug || '';
+    document.getElementById('postFormSubmissionId').value = item.id || '';
     document.getElementById('postFormSource').value = item.source;
     document.getElementById('postTitleInput').value = item.title;
     document.getElementById('postAuthorInput').value = item.author || item.submittedBy || '';
@@ -417,13 +429,13 @@ function openEditModal(key) {
 
 async function fetchFullPostForEdit(item) {
     try {
-            const url = item.source === 'submission'
-                ? `${API_BASE}/postSubmissions/${item.slug || item.id}`
-                : `${API_BASE}/posts/${item.slug}`;
+        const url = item.source === 'submission'
+            ? `${API_BASE}/postSubmissions/${item.id}`
+            : `${API_BASE}/posts/${item.slug}`;
 
-            const res = await fetch(url, { credentials: 'include' });
-            if (!res.ok) throw new Error('Failed to fetch post');
-            const full = await res.json();
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to fetch post');
+        const full = await res.json();
 
         document.getElementById('postContent').innerHTML = full.content || '';
         document.getElementById('postSourceInput').value = full.source || '';
@@ -468,11 +480,11 @@ const slugify = text =>
 
 async function collectFormData() {
     const title = document.getElementById('postTitleInput').value.trim();
-    const author = document.getElementById('postAuthorInput').value.trim();
+    const author = document.getElementById('postAuthorInput').value.trim(); // auto-filled, readonly
     const category = document.getElementById('postCategoryInput').value;
     const content = document.getElementById('postContent').innerHTML.trim();
     const source = document.getElementById('postSourceInput').value.trim();
-    const featured = document.getElementById('postFeaturedInput').checked; // boolean, can legitimately be false
+    const featured = document.getElementById('postFeaturedInput').checked;
     const schedule = document.getElementById('postScheduleInput').value;
 
     const thumbnailInput = document.getElementById('postThumbnailInput');
@@ -512,8 +524,6 @@ async function handleFormSubmit(e) {
         return;
     }
 
-    // FIXED: removed `featured` from this required-fields check —
-    // it's a boolean checkbox and `false` is a perfectly valid, common value
     if (!payload.title || !payload.author || !payload.category || !payload.content) {
         showError('Please complete all required fields.');
         return;
@@ -536,9 +546,10 @@ async function handleFormSubmit(e) {
                 credentials: 'include'
             });
         } else {
-            const slug = document.getElementById('postFormSlug').value;
             const source = document.getElementById('postFormSource').value;
-            const endpoint = source === 'submission' ? `/postSubmissions/${slug}` : `/posts/${slug}`;
+            const endpoint = source === 'submission'
+                ? `/postSubmissions/${document.getElementById('postFormSubmissionId').value}`
+                : `/posts/${document.getElementById('postFormSlug').value}`;
             res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
