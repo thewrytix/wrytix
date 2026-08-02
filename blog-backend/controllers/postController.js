@@ -1,4 +1,4 @@
-const { Post, PostSubmission } = require('../models');
+const { Post, PostSubmission, User } = require('../models');
 const { logAction } = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
