@@ -624,7 +624,7 @@ const getManagedPosts = async (req, res) => {
                 PostSubmission.find({ status: 'rejected', submittedBy: user.username })
                     .select('title slug category submittedBy createdAt status editorComments').lean(),
                 Post.find({ submittedBy: user.username })
-                    .select('title slug category schedule views featured').lean()
+                    .select('title slug category author schedule views featured').lean()
             ]);
 
             const combined = [
