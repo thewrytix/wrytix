@@ -92,9 +92,11 @@ const buildAdminStats = async () => {
 
 const buildEditorStats = async (username) => {
     const now = new Date();
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const [posts, mySubmissionQueue, myAssignedAuthorsCount] = await Promise.all([
-        Post.find().select('title slug schedule views').lean(),
+        Post.find().select('title slug schedule views lastViewed').lean(), // add lastViewed to be consistent
         PostSubmission.find({ assignedEditor: username })
             .select('title status submittedBy category createdAt')
             .sort({ createdAt: -1 })
@@ -107,6 +109,20 @@ const buildEditorStats = async (username) => {
     const pending = mySubmissionQueue.filter(s => s.status === 'pending');
     const recentSubmissions = mySubmissionQueue.slice(0, 5);
 
+    const trendingThreshold = getDynamicThreshold(posts, 0.1);
+    const popularThreshold = getDynamicThreshold(posts, 0.05);
+
+    const isRecent = (p, cutoff) => {
+        const d = new Date(p.schedule);
+        const lv = p.lastViewed ? new Date(p.lastViewed) : null;
+        return d >= cutoff || (lv && lv >= cutoff);
+    };
+
+    const trendingPosts = posts.filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
+        .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+    const popularPosts = posts.filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
+        .sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
+
     return {
         role: 'editor',
         totalPosts: posts.length,
@@ -117,7 +133,10 @@ const buildEditorStats = async (username) => {
         myAuthorsCount: myAssignedAuthorsCount,
         trendingCount: trendingPosts.length,
         popularCount: popularPosts.length,
-        recentSubmissions, trendingPosts, popularPosts, topViewed,
+        recentSubmissions,
+        trendingPosts,
+        popularPosts,
+        topViewed,
     };
 };
 

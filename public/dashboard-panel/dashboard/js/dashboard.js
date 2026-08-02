@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRoleSpecificSections(stats);
     } catch (err) {
         console.error('Failed to load dashboard stats:', err);
+        console.error('❌ Dashboard stats error:', err);
         document.getElementById('statsContainer').innerHTML =
             '<p style="color:red;">Failed to load dashboard data.</p>';
     }
