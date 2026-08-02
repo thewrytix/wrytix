@@ -79,7 +79,7 @@ async function loadCategoryOptions() {
 }
 
 function setupEventListeners() {
- 
+
 
     document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPosts(); });
     document.getElementById('resetBtn').addEventListener('click', () => {
