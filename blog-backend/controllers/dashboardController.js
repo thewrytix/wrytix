@@ -135,7 +135,7 @@ const buildEditorStats = async (username) => {
         trendingCount: trendingPosts.length,
         popularCount: popularPosts.length,
         recentSubmissions,
-        trendingPosts,  
+        trendingPosts,
         popularPosts,
         topViewed,
     };

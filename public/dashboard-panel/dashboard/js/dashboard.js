@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = JSON.parse(userData);
     const config = window.RoleConfig[user.role];
     if (!config) {
-
-        showError('Access denied, cotact the administrator');
+        showError('Access denied, contact the administrator');
         window.location.href = '/login.html';
         return;
     }

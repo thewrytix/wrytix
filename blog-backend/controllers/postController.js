@@ -581,7 +581,7 @@ const getManagedPosts = async (req, res) => {
 
             const [items, total] = await Promise.all([
                 PostSubmission.find(query)
-                    .select('id title slug category submittedBy assignedEditor createdAt status editorComments')
+                    .select('id title slug category submittedBy featured assignedEditor createdAt status editorComments')
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
