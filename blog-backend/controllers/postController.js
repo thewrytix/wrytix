@@ -572,19 +572,84 @@ const getManagedPosts = async (req, res) => {
         const skip = (parseInt(page) - 1) * limit;
         const now = new Date();
 
-        const usernameRegex = user.username
-            ? new RegExp(`^${user.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
-            : null;
-
-        if (status === 'pending') {
-            let query = { status: 'pending' };
-
-            if (user.role === 'editor') query.assignedEditor = usernameRegex;
-            if (user.role === 'author') query.submittedBy = usernameRegex;
+        // Author-specific statuses: pending / rejected (submissions) or approved (published Post)
+        if (user.role === 'author' && ['pending', 'rejected'].includes(status)) {
+            let query = { status, submittedBy: user.username };
 
             if (search) query.title = { $regex: search, $options: 'i' };
             if (category) query.category = category;
-            if (author && user.role !== 'author') query.submittedBy = new RegExp(`^${author}$`, 'i');
+
+            const [items, total] = await Promise.all([
+                PostSubmission.find(query)
+                    .select('title slug category submittedBy assignedEditor createdAt status editorComments')
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                PostSubmission.countDocuments(query)
+            ]);
+
+            return res.json({
+                items: items.map(i => ({ ...i, source: 'submission' })),
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        if (user.role === 'author' && status === 'approved') {
+            let query = { submittedBy: user.username };
+            if (search) query.title = { $regex: search, $options: 'i' };
+            if (category) query.category = category;
+
+            const [items, total] = await Promise.all([
+                Post.find(query)
+                    .select('title slug category author schedule views featured')
+                    .sort({ schedule: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                Post.countDocuments(query)
+            ]);
+
+            return res.json({
+                items: items.map(i => ({ ...i, source: 'post' })),
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        if (user.role === 'author' && status === 'all') {
+            // Combine all three for authors: pending + rejected submissions + approved posts
+            const [pending, rejected, approved] = await Promise.all([
+                PostSubmission.find({ status: 'pending', submittedBy: user.username })
+                    .select('title slug category submittedBy createdAt status editorComments').lean(),
+                PostSubmission.find({ status: 'rejected', submittedBy: user.username })
+                    .select('title slug category submittedBy createdAt status editorComments').lean(),
+                Post.find({ submittedBy: user.username })
+                    .select('title slug category author schedule views featured').lean()
+            ]);
+
+            const combined = [
+                ...pending.map(i => ({ ...i, source: 'submission' })),
+                ...rejected.map(i => ({ ...i, source: 'submission' })),
+                ...approved.map(i => ({ ...i, source: 'post', status: 'approved' }))
+            ].sort((a, b) => new Date(b.createdAt || b.schedule) - new Date(a.createdAt || a.schedule));
+
+            const total = combined.length;
+            const paginated = combined.slice(skip, skip + limit);
+
+            return res.json({
+                items: paginated,
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        // ---- Existing admin/editor logic below, unchanged ----
+        if (status === 'pending') {
+            let query = { status: 'pending' };
+            if (user.role === 'editor') query.assignedEditor = user.username;
+
+            if (search) query.title = { $regex: search, $options: 'i' };
+            if (category) query.category = category;
+            if (author) query.submittedBy = author;
             if (req.query.featured === 'true') query.featured = true;
             if (req.query.featured === 'false') query.featured = false;
 
@@ -600,21 +665,16 @@ const getManagedPosts = async (req, res) => {
 
             return res.json({
                 items: items.map(i => ({ ...i, source: 'submission' })),
-                total,
-                page: parseInt(page),
-                totalPages: Math.ceil(total / limit)
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
             });
         }
 
         let query = {};
-        if (user.role === 'author') query.submittedBy = usernameRegex;
-
         if (status === 'live') query.schedule = { $lte: now };
         if (status === 'scheduled') query.schedule = { $gt: now };
-
         if (search) query.title = { $regex: search, $options: 'i' };
         if (category) query.category = category;
-        if (author && user.role !== 'author') query.author = new RegExp(`^${author}$`, 'i');
+        if (author) query.author = author;
 
         const [items, total] = await Promise.all([
             Post.find(query)
@@ -628,9 +688,7 @@ const getManagedPosts = async (req, res) => {
 
         res.json({
             items: items.map(i => ({ ...i, source: 'post' })),
-            total,
-            page: parseInt(page),
-            totalPages: Math.ceil(total / limit)
+            total, page: parseInt(page), totalPages: Math.ceil(total / limit)
         });
     } catch (err) {
         console.error('getManagedPosts error:', err);

@@ -18,10 +18,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('filterAuthor').style.display = 'none';
     }
 
+    renderStatusTabs();
     await loadCategoryOptions();
     setupEventListeners();
     loadPosts();
 });
+
+function renderStatusTabs() {
+    const container = document.getElementById('statusTabs');
+
+    const tabs = currentUser.role === 'author'
+        ? [
+            { status: 'all', label: 'All' },
+            { status: 'pending', label: 'Pending' },
+            { status: 'approved', label: 'Approved' },
+            { status: 'rejected', label: 'Rejected' }
+        ]
+        : [
+            { status: 'all', label: 'All' },
+            { status: 'live', label: 'Live' },
+            { status: 'scheduled', label: 'Scheduled' },
+            { status: 'pending', label: 'Pending Approval' }
+        ];
+
+    container.innerHTML = tabs.map((t, i) => `
+        <button class="status-tab ${i === 0 ? 'active' : ''}" data-status="${t.status}">${t.label}</button>
+    `).join('');
+
+    container.querySelectorAll('.status-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            container.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentStatus = tab.dataset.status;
+            currentPage = 1;
+            selectedKeys.clear();
+            loadPosts();
+        });
+    });
+}
+
+
 
 async function loadCategoryOptions() {
     try {
@@ -43,16 +79,7 @@ async function loadCategoryOptions() {
 }
 
 function setupEventListeners() {
-    document.querySelectorAll('.status-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentStatus = tab.dataset.status;
-            currentPage = 1;
-            selectedKeys.clear();
-            loadPosts();
-        });
-    });
+ 
 
     document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPosts(); });
     document.getElementById('resetBtn').addEventListener('click', () => {
@@ -88,6 +115,8 @@ function setupEventListeners() {
     document.getElementById('postForm').addEventListener('submit', handleFormSubmit);
     document.getElementById('previewPostBtn').addEventListener('click', handlePreview);
 }
+
+
 
 /* ============ Load & Render ============ */
 
@@ -132,16 +161,23 @@ function renderTable(items) {
 
         let statusLabel;
         if (item.source === 'submission') {
-            statusLabel = `<span class="status-scheduled">Pending</span>`;
+            const statusText = item.status === 'rejected' ? 'Rejected' : 'Pending';
+            const statusClass = item.status === 'rejected' ? 'status-none' : 'status-scheduled';
+            statusLabel = `<span class="${statusClass}">${statusText}</span>`;
         } else {
             const isLive = new Date(item.schedule) <= new Date();
-            statusLabel = isLive
-                ? `<span class="status-live">Live</span>`
-                : `<span class="status-scheduled">Scheduled</span>`;
+            statusLabel = currentUser.role === 'author'
+                ? `<span class="status-live">Approved</span>`
+                : (isLive ? `<span class="status-live">Live</span>` : `<span class="status-scheduled">Scheduled</span>`);
         }
 
         const authorDisplay = item.author || item.submittedBy || 'Unknown';
         const featuredBadge = item.featured ? `<span class="featured-badge">Featured</span>` : '—';
+
+        const actions = item.status === 'rejected'
+            ? `<button class="btn-edit" onclick="showRejectReason('${key}')">View Reason</button>
+               <button class="btn-edit" onclick="openEditModal('${key}')">Edit &amp; Resubmit</button>`
+            : `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>`;
 
         return `
             <tr>
@@ -152,9 +188,7 @@ function renderTable(items) {
                 <td>${statusLabel}</td>
                 <td>${featuredBadge}</td>
                 <td>${item.views || 0}</td>
-                <td class="action-buttons">
-                    <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
-                </td>
+                <td class="action-buttons">${actions}</td>
             </tr>
         `;
     }).join('');
@@ -162,6 +196,11 @@ function renderTable(items) {
     document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.addEventListener('change', (e) => toggleSelection(e.target.dataset.key, e.target.checked));
     });
+}
+
+function showRejectReason(key) {
+    const item = currentItems.find(i => `${i.source}:${i.slug || i.id}` === key);
+    alert(item?.editorComments || 'No reason given.');
 }
 
 function renderPagination(page, totalPages) {
