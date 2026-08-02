@@ -163,6 +163,7 @@ const getPosts = async (req, res) => {
 
         res.json(shaped);
     } catch (err) {
+        console.error('❌ getPosts error:', err);   // 👈 this
         res.status(500).json({ error: "Server error" });
     }
 };
