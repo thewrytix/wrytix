@@ -506,8 +506,7 @@ const createPostSubmission = async (req, res) => {
         await logAction(author.username, 'post-submitted', newSubmission.title);
         res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
     } catch (err) {
-        console.error('createPostSubmission error:', err); // ← add this
-        res.status(500).json({ error: 'Failed to submit post', details: err.message }); // ← temporarily expose details
+        res.status(500).json({ error: 'Failed to submit post'});
     }
 };
 
@@ -538,13 +537,14 @@ const getPendingApproval = async (req, res) => {
 const getMyPosts = async (req, res) => {
     try {
         const username = req.session.user.username;
+        const usernameRegex = new RegExp(`^${username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
 
         const [submissions, published] = await Promise.all([
-            PostSubmission.find({ submittedBy: username })
+            PostSubmission.find({ submittedBy: usernameRegex })
                 .select('title status createdAt category editorComments')
                 .sort({ createdAt: -1 })
                 .lean(),
-            Post.find({ submittedBy: username })
+            Post.find({ submittedBy: usernameRegex })
                 .select('title slug views schedule category')
                 .sort({ schedule: -1 })
                 .lean()
@@ -556,6 +556,8 @@ const getMyPosts = async (req, res) => {
     }
 };
 
+// controllers/postController.js
+
 const getManagedPosts = async (req, res) => {
     try {
         const user = req.session.user;
@@ -564,20 +566,19 @@ const getManagedPosts = async (req, res) => {
         const skip = (parseInt(page) - 1) * limit;
         const now = new Date();
 
-        // "pending" pulls from PostSubmission; everything else pulls from Post
+        const usernameRegex = user.username
+            ? new RegExp(`^${user.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+            : null;
+
         if (status === 'pending') {
             let query = { status: 'pending' };
 
-            if (user.role === 'editor') query.assignedEditor = user.username;
-            if (user.role === 'author') query.submittedBy = user.username;
-            // admin: no extra filter — sees everything including unassigned
+            if (user.role === 'editor') query.assignedEditor = usernameRegex;
+            if (user.role === 'author') query.submittedBy = usernameRegex;
 
             if (search) query.title = { $regex: search, $options: 'i' };
             if (category) query.category = category;
-            if (author && user.role !== 'author') query.submittedBy = author;
-            // controllers/postController.js — inside getManagedPosts, published-posts branch
-            if (status === 'live') query.schedule = { $lte: now };
-            if (status === 'scheduled') query.schedule = { $gt: now };
+            if (author && user.role !== 'author') query.submittedBy = new RegExp(`^${author}$`, 'i');
             if (req.query.featured === 'true') query.featured = true;
             if (req.query.featured === 'false') query.featured = false;
 
@@ -599,16 +600,15 @@ const getManagedPosts = async (req, res) => {
             });
         }
 
-        // Published posts: all / live / scheduled
         let query = {};
-        if (user.role === 'author') query.submittedBy = user.username;
+        if (user.role === 'author') query.submittedBy = usernameRegex;
 
         if (status === 'live') query.schedule = { $lte: now };
         if (status === 'scheduled') query.schedule = { $gt: now };
 
         if (search) query.title = { $regex: search, $options: 'i' };
         if (category) query.category = category;
-        if (author && user.role !== 'author') query.author = author;
+        if (author && user.role !== 'author') query.author = new RegExp(`^${author}$`, 'i');
 
         const [items, total] = await Promise.all([
             Post.find(query)
