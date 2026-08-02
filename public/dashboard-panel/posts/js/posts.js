@@ -417,12 +417,13 @@ function openEditModal(key) {
 
 async function fetchFullPostForEdit(item) {
     try {
-        const url = item.source === 'submission'
-            ? `${API_BASE}/postSubmissions/${item.slug || item.id}`
-            : `${API_BASE}/posts/${item.slug}`;
+            const url = item.source === 'submission'
+                ? `${API_BASE}/postSubmissions/${item.slug || item.id}`
+                : `${API_BASE}/posts/${item.slug}`;
 
-        const res = await fetch(url, { credentials: 'include' });
-        const full = await res.json();
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) throw new Error('Failed to fetch post');
+            const full = await res.json();
 
         document.getElementById('postContent').innerHTML = full.content || '';
         document.getElementById('postSourceInput').value = full.source || '';
