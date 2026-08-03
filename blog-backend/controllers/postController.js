@@ -630,11 +630,11 @@ const getManagedPosts = async (req, res) => {
             // Combine all three for authors: pending + rejected submissions + approved posts
             const [pending, rejected, approved] = await Promise.all([
                 PostSubmission.find({ status: 'pending', submittedBy: user.username })
-                    .select('title slug category submittedBy createdAt status featured editorComments').lean(),
+                    .select('id title slug category submittedBy createdAt status featured editorComments').lean(),
                 PostSubmission.find({ status: 'rejected', submittedBy: user.username })
-                    .select('title slug category submittedBy createdAt status featured  editorComments').lean(),
+                    .select('id title slug category submittedBy createdAt status featured  editorComments').lean(),
                 Post.find({ submittedBy: user.username })
-                    .select('title slug category author schedule views featured').lean()
+                    .select('id title slug category author schedule views featured').lean()
             ]);
 
             const combined = [
