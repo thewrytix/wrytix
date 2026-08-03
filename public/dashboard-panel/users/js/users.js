@@ -1,4 +1,3 @@
-
 let currentUser = null;
 let currentStatus = 'all';
 let currentPage = 1;
@@ -7,31 +6,42 @@ let selectedIds = new Set();
 let isUsernameAvailable = false;
 let isEmailAvailable = false;
 let usernameTimer, emailTimer;
+let editorsList = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const userData = localStorage.getItem('user');
     if (!userData) { window.location.href = '/login.html'; return; }
 
     currentUser = JSON.parse(userData);
     if (!['admin', 'editor'].includes(currentUser.role)) {
-        alert('Access denied.');
+        showError('Access denied.');
         window.location.href = '/login.html';
         return;
     }
 
     renderSidebar(window.RoleConfig[currentUser.role].sidebar);
-    setupSidebarCollapse()
+    setupSidebarCollapse();
     document.getElementById('profileBtn').textContent = currentUser.username;
 
+    await loadEditorsList();
     setupEventListeners();
     setupRoleFieldToggling();
+    setupAvailabilityChecks(); // FIX: this was never called before — root cause of the availability bug
     loadUsers();
 });
 
-function renderSidebar(links) {
-    document.getElementById('sidebarLinks').innerHTML = links.map(link => `
-        <li><a href="${link.href}"><i class="fa-solid ${link.icon}"></i> ${link.label}</a></li>
-    `).join('');
+async function loadEditorsList() {
+    try {
+        const res = await fetch(`${API_BASE}/users/editors`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        editorsList = await res.json();
+
+        const select = document.getElementById('lineManagerInput');
+        select.innerHTML = '<option value="">-- No line manager --</option>' +
+            editorsList.map(e => `<option value="${e.username}">${e.fullname || e.username}</option>`).join('');
+    } catch (err) {
+        showError('Failed to load editors list: ' + err.message);
+    }
 }
 
 function setupEventListeners() {
@@ -73,6 +83,7 @@ function setupEventListeners() {
     document.getElementById('openAddModalBtn').addEventListener('click', () => openModal('add'));
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+    document.getElementById('closeViewModalBtn').addEventListener('click', closeViewModal);
 
     document.getElementById('userForm').addEventListener('submit', handleFormSubmit);
 }
@@ -89,7 +100,7 @@ function setupRoleFieldToggling() {
 
 async function loadUsers() {
     const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
 
     const params = new URLSearchParams({
         status: currentStatus,
@@ -107,8 +118,8 @@ async function loadUsers() {
         renderTable(data.items);
         renderPagination(data.page, data.totalPages);
     } catch (err) {
-        console.error('Failed to load users:', err);
-        tbody.innerHTML = '<tr><td colspan="7">Failed to load users.</td></tr>';
+        showError('Failed to load users: ' + err.message);
+        tbody.innerHTML = '<tr><td colspan="8">Failed to load users.</td></tr>';
     }
 }
 
@@ -116,23 +127,26 @@ function renderTable(items) {
     const tbody = document.getElementById('usersTableBody');
 
     if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No users found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">No users found.</td></tr>';
         return;
     }
 
     tbody.innerHTML = items.map(item => {
         const key = item._id || item.id;
         const isPending = item.source === 'pending';
+        const fullNameDisplay = item.fullname || item.fullName || '—';
 
         return `
             <tr>
                 <td><input type="checkbox" class="row-checkbox" data-id="${key}" ${selectedIds.has(key) ? 'checked' : ''} /></td>
+                <td>${fullNameDisplay}</td>
                 <td>${item.username}</td>
                 <td>${item.email}</td>
                 <td>${item.role}</td>
                 <td>${isPending ? '<span class="status-scheduled">Pending</span>' : (item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>')}</td>
                 <td>${item.lineManager || '—'}</td>
                 <td class="action-buttons">
+                    <button class="btn-edit" onclick="openViewModal('${key}', ${isPending})">View</button>
                     ${isPending
             ? `<button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
                            <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`
@@ -175,6 +189,56 @@ function renderPagination(page, totalPages) {
     container.appendChild(nextBtn);
 }
 
+/* ============ View Modal ============ */
+
+async function openViewModal(id, isPending) {
+    document.getElementById('viewModal').classList.add('visible');
+    document.getElementById('viewModalBody').innerHTML = '<p>Loading...</p>';
+
+    try {
+        const url = isPending ? `${API_BASE}/pendingUsers/${id}` : `${API_BASE}/users/${id}`;
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load user details');
+        const user = await res.json();
+
+        const avatarHtml = user.avatarId
+            ? `<div style="margin:1rem 0;">
+                 <img src="${API_BASE}/files/${user.avatarId}" alt="Avatar" style="max-width:150px;border-radius:8px;border:1px solid var(--border-color);" />
+                 <br><a href="${API_BASE}/files/${user.avatarId}" download target="_blank" class="btn-edit" style="display:inline-block;margin-top:0.5rem;">Download Avatar</a>
+               </div>`
+            : '<p><em>No profile picture</em></p>';
+
+        const documentHtml = user.pdfId
+            ? `<div style="margin:1rem 0;">
+                 <a href="${API_BASE}/files/${user.pdfId}" download target="_blank" class="btn-edit">
+                    <i class="fa-solid fa-file-pdf"></i> Download ${user.pdfOriginalName || 'Document'}
+                 </a>
+               </div>`
+            : '<p><em>No document attached</em></p>';
+
+        document.getElementById('viewModalBody').innerHTML = `
+            <p><strong>Full Name:</strong> ${user.fullname || user.fullName || '—'}</p>
+            <p><strong>Username:</strong> ${user.username}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Role:</strong> ${user.role}</p>
+            <p><strong>Status:</strong> ${user.status || 'pending'}</p>
+            ${user.lineManager ? `<p><strong>Line Manager:</strong> ${user.lineManager}</p>` : ''}
+            ${user.assignedCategories?.length ? `<p><strong>Categories:</strong> ${user.assignedCategories.join(', ')}</p>` : ''}
+            <hr style="margin:1rem 0;" />
+            <h3>Profile Picture</h3>
+            ${avatarHtml}
+            <h3>Attached Document</h3>
+            ${documentHtml}
+        `;
+    } catch (err) {
+        document.getElementById('viewModalBody').innerHTML = `<p style="color:red;">${err.message}</p>`;
+    }
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').classList.remove('visible');
+}
+
 /* ============ Selection & Bulk Actions ============ */
 
 function toggleSelection(id, checked) {
@@ -191,7 +255,8 @@ function updateBulkBar() {
 
 async function handleBulkDelete() {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Delete ${selectedIds.size} user(s)? This cannot be undone.`)) return;
+    const ok = await showConfirm(`Delete ${selectedIds.size} user(s)? This cannot be undone.`, { title: 'Delete users', confirmText: 'Delete' });
+    if (!ok) return;
 
     try {
         const res = await fetch(`${API_BASE}/users/bulk-delete`, {
@@ -203,21 +268,23 @@ async function handleBulkDelete() {
         if (!res.ok) throw new Error('Bulk delete failed');
         selectedIds.clear();
         await loadUsers();
+        showSuccess('Users deleted.');
     } catch (err) {
-        console.error(err);
-        alert('Bulk delete failed.');
+        showError('Bulk delete failed: ' + err.message);
     }
 }
 
 async function handleSingleDelete(id) {
-    if (!confirm('Delete this user?')) return;
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete this user?', confirmText: 'Delete' });
+    if (!ok) return;
+
     try {
         const res = await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE', credentials: 'include' });
         if (!res.ok) throw new Error('Delete failed');
         await loadUsers();
+        showSuccess('User deleted.');
     } catch (err) {
-        console.error(err);
-        alert('Delete failed.');
+        showError('Delete failed: ' + err.message);
     }
 }
 
@@ -229,14 +296,16 @@ async function approvePendingUser(id) {
         });
         if (!res.ok) throw new Error('Approve failed');
         await loadUsers();
+        showSuccess('User approved.');
     } catch (err) {
-        console.error(err);
-        alert('Failed to approve user.');
+        showError('Failed to approve user: ' + err.message);
     }
 }
 
 async function rejectPendingUser(id) {
-    if (!confirm('Reject this user submission?')) return;
+    const ok = await showConfirm('Reject this user submission?', { title: 'Reject user', confirmText: 'Reject' });
+    if (!ok) return;
+
     try {
         const res = await fetch(`${API_BASE}/pendingUsers/${id}`, {
             method: 'DELETE',
@@ -244,18 +313,14 @@ async function rejectPendingUser(id) {
         });
         if (!res.ok) throw new Error('Reject failed');
         await loadUsers();
+        showSuccess('User rejected.');
     } catch (err) {
-        console.error(err);
-        alert('Failed to reject user.');
+        showError('Failed to reject user: ' + err.message);
     }
 }
 
-
-
-
-
-
 /* ============ Modal: Add / Edit ============ */
+
 function setupAvailabilityChecks() {
     const usernameInput = document.getElementById('usernameInput');
     const usernameStatus = document.getElementById('username-status');
@@ -333,6 +398,10 @@ function openModal(mode) {
     document.getElementById('userFormMode').value = mode;
     document.getElementById('passwordInput').required = mode === 'add';
     document.getElementById('passwordFieldWrapper').style.display = 'block';
+    document.getElementById('avatarInput').style.display = 'block';
+    document.getElementById('documentInput').style.display = 'block';
+    document.querySelector('label[for="avatarInput"]').style.display = 'block';
+    document.querySelector('label[for="documentInput"]').style.display = 'block';
     document.getElementById('userModal').classList.add('visible');
 }
 
@@ -353,17 +422,19 @@ function openEditModal(id) {
 
     openModal('edit');
     document.getElementById('userFormId').value = id;
-    document.getElementById('fullNameInput').value = user.fullName || user.fullname || '';
+    document.getElementById('fullNameInput').value = user.fullname || user.fullName || '';
     document.getElementById('usernameInput').value = user.username;
     document.getElementById('emailInput').value = user.email;
     document.getElementById('roleInput').value = user.role;
     document.getElementById('roleInput').dispatchEvent(new Event('change'));
 
-    // Editing: username/email already exist for this user, skip availability blocking
+    // Editing: username/email already belong to this user, skip the availability gate
     isUsernameAvailable = true;
     isEmailAvailable = true;
     document.getElementById('passwordInput').placeholder = 'Leave blank to keep unchanged';
-    document.getElementById('avatarInput').style.display = 'none'; // avatar/doc re-upload not supported in edit via upload.none()
+
+    // Avatar/document re-upload isn't supported via upload.none() on the update route
+    document.getElementById('avatarInput').style.display = 'none';
     document.getElementById('documentInput').style.display = 'none';
     document.querySelector('label[for="avatarInput"]').style.display = 'none';
     document.querySelector('label[for="documentInput"]').style.display = 'none';
@@ -379,8 +450,8 @@ async function handleFormSubmit(e) {
     const role = document.getElementById('roleInput').value;
 
     if (mode === 'add') {
-        if (!isUsernameAvailable) { alert('Please choose an available username.'); return; }
-        if (!isEmailAvailable) { alert('Please choose an available email.'); return; }
+        if (!isUsernameAvailable) { showError('Please choose an available username.'); return; }
+        if (!isEmailAvailable) { showError('Please choose an available email.'); return; }
     }
 
     const formData = new FormData();
@@ -431,16 +502,14 @@ async function handleFormSubmit(e) {
 
         if (!res.ok) {
             const msg = resData?.message || resData?.error || 'Unknown error';
-            alert(`Failed to save user: ${msg}`);
+            showError(`Failed to save user: ${msg}`);
             return;
         }
 
         closeModal();
         await loadUsers();
+        showSuccess('User saved successfully.');
     } catch (err) {
-        console.error(err);
-        alert('Failed to save user.');
+        showError('Failed to save user: ' + err.message);
     }
 }
-
-

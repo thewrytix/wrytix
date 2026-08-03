@@ -13,10 +13,12 @@ const getUsers = async (req, res) => {
     res.json(mappedUsers);
 };
 
+
 const getUserById = async (req, res) => {
     const user = await User.findOne({ _id: req.params.id }).lean();
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+    const { password, ...safeUser } = user;
+    res.json({ ...safeUser, fullName: user.fullname });
 };
 
 const createUser = async (req, res) => {
@@ -415,6 +417,17 @@ const assignEditorCategories = async (req, res) => {
     }
 };
 
+const getEditorsList = async (req, res) => {
+    try {
+        const editors = await User.find({ role: 'editor', status: 'active' })
+            .select('id username fullname')
+            .lean();
+        res.json(editors);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load editors' });
+    }
+};
+
 const getManagedUsers = async (req, res) => {
     try {
         const admin = req.session.user;
@@ -431,7 +444,7 @@ const getManagedUsers = async (req, res) => {
 
             const [items, total] = await Promise.all([
                 PendingUser.find(query)
-                    .select('username email role createdAt createdBy')
+                    .select('username fullname email role createdAt createdBy')
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(limit)
@@ -453,7 +466,7 @@ const getManagedUsers = async (req, res) => {
 
         const [items, total] = await Promise.all([
             User.find(query)
-                .select('username email role status createdAt lineManager assignedCategories')
+                .select('username fullname email role status createdAt lineManager assignedCategories')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -507,6 +520,7 @@ module.exports = {
     submitPendingUser,
     getMyPendingUsers,
     assignLineManager,
+    getEditorsList,
     assignEditorCategories,
     getManagedUsers,
     bulkDeleteUsers
