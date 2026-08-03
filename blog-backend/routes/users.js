@@ -60,7 +60,7 @@ router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([
     { name: 'pdf', maxCount: 1 }
 ]), createPendingUser);
 
-router.get('/pendingUsers/:id', requireAdmin, getPendingUserById);
+router.get('/pendingUsers/:id', requireEditorOrAdmin, getPendingUserById);
 router.delete('/pendingUsers/:id', requireAdmin, deletePendingUser);
 
 module.exports = router;
