@@ -118,6 +118,7 @@ function setupEventListeners() {
 
     document.getElementById('confirmRejectBtn').addEventListener('click', confirmRejection);
     document.getElementById('cancelRejectBtn').addEventListener('click', closeRejectModal);
+    document.getElementById('closeRejectModalBtn').addEventListener('click', closeRejectModal);
 }
 
 /* ============ Load & Render ============ */
@@ -266,7 +267,9 @@ function renderPagination(page, totalPages) {
 async function approveSubmission(key) {
     const item = findItemByKey(key);
     if (!item) return;
-    if (!confirm('Approve and publish this post?')) return;
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Approve Post', confirmText: 'Approve and publish post' });
+    if (!ok) return;
+
 
     try {
         const res = await fetch(`${API_BASE}/postSubmissions/${item.id}`, {
@@ -342,7 +345,9 @@ function updateBulkBar() {
 
 async function handleBulkDelete() {
     if (selectedKeys.size === 0) return;
-    if (!confirm(`Delete ${selectedKeys.size} item(s)? This cannot be undone.`)) return;
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete bulk posts?', confirmText: 'Delete' });
+    if (!ok) return;
+
 
     const items = [...selectedKeys].map(key => {
         const [source, slug] = key.split(':');
@@ -369,7 +374,8 @@ async function handleBulkDelete() {
 }
 
 async function handleSingleDelete(key) {
-    if (!confirm('Delete this post?')) return;
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete this post?', confirmText: 'Delete' });
+    if (!ok) return;
     const [source, slug] = key.split(':');
 
     try {
@@ -480,7 +486,7 @@ const slugify = text =>
 
 async function collectFormData() {
     const title = document.getElementById('postTitleInput').value.trim();
-    const author = document.getElementById('postAuthorInput').value.trim(); // auto-filled, readonly
+    const author = document.getElementById('postAuthorInput').value.trim(); //
     const category = document.getElementById('postCategoryInput').value;
     const content = document.getElementById('postContent').innerHTML.trim();
     const source = document.getElementById('postSourceInput').value.trim();

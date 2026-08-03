@@ -573,12 +573,18 @@ const getManagedPosts = async (req, res) => {
         const skip = (parseInt(page) - 1) * limit;
         const now = new Date();
 
+        const applyFeatured = (query) => {
+            if (req.query.featured === 'true') query.featured = true;
+            if (req.query.featured === 'false') query.featured = false;
+        };
+
         // Author-specific statuses: pending / rejected (submissions) or approved (published Post)
         if (user.role === 'author' && ['pending', 'rejected'].includes(status)) {
             let query = { status, submittedBy: user.username };
 
             if (search) query.title = { $regex: search, $options: 'i' };
             if (category) query.category = category;
+            applyFeatured(query);
 
             const [items, total] = await Promise.all([
                 PostSubmission.find(query)

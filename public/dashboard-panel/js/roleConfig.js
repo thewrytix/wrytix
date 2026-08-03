@@ -76,7 +76,11 @@ window.RoleConfig = {
         title: 'Author Dashboard',
         sidebar: [
             { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
-            { label: 'My Posts', href: '../posts/posts.html?status=all' },
+            { label: 'Posts', icon: 'fa-newspaper',
+                      children: [
+                  { label: 'My Posts', href: '../posts/posts.html?status=all' },
+
+                     ]}
         ],
         cards: [
             { id: 'totalPosts', label: 'Total Submitted' },
