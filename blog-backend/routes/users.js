@@ -15,7 +15,7 @@ const {
     bulkDeleteUsers,
     getEditorsList
 } = require('../controllers/userController');
-const { checkUsername, checkEmail } = require('../middleware/validation'); 
+const { checkUsername, checkEmail } = require('../middleware/validation');
 const { requireAdmin, requireEditorOrAdmin, requireRole, requireLogin } = require('../middleware/auth');
 const { upload } = require('../config/middleware');
 const { getVisitAnalytics } = require('../controllers/analyticsController');
@@ -54,7 +54,7 @@ router.delete('/users/:id', requireAdmin, deleteUser);
 // ============================================================
 //  4️⃣ PENDING USER ROUTES
 // ============================================================
-router.get('/pendingUsers', requireAdmin, getPendingUsers);
+router.get('/pendingUsers', requireEditorOrAdmin, getPendingUsers);
 router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 },
     { name: 'pdf', maxCount: 1 }
