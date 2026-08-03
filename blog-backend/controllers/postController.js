@@ -606,6 +606,7 @@ const getManagedPosts = async (req, res) => {
             let query = { submittedBy: user.username };
             if (search) query.title = { $regex: search, $options: 'i' };
             if (category) query.category = category;
+            applyFeatured(query);
 
             const [items, total] = await Promise.all([
                 Post.find(query)
@@ -624,6 +625,8 @@ const getManagedPosts = async (req, res) => {
         }
 
         if (user.role === 'author' && status === 'all') {
+            const featuredFilter = {};
+            applyFeatured(featuredFilter);
             // Combine all three for authors: pending + rejected submissions + approved posts
             const [pending, rejected, approved] = await Promise.all([
                 PostSubmission.find({ status: 'pending', submittedBy: user.username })
@@ -659,6 +662,7 @@ const getManagedPosts = async (req, res) => {
             if (author) query.submittedBy = author;
             if (req.query.featured === 'true') query.featured = true;
             if (req.query.featured === 'false') query.featured = false;
+            applyFeatured(query);
 
             const [items, total] = await Promise.all([
                 PostSubmission.find(query)
@@ -682,6 +686,7 @@ const getManagedPosts = async (req, res) => {
         if (search) query.title = { $regex: search, $options: 'i' };
         if (category) query.category = category;
         if (author) query.author = author;
+        applyFeatured(query);
 
         const [items, total] = await Promise.all([
             Post.find(query)
