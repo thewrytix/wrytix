@@ -163,7 +163,10 @@ const toggleUserStatus = async (req, res) => {
         await logAction(requester.username, user.status === 'suspended' ? 'user-suspended' : 'user-activated', user.username);
         res.json({ message: 'Status updated', status: user.status });
     } catch (err) {
+        await logAction(req.session.user.username, 'suspend-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to update status' });
+
+
     }
 };
 
@@ -228,6 +231,7 @@ const submitPendingUser = async (req, res) => {
         await logAction(editor.username, 'user-submission-created', req.body.username || req.body.email);
         res.status(201).json({ message: 'User submitted for approval' });
     } catch (err) {
+        await logAction(req.session.user.username, 'user-submission-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to submit user' });
     }
 };
@@ -240,6 +244,7 @@ const getMyPendingUsers = async (req, res) => {
             .lean();
         res.json(pending);
     } catch (err) {
+        await logAction(req.session.user.username, 'user-submission-load-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to load your submitted users' });
     }
 };
@@ -343,6 +348,7 @@ const assignLineManager = async (req, res) => {
         await logAction(req.session.user.username, 'author-assigned', username, { lineManager });
         res.json({ message: 'Line manager assigned', author });
     } catch (err) {
+        await logAction(req.session.user.username, 'author-assigned-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to assign line manager' });
     }
 };
@@ -359,6 +365,7 @@ const assignEditorCategories = async (req, res) => {
         await logAction(req.session.user.username, 'editor-categories-assigned', username, { categories });
         res.json({ message: 'Categories assigned', editor });
     } catch (err) {
+        await logAction(req.session.user.username, 'editor-categories-assigned-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to assign categories' });
     }
 };
@@ -368,6 +375,7 @@ const getEditorsList = async (req, res) => {
         const editors = await User.find({ role: 'editor', status: 'active' }).select('id username fullname').lean();
         res.json(editors);
     } catch (err) {
+        await logAction(req.session.user.username, 'editor-load-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to load editors' });
     }
 };
@@ -423,7 +431,7 @@ const getManagedUsers = async (req, res) => {
             total, page: parseInt(page), totalPages: Math.ceil(total / limit)
         });
     } catch (err) {
-        console.error('getManagedUsers error:', err);
+        await logAction(req.session.user.username, 'get-managed-users-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to load users' });
     }
 };
@@ -441,7 +449,7 @@ const bulkDeleteUsers = async (req, res) => {
         await logAction(requester.username, 'bulk-delete-users', 'multiple', { deletedCount: result.deletedCount });
         res.json({ message: 'Bulk delete complete', deletedCount: result.deletedCount });
     } catch (err) {
-        console.error('bulkDeleteUsers error:', err);
+        await logAction(req.session.user.username, 'bulk-delete-users-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Bulk delete failed' });
     }
 };
