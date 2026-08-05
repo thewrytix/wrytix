@@ -178,7 +178,7 @@ const deleteUser = async (req, res) => {
         const requester = req.session.user;
         if (requester.role === 'editor') {
             if (user.submittedBy !== requester.username) {
-                return res.status(403).json({ error: 'You can only edit users you submitted' });
+                return res.status(403).json({ error: 'You can only delete users you submitted' });
             }
             if (user.status === 'active') {
                 return res.status(403).json({ error: 'Not authorized to delete this user' });
