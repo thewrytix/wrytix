@@ -135,6 +135,30 @@ function renderTable(items) {
         const key = item._id || item.id;
         const isPending = item.source === 'pending';
         const fullNameDisplay = item.fullname || item.fullName || '—';
+        const isSuspended = item.status === 'suspended';
+
+        const canEdit = !(currentUser.role === 'editor' && item.status === 'active');
+        const statusLabel = isPending
+            ? '<span class="status-scheduled">Pending</span>'
+            : isSuspended
+                ? '<span class="status-none">Suspended</span>'
+                : (item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>');
+
+        let actionButtons = `<button class="btn-edit" onclick="openViewModal('${key}', ${isPending})">View</button>`;
+
+        if (isPending) {
+            actionButtons += `
+                <button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
+                <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`;
+        } else {
+            if (canEdit) {
+                actionButtons += `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>`;
+            }
+            actionButtons += `<button class="status-btn" onclick="handleToggleStatus('${key}', ${isSuspended})">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
+            if (canEdit) {
+                actionButtons += `<button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>`;
+            }
+        }
 
         return `
             <tr>
@@ -143,17 +167,9 @@ function renderTable(items) {
                 <td>${item.username}</td>
                 <td>${item.email}</td>
                 <td>${item.role}</td>
-                <td>${isPending ? '<span class="status-scheduled">Pending</span>' : (item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>')}</td>
+                <td>${statusLabel}</td>
                 <td>${item.lineManager || '—'}</td>
-                <td class="action-buttons">
-                    <button class="btn-edit" onclick="openViewModal('${key}', ${isPending})">View</button>
-                    ${isPending
-            ? `<button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
-                           <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`
-            : `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
-                           <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>`
-        }
-                </td>
+                <td class="action-buttons">${actionButtons}</td>
             </tr>
         `;
     }).join('');
@@ -162,6 +178,8 @@ function renderTable(items) {
         cb.addEventListener('change', (e) => toggleSelection(e.target.dataset.id, e.target.checked));
     });
 }
+
+
 
 function renderPagination(page, totalPages) {
     const container = document.getElementById('pagination');
@@ -201,20 +219,28 @@ async function openViewModal(id, isPending) {
         if (!res.ok) throw new Error('Failed to load user details');
         const user = await res.json();
 
-        const avatarHtml = user.avatarId
-            ? `<div style="margin:1rem 0;">
-                 <img src="${API_BASE}/files/${user.avatarId}" alt="Avatar" style="max-width:150px;border-radius:8px;border:1px solid var(--border-color);" />
-                 <br><a href="${API_BASE}/files/${user.avatarId}" download target="_blank" class="btn-edit" style="display:inline-block;margin-top:0.5rem;">Download Avatar</a>
-               </div>`
-            : '<p><em>No profile picture</em></p>';
+        let avatarHtml = '<p><em>No profile picture</em></p>';
+        if (user.avatarId) {
+            const avatarUrl = await fetchFileAsBlobUrl(user.avatarId);
+            avatarHtml = avatarUrl
+                ? `<div style="margin:1rem 0;">
+                     <img src="${avatarUrl}" alt="Avatar" style="max-width:150px;border-radius:8px;border:1px solid var(--border-color);" />
+                     <br><a href="${avatarUrl}" download="avatar" class="btn-edit" style="display:inline-block;margin-top:0.5rem;">Download Avatar</a>
+                   </div>`
+                : '<p style="color:red;">Failed to load avatar</p>';
+        }
 
-        const documentHtml = user.pdfId
-            ? `<div style="margin:1rem 0;">
-                 <a href="${API_BASE}/files/${user.pdfId}" download target="_blank" class="btn-edit">
-                    <i class="fa-solid fa-file-pdf"></i> Download ${user.pdfOriginalName || 'Document'}
-                 </a>
-               </div>`
-            : '<p><em>No document attached</em></p>';
+        let documentHtml = '<p><em>No document attached</em></p>';
+        if (user.pdfId) {
+            const pdfUrl = await fetchFileAsBlobUrl(user.pdfId);
+            documentHtml = pdfUrl
+                ? `<div style="margin:1rem 0;">
+                     <a href="${pdfUrl}" download="${user.pdfOriginalName || 'document.pdf'}" class="btn-edit">
+                        <i class="fa-solid fa-file-pdf"></i> Download ${user.pdfOriginalName || 'Document'}
+                     </a>
+                   </div>`
+                : '<p style="color:red;">Failed to load document</p>';
+        }
 
         document.getElementById('viewModalBody').innerHTML = `
             <p><strong>Full Name:</strong> ${user.fullname || user.fullName || '—'}</p>
@@ -224,6 +250,8 @@ async function openViewModal(id, isPending) {
             <p><strong>Status:</strong> ${user.status || 'pending'}</p>
             ${user.lineManager ? `<p><strong>Line Manager:</strong> ${user.lineManager}</p>` : ''}
             ${user.assignedCategories?.length ? `<p><strong>Categories:</strong> ${user.assignedCategories.join(', ')}</p>` : ''}
+            <p><strong>Created:</strong> ${user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}</p>
+            <p><strong>Last Login:</strong> ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</p>
             <hr style="margin:1rem 0;" />
             <h3>Profile Picture</h3>
             ${avatarHtml}
@@ -234,7 +262,6 @@ async function openViewModal(id, isPending) {
         document.getElementById('viewModalBody').innerHTML = `<p style="color:red;">${err.message}</p>`;
     }
 }
-
 function closeViewModal() {
     document.getElementById('viewModal').classList.remove('visible');
 }
@@ -316,6 +343,35 @@ async function rejectPendingUser(id) {
         showSuccess('User rejected.');
     } catch (err) {
         showError('Failed to reject user: ' + err.message);
+    }
+}
+
+async function fetchFileAsBlobUrl(fileId) {
+    try {
+        const res = await fetch(`${API_BASE}/files/${fileId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('File not accessible');
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+    } catch (err) {
+        return null;
+    }
+}
+
+
+
+
+async function handleToggleStatus(id, currentlySuspended) {
+    const action = currentlySuspended ? 'activate' : 'suspend';
+    const ok = await showConfirm(`Are you sure you want to ${action} this user?`, { title: `${action.charAt(0).toUpperCase() + action.slice(1)} User`, confirmText: action.charAt(0).toUpperCase() + action.slice(1) });
+    if (!ok) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/users/${id}/status`, { method: 'PUT', credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to update status');
+        await loadUsers();
+        showSuccess(`User ${action}d.`);
+    } catch (err) {
+        showError('Failed to update status: ' + err.message);
     }
 }
 
@@ -416,7 +472,7 @@ function closeModal() {
     isEmailAvailable = false;
 }
 
-function openEditModal(id) {
+async function openEditModal(id) {
     const user = currentItems.find(u => (u._id || u.id) === id);
     if (!user) return;
 
@@ -428,16 +484,28 @@ function openEditModal(id) {
     document.getElementById('roleInput').value = user.role;
     document.getElementById('roleInput').dispatchEvent(new Event('change'));
 
-    // Editing: username/email already belong to this user, skip the availability gate
     isUsernameAvailable = true;
     isEmailAvailable = true;
     document.getElementById('passwordInput').placeholder = 'Leave blank to keep unchanged';
 
-    // Avatar/document re-upload isn't supported via upload.none() on the update route
-    document.getElementById('avatarInput').style.display = 'none';
-    document.getElementById('documentInput').style.display = 'none';
-    document.querySelector('label[for="avatarInput"]').style.display = 'none';
-    document.querySelector('label[for="documentInput"]').style.display = 'none';
+    // Show file inputs again — now they mean "replace existing file", not "add new"
+    document.getElementById('avatarInput').style.display = 'block';
+    document.getElementById('documentInput').style.display = 'block';
+    document.querySelector('label[for="avatarInput"]').textContent = 'Replace Profile Picture (optional)';
+    document.querySelector('label[for="avatarInput"]').style.display = 'block';
+    document.querySelector('label[for="documentInput"]').textContent = 'Replace Document (optional)';
+    document.querySelector('label[for="documentInput"]').style.display = 'block';
+
+    // Show current file previews, if any
+    let currentFilesHtml = '';
+    if (user.avatarId) {
+        const avatarUrl = await fetchFileAsBlobUrl(user.avatarId);
+        if (avatarUrl) currentFilesHtml += `<p>Current picture: <img src="${avatarUrl}" style="max-width:60px;border-radius:4px;vertical-align:middle;" /></p>`;
+    }
+    if (user.pdfId) {
+        currentFilesHtml += `<p>Current document: ${user.pdfOriginalName || 'document.pdf'}</p>`;
+    }
+    document.getElementById('currentFilesPreview').innerHTML = currentFilesHtml;
 
     if (user.role === 'author') document.getElementById('lineManagerInput').value = user.lineManager || '';
     if (user.role === 'editor') document.getElementById('categoriesInput').value = (user.assignedCategories || []).join(', ');

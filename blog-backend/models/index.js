@@ -4,20 +4,22 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 // User Schema
-const UserSchema = new Schema({
-    id: { type: String, required: true, unique: true },
+const UserSchema = new mongoose.Schema({
     fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
-    pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
-    role: { type: String, required: true },
-    status: { type: String, default: 'active' },
-    pdfOriginalName: { type: String },
+    avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files', default: null },
+    pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files', default: null },
+    role: { type: String, enum: ['admin', 'editor', 'author', 'viewer'], default: 'viewer' },
+    status: { type: String, enum: ['active', 'inactive', 'pending', 'suspended'], default: 'pending' },
+    assignedCategories: { type: [String], default: [] },
+    lineManager: { type: String, default: null },
+    createdBy: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
-    approvedBy: { type: String },
-    approvedAt: { type: Date },
+    lastLogin: { type: Date, default: null }, // added for issue #7
+    pdfFilename: { type: String },
+    pdfOriginalName: { type: String }
 });
 
 const PostSchema = new mongoose.Schema({
@@ -72,19 +74,22 @@ const CommentSchema = new Schema({
     }],
 });
 
-const PendingUserSchema = new Schema({
-    id: { type: String, required: true, unique: true },
+const PendingUserSchema = new mongoose.Schema({
     fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String },
+    role: { type: String, enum: ['viewer', 'author', 'editor', 'admin'], required: true },
     avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
     pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
-    submittedBy: { type: String },
-    createdAt: { type: Date, default: Date.now },
-    pdfOriginalName: { type: String },
+    status: { type: String, enum: ['pending'], default: 'pending' },
+    lineManager: { type: String, default: null },
+    assignedCategories: { type: [String], default: [] },
+    submittedBy: { type: String, default: null },
+    requestedAt: { type: Date, default: Date.now },
+    pdfOriginalName: { type: String }
 });
+
 
 const PendingDeletionSchema = new Schema({
     id: { type: String, required: true, unique: true },

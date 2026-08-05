@@ -9,8 +9,10 @@ const PendingUserSchema = new mongoose.Schema({
     avatarId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for avatar
     pdfId: { type: Schema.Types.ObjectId, ref: 'fs.files' }, // GridFS ID for PDF
     status: { type: String, enum: ['pending'], default: 'pending' },
+    lineManager: { type: String, default: null },
+    assignedCategories: { type: [String], default: [] },
+    submittedBy: { type: String, default: null },
     requestedAt: { type: Date, default: Date.now },
-    submittedBy: { type: String },
     pdfOriginalName: { type: String }
 });
 
