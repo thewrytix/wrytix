@@ -2,7 +2,7 @@ const express = require('express');
 const {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
     getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
-    assignLineManager, assignEditorCategories, getManagedUsers, bulkDeleteUsers, getEditorsList
+    assignLineManager, assignEditorCategories, getManagedUsers, bulkDeleteUsers, getEditorsList, approvePendingUser
 } = require('../controllers/userController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { requireAdmin, requireEditorOrAdmin, requireRole, requireLogin } = require('../middleware/auth');
@@ -38,7 +38,9 @@ router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
 ]), createPendingUser);
 
+
 router.get('/pendingUsers/:id', requireEditorOrAdmin, getPendingUserById);
 router.delete('/pendingUsers/:id', requireEditorOrAdmin, deletePendingUser);
+router.post('/pendingUsers/:id/approve', requireAdmin, approvePendingUser);
 
 module.exports = router;

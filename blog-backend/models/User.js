@@ -12,6 +12,7 @@ const UserSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive', 'pending', 'suspended'], default: 'pending' },
     assignedCategories: { type: [String], default: [] },
     lineManager: { type: String, default: null },
+    submittedBy: { type: String, default: null },
     createdBy: { type: String, default: null },
     createdAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: null }, // added for issue #7

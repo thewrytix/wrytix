@@ -131,6 +131,8 @@ function renderTable(items) {
         return;
     }
 
+    const isAdmin = currentUser.role === 'admin';
+
     tbody.innerHTML = items.map(item => {
         const key = item._id || item.id;
         const isPending = item.source === 'pending';
@@ -147,9 +149,17 @@ function renderTable(items) {
         let actionButtons = `<button class="btn-edit" onclick="openViewModal('${key}', ${isPending})">View</button>`;
 
         if (isPending) {
-            actionButtons += `
-                <button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
-                <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`;
+            if (isAdmin) {
+                // Only admin approves/rejects
+                actionButtons += `
+                    <button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
+                    <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`;
+            } else {
+                // Editor viewing their own pending submission: manage it, don't approve it
+                actionButtons += `
+                    <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
+                    <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>`;
+            }
         } else {
             if (canEdit) {
                 actionButtons += `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>`;

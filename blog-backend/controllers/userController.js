@@ -236,6 +236,43 @@ const submitPendingUser = async (req, res) => {
     }
 };
 
+const approvePendingUser = async (req, res) => {
+    try {
+        const pending = await PendingUser.findOne({ _id: req.params.id }).lean();
+        if (!pending) return res.status(404).json({ error: 'Pending user not found' });
+
+        const newUser = {
+            id: pending.id,
+            fullname: pending.fullname,
+            username: pending.username,
+            email: pending.email,
+            password: pending.password, // already hashed
+            role: pending.role,
+            avatarId: pending.avatarId || null,
+            pdfId: pending.pdfId || null,
+            pdfOriginalName: pending.pdfOriginalName || null,
+            submittedBy: pending.submittedBy,           // preserved explicitly
+            lineManager: pending.lineManager || null,    // preserved explicitly
+            assignedCategories: pending.assignedCategories || [],
+            status: 'active',                             // FIX: explicitly set, never inherited from pending
+            createdAt: new Date()
+        };
+
+        await User.create(newUser);
+        await PendingUser.deleteOne({ _id: req.params.id });
+
+        await logAction(req.session.user.username, 'user-approved', pending.username, {
+            role: pending.role, submittedBy: pending.submittedBy
+        });
+
+        const { password, ...safeUser } = newUser;
+        res.json({ message: 'User approved', user: safeUser });
+    } catch (err) {
+        console.error('approvePendingUser error:', err);
+        res.status(500).json({ error: 'Failed to approve user' });
+    }
+};
+
 const getMyPendingUsers = async (req, res) => {
     try {
         const editor = req.session.user;
@@ -456,7 +493,7 @@ const bulkDeleteUsers = async (req, res) => {
 
 module.exports = {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
-    getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
+    getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,approvePendingUser,
     submitPendingUser, getMyPendingUsers, assignLineManager, getEditorsList,
     assignEditorCategories, getManagedUsers, bulkDeleteUsers
 };
