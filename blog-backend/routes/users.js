@@ -2,7 +2,7 @@ const express = require('express');
 const {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
     getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
-    assignLineManager, assignEditorCategories, getManagedUsers, bulkDeleteUsers, getEditorsList, approvePendingUser
+    assignLineManager, assignEditorCategories, getManagedUsers, rejectPendingUser,bulkDeleteUsers, updatePendingUser, getEditorsList, approvePendingUser
 } = require('../controllers/userController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { requireAdmin, requireEditorOrAdmin, requireRole, requireLogin } = require('../middleware/auth');
@@ -22,7 +22,7 @@ router.put('/users/assign-line-manager', requireAdmin, assignLineManager);
 router.put('/users/assign-categories', requireAdmin, assignEditorCategories);
 
 router.get('/users', requireAdmin, getUsers);
-router.post('/users', requireAdmin, upload.fields([
+router.post('/users', requireEditorOrAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
 ]), createUser);
 
@@ -34,13 +34,16 @@ router.put('/users/:id', requireRole(['admin', 'editor']), upload.fields([      
 router.delete('/users/:id', requireRole(['admin', 'editor']), deleteUser);
 
 router.get('/pendingUsers', requireEditorOrAdmin, getPendingUsers);
-router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([
+router.post('/pendingUsers', requireAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
 ]), createPendingUser);
 
-
+router.post('/pendingUsers/:id/approve', requireAdmin, approvePendingUser);
+router.post('/pendingUsers/:id/reject', requireAdmin, rejectPendingUser);                 // NEW
+router.put('/pendingUsers/:id', requireEditorOrAdmin, upload.fields([                     // NEW — edit & resubmit
+    { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
+]), updatePendingUser);
 router.get('/pendingUsers/:id', requireEditorOrAdmin, getPendingUserById);
 router.delete('/pendingUsers/:id', requireEditorOrAdmin, deletePendingUser);
-router.post('/pendingUsers/:id/approve', requireAdmin, approvePendingUser);
 
 module.exports = router;

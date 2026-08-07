@@ -37,6 +37,7 @@
             <button class="status-tab" data-status="active">Active</button>
             <button class="status-tab" data-status="inactive">Inactive</button>
             <button class="status-tab" data-status="pending">Pending Approval</button>
+            <button class="status-tab" data-status="rejected">Rejected</button>
         </div>
 
         <div id="searchContainer">
@@ -88,7 +89,9 @@
 
         <form id="userForm">
             <input type="hidden" id="userFormMode" value="add" />
+            <input type="hidden" id="userFormSource" value="user" />
             <input type="hidden" id="userFormId" value="" />
+
 
             <label for="fullNameInput">Full Name</label>
             <input type="text" id="fullNameInput" required />
@@ -151,6 +154,20 @@
 
         <div id="viewModalBody">
             <p>Loading...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Reject User Modal -->
+<div class="modal-overlay" id="userRejectModal">
+    <div class="modal-box" style="max-width:450px;">
+        <button class="modal-close" id="closeUserRejectModalBtn">&times;</button>
+        <h2>Reject User Submission</h2>
+        <label for="userRejectionReasonInput">Rejection Reason</label>
+        <textarea id="userRejectionReasonInput" rows="4" placeholder="Enter rejection reason..." style="width:100%;padding:10px;border:1px solid var(--border-color);border-radius:6px;"></textarea>
+        <div class="modal-actions">
+            <button type="button" id="confirmUserRejectBtn" style="background:var(--status-red);color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Reject</button>
+            <button type="button" id="cancelUserRejectBtn" style="background:var(--border-color);border:none;padding:10px 20px;border-radius:6px;cursor:pointer;">Cancel</button>
         </div>
     </div>
 </div>

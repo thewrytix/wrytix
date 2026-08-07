@@ -7,6 +7,7 @@ let isUsernameAvailable = false;
 let isEmailAvailable = false;
 let usernameTimer, emailTimer;
 let editorsList = [];
+let rejectTargetId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const userData = localStorage.getItem('user');
@@ -84,7 +85,9 @@ function setupEventListeners() {
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
     document.getElementById('closeViewModalBtn').addEventListener('click', closeViewModal);
-
+    document.getElementById('confirmUserRejectBtn').addEventListener('click', confirmUserRejection);
+    document.getElementById('cancelUserRejectBtn').addEventListener('click', closeUserRejectModal);
+    document.getElementById('closeUserRejectModalBtn').addEventListener('click', closeUserRejectModal);
     document.getElementById('userForm').addEventListener('submit', handleFormSubmit);
 }
 
@@ -135,38 +138,47 @@ function renderTable(items) {
 
     tbody.innerHTML = items.map(item => {
         const key = item._id || item.id;
-        const isPending = item.source === 'pending';
+        const isPending = item.source === 'pending' && item.status === 'pending';
+        const isRejected = item.source === 'pending' && item.status === 'rejected';
         const fullNameDisplay = item.fullname || item.fullName || '—';
         const isSuspended = item.status === 'suspended';
+        const isOwn = item.submittedBy === currentUser.username;
 
-        const canEdit = !(currentUser.role === 'editor' && item.status === 'active');
-        const statusLabel = isPending
-            ? '<span class="status-scheduled">Pending</span>'
-            : isSuspended
-                ? '<span class="status-none">Suspended</span>'
-                : (item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>');
+        let statusLabel;
+        if (isPending) statusLabel = '<span class="status-scheduled">Pending</span>';
+        else if (isRejected) statusLabel = '<span class="status-none">Rejected</span>';
+        else if (isSuspended) statusLabel = '<span class="status-none">Suspended</span>';
+        else statusLabel = item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>';
 
-        let actionButtons = `<button class="btn-edit" onclick="openViewModal('${key}', ${isPending})">View</button>`;
+        let actionButtons = `<button class="btn-edit" onclick="openViewModal('${key}', ${item.source === 'pending'})">View</button>`;
 
         if (isPending) {
             if (isAdmin) {
-                // Only admin approves/rejects
                 actionButtons += `
                     <button class="btn approve" onclick="approvePendingUser('${key}')">Approve</button>
-                    <button class="btn reject" onclick="rejectPendingUser('${key}')">Reject</button>`;
-            } else {
-                // Editor viewing their own pending submission: manage it, don't approve it
+                    <button class="btn reject" onclick="openUserRejectModal('${key}')">Reject</button>
+                    <button class="delete-btn" onclick="handleSingleDelete('${key}', 'pending')">Delete</button>`;
+            } else if (isOwn) {
+                actionButtons += `<button class="delete-btn" onclick="handleSingleDelete('${key}', 'pending')">Delete</button>`;
+            }
+        } else if (isRejected) {
+            if (isAdmin) {
+                actionButtons += `<button class="delete-btn" onclick="handleSingleDelete('${key}', 'pending')">Delete</button>`;
+            } else if (isOwn) {
                 actionButtons += `
-                    <button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>
-                    <button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>`;
+                    <button class="btn-edit" onclick="openEditModal('${key}', 'pending')">Edit &amp; Resubmit</button>
+                    <button class="delete-btn" onclick="handleSingleDelete('${key}', 'pending')">Delete</button>`;
             }
         } else {
-            if (canEdit) {
-                actionButtons += `<button class="btn-edit" onclick="openEditModal('${key}')">Edit</button>`;
-            }
-            actionButtons += `<button class="status-btn" onclick="handleToggleStatus('${key}', ${isSuspended})">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
-            if (canEdit) {
-                actionButtons += `<button class="delete-btn" onclick="handleSingleDelete('${key}')">Delete</button>`;
+            // Active/Inactive/Suspended user
+            if (isAdmin) {
+                actionButtons += `
+                    <button class="btn-edit" onclick="openEditModal('${key}', 'user')">Edit</button>
+                    <button class="status-btn" onclick="handleToggleStatus('${key}', ${isSuspended})">${isSuspended ? 'Activate' : 'Suspend'}</button>
+                    <button class="delete-btn" onclick="handleSingleDelete('${key}', 'user')">Delete</button>`;
+            } else {
+                // Editor: only suspend/activate their own line-managed authors, never edit/delete
+                actionButtons += `<button class="status-btn" onclick="handleToggleStatus('${key}', ${isSuspended})">${isSuspended ? 'Activate' : 'Suspend'}</button>`;
             }
         }
 
@@ -187,6 +199,23 @@ function renderTable(items) {
     document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.addEventListener('change', (e) => toggleSelection(e.target.dataset.id, e.target.checked));
     });
+}
+
+// FIX: source-aware delete, routes to the correct collection
+async function handleSingleDelete(id, source) {
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete this record?', confirmText: 'Delete' });
+    if (!ok) return;
+
+    try {
+        const endpoint = source === 'pending' ? `/pendingUsers/${id}` : `/users/${id}`;
+        const res = await fetch(`${API_BASE}${endpoint}`, { method: 'DELETE', credentials: 'include' });
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Delete failed');
+        await loadUsers();
+        showSuccess('Deleted.');
+    } catch (err) {
+        showError('Delete failed: ' + err.message);
+    }
 }
 
 
@@ -258,6 +287,7 @@ async function openViewModal(id, isPending) {
             <p><strong>Email:</strong> ${user.email}</p>
             <p><strong>Role:</strong> ${user.role}</p>
             <p><strong>Status:</strong> ${user.status || 'pending'}</p>
+            ${user.rejectionReason ? `<p><strong>Rejection Reason:</strong> ${user.rejectionReason}</p>` : ''}
             ${user.lineManager ? `<p><strong>Line Manager:</strong> ${user.lineManager}</p>` : ''}
             ${user.assignedCategories?.length ? `<p><strong>Categories:</strong> ${user.assignedCategories.join(', ')}</p>` : ''}
             <p><strong>Created:</strong> ${user.createdAt ? new Date(user.createdAt).toLocaleString() : '—'}</p>
@@ -311,19 +341,41 @@ async function handleBulkDelete() {
     }
 }
 
-async function handleSingleDelete(id) {
-    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete this user?', confirmText: 'Delete' });
-    if (!ok) return;
+function openUserRejectModal(id) {
+    rejectTargetId = id;
+    document.getElementById('userRejectionReasonInput').value = '';
+    document.getElementById('userRejectModal').classList.add('visible');
+}
+
+function closeUserRejectModal() {
+    rejectTargetId = null;
+    document.getElementById('userRejectModal').classList.remove('visible');
+}
+
+async function confirmUserRejection() {
+    const reason = document.getElementById('userRejectionReasonInput').value.trim();
+    if (!reason) { showError('Rejection reason is required.'); return; }
 
     try {
-        const res = await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE', credentials: 'include' });
-        if (!res.ok) throw new Error('Delete failed');
+        const res = await fetch(`${API_BASE}/pendingUsers/${rejectTargetId}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+            credentials: 'include'
+        });
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resData?.error || 'Reject failed');
+
+        closeUserRejectModal();
+        showSuccess('User submission rejected.');
         await loadUsers();
-        showSuccess('User deleted.');
     } catch (err) {
-        showError('Delete failed: ' + err.message);
+        showError('Failed to reject: ' + err.message);
     }
 }
+
+
+
 
 async function approvePendingUser(id) {
     try {
@@ -482,49 +534,47 @@ function closeModal() {
     isEmailAvailable = false;
 }
 
-async function openEditModal(id) {
-    const user = currentItems.find(u => (u._id || u.id) === id);
-    if (!user) return;
+async function openEditModal(id, source) {
+    const item = currentItems.find(u => (u._id || u.id) === id);
+    if (!item) return;
 
     openModal('edit');
     document.getElementById('userFormId').value = id;
-    document.getElementById('fullNameInput').value = user.fullname || user.fullName || '';
-    document.getElementById('usernameInput').value = user.username;
-    document.getElementById('emailInput').value = user.email;
-    document.getElementById('roleInput').value = user.role;
+    document.getElementById('userFormSource').value = source; // NEW hidden field
+    document.getElementById('fullNameInput').value = item.fullname || item.fullName || '';
+    document.getElementById('usernameInput').value = item.username;
+    document.getElementById('emailInput').value = item.email;
+    document.getElementById('roleInput').value = item.role;
     document.getElementById('roleInput').dispatchEvent(new Event('change'));
 
     isUsernameAvailable = true;
     isEmailAvailable = true;
     document.getElementById('passwordInput').placeholder = 'Leave blank to keep unchanged';
 
-    // Show file inputs again — now they mean "replace existing file", not "add new"
     document.getElementById('avatarInput').style.display = 'block';
     document.getElementById('documentInput').style.display = 'block';
     document.querySelector('label[for="avatarInput"]').textContent = 'Replace Profile Picture (optional)';
-    document.querySelector('label[for="avatarInput"]').style.display = 'block';
     document.querySelector('label[for="documentInput"]').textContent = 'Replace Document (optional)';
-    document.querySelector('label[for="documentInput"]').style.display = 'block';
 
-    // Show current file previews, if any
     let currentFilesHtml = '';
-    if (user.avatarId) {
-        const avatarUrl = await fetchFileAsBlobUrl(user.avatarId);
+    if (item.avatarId) {
+        const avatarUrl = await fetchFileAsBlobUrl(item.avatarId);
         if (avatarUrl) currentFilesHtml += `<p>Current picture: <img src="${avatarUrl}" style="max-width:60px;border-radius:4px;vertical-align:middle;" /></p>`;
     }
-    if (user.pdfId) {
-        currentFilesHtml += `<p>Current document: ${user.pdfOriginalName || 'document.pdf'}</p>`;
+    if (item.pdfId) {
+        currentFilesHtml += `<p>Current document: ${item.pdfOriginalName || 'document.pdf'}</p>`;
     }
     document.getElementById('currentFilesPreview').innerHTML = currentFilesHtml;
 
-    if (user.role === 'author') document.getElementById('lineManagerInput').value = user.lineManager || '';
-    if (user.role === 'editor') document.getElementById('categoriesInput').value = (user.assignedCategories || []).join(', ');
+    if (item.role === 'author') document.getElementById('lineManagerInput').value = item.lineManager || '';
+    if (item.role === 'editor') document.getElementById('categoriesInput').value = (item.assignedCategories || []).join(', ');
 }
 
 async function handleFormSubmit(e) {
     e.preventDefault();
 
     const mode = document.getElementById('userFormMode').value;
+    const source = document.getElementById('userFormSource')?.value || 'user'; // NEW
     const role = document.getElementById('roleInput').value;
 
     if (mode === 'add') {
@@ -541,12 +591,9 @@ async function handleFormSubmit(e) {
     const password = document.getElementById('passwordInput').value.trim();
     if (password) formData.append('password', password);
 
-    if (role === 'author') {
-        formData.append('lineManager', document.getElementById('lineManagerInput').value.trim());
-    }
+    if (role === 'author') formData.append('lineManager', document.getElementById('lineManagerInput').value.trim());
     if (role === 'editor') {
-        const categories = document.getElementById('categoriesInput').value
-            .split(',').map(c => c.trim()).filter(Boolean);
+        const categories = document.getElementById('categoriesInput').value.split(',').map(c => c.trim()).filter(Boolean);
         formData.append('assignedCategories', JSON.stringify(categories));
     }
 
@@ -562,31 +609,23 @@ async function handleFormSubmit(e) {
         let res;
         if (mode === 'add') {
             const endpoint = currentUser.role === 'editor' ? '/pendingUsers' : '/users';
-            res = await fetch(`${API_BASE}${endpoint}`, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            });
+            res = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', body: formData, credentials: 'include' });
         } else {
             const id = document.getElementById('userFormId').value;
-            res = await fetch(`${API_BASE}/users/${id}`, {
-                method: 'PUT',
-                body: formData,
-                credentials: 'include'
-            });
+            // FIX: route to the correct collection based on source
+            const endpoint = source === 'pending' ? `/pendingUsers/${id}` : `/users/${id}`;
+            res = await fetch(`${API_BASE}${endpoint}`, { method: 'PUT', body: formData, credentials: 'include' });
         }
 
         const resData = await res.json().catch(() => ({}));
-
         if (!res.ok) {
-            const msg = resData?.message || resData?.error || 'Unknown error';
-            showError(`Failed to save user: ${msg}`);
+            showError(`Failed to save user: ${resData?.message || resData?.error || 'Unknown error'}`);
             return;
         }
 
         closeModal();
         await loadUsers();
-        showSuccess('User saved successfully.');
+        showSuccess('Saved successfully.');
     } catch (err) {
         showError('Failed to save user: ' + err.message);
     }

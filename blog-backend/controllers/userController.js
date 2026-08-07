@@ -90,115 +90,8 @@ const createUser = async (req, res) => {
     }
 };
 
-const updateUser = async (req, res) => {
-    try {
-        const user = await User.findOne({ _id: req.params.id }).lean();
-        if (!user) {
-            await logAction(req.session.user.username, 'user-update-failed', req.params.id, { reason: 'Not found' });
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const requester = req.session.user;
-
-        // Editors can only edit users THEY submitted, and only while pending/rejected — never once approved/active
-        if (requester.role === 'editor') {
-            if (user.submittedBy !== requester.username) {
-                return res.status(403).json({ error: 'You can only edit users you submitted' });
-            }
-            if (user.status === 'active') {
-                return res.status(403).json({ error: 'Cannot edit a user that has already been approved' });
-            }
-        }
-
-        const updateData = { ...req.body };
-
-        if (updateData.password) {
-            updateData.password = await bcrypt.hash(updateData.password, 10);
-        } else {
-            delete updateData.password; // never overwrite with an empty string
-        }
-
-        if (updateData.assignedCategories !== undefined) {
-            updateData.assignedCategories = parseCategories(updateData.assignedCategories);
-        }
-
-        if (updateData.role && updateData.role !== 'author') updateData.lineManager = null;
-        if (updateData.role && updateData.role !== 'editor') updateData.assignedCategories = [];
-
-        // Allow replacing avatar/document on edit
-        if (req.files?.avatar?.[0]) {
-            updateData.avatarId = await uploadToGridFS(req.files.avatar[0], `${Date.now()}-${req.files.avatar[0].originalname}`);
-        }
-        if (req.files?.pdf?.[0]) {
-            updateData.pdfId = await uploadToGridFS(req.files.pdf[0], `${Date.now()}-${req.files.pdf[0].originalname}`);
-            updateData.pdfOriginalName = req.files.pdf[0].originalname;
-        }
-
-        await User.updateOne({ _id: req.params.id }, updateData);
-        await logAction(requester.username, 'user-updated', user.username || user.email, { changes: Object.keys(req.body) });
-
-        const updatedUser = await User.findOne({ _id: req.params.id }).lean();
-        const { password: _pw, ...safeUpdatedUser } = updatedUser;
-        res.json({ message: 'User updated', user: safeUpdatedUser });
-    } catch (err) {
-        await logAction(req.session.user.username, 'user-update-error', req.params.id, { error: err.message });
-        res.status(500).json({ error: 'Failed to update user' });
-    }
-};
-
-// NEW: Suspend / Activate toggle
-const toggleUserStatus = async (req, res) => {
-    try {
-        const user = await User.findOne({ _id: req.params.id });
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        const requester = req.session.user;
-        if (requester.role === 'editor' && user.submittedBy !== requester.username) {
-            return res.status(403).json({ error: 'Not authorized to modify this user' });
-        }
-
-        user.status = user.status === 'suspended' ? 'active' : 'suspended';
-        await user.save();
-
-        await logAction(requester.username, user.status === 'suspended' ? 'user-suspended' : 'user-activated', user.username);
-        res.json({ message: 'Status updated', status: user.status });
-    } catch (err) {
-        await logAction(req.session.user.username, 'suspend-error', req.params.id, { error: err.message });
-        res.status(500).json({ error: 'Failed to update status' });
 
 
-    }
-};
-
-const deleteUser = async (req, res) => {
-    try {
-        const user = await User.findOne({ _id: req.params.id }).lean();
-        if (!user) {
-            await logAction(req.session.user.username, 'user-delete-failed', req.params.id, { reason: 'Not found' });
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        const requester = req.session.user;
-        if (requester.role === 'editor') {
-            if (user.submittedBy !== requester.username) {
-                return res.status(403).json({ error: 'You can only delete users you submitted' });
-            }
-            if (user.status === 'active') {
-                return res.status(403).json({ error: 'Not authorized to delete this user' });
-            }
-        }
-
-        const safeUser = { id: user.id, fullname: user.fullname, username: user.username, email: user.email, role: user.role, createdAt: user.createdAt };
-
-        await User.deleteOne({ _id: req.params.id });
-        await logAction(requester.username, 'user-deleted', user.username || user.email, { role: user.role });
-
-        res.json({ message: 'User deleted', user: safeUser });
-    } catch (err) {
-        await logAction(req.session.user.username, 'user-delete-error', req.params.id, { error: err.message });
-        res.status(500).json({ error: 'Failed to delete user', details: err.message });
-    }
-};
 
 const getPendingUsers = async (req, res) => {
     const pending = await PendingUser.find().lean();
@@ -417,61 +310,7 @@ const getEditorsList = async (req, res) => {
     }
 };
 
-const getManagedUsers = async (req, res) => {
-    try {
-        const admin = req.session.user;
-        const { status = 'all', page = 1, search = '', role = '' } = req.query;
-        const limit = 20;
-        const skip = (parseInt(page) - 1) * limit;
 
-        if (status === 'pending') {
-            let query = {};
-            if (admin.role === 'editor') query.submittedBy = admin.username; // FIX: was createdBy, never matched
-
-            if (search) query.username = { $regex: search, $options: 'i' };
-
-            const [items, total] = await Promise.all([
-                PendingUser.find(query)
-                    .select('username fullname email role createdAt submittedBy')
-                    .sort({ createdAt: -1 })
-                    .skip(skip)
-                    .limit(limit)
-                    .lean(),
-                PendingUser.countDocuments(query)
-            ]);
-
-            return res.json({
-                items: items.map(i => ({ ...i, source: 'pending' })),
-                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
-            });
-        }
-
-        let query = {};
-        if (status === 'active') query.status = 'active';
-        if (status === 'inactive') query.status = { $in: ['inactive', 'suspended'] };
-        if (search) query.username = { $regex: search, $options: 'i' };
-        if (role) query.role = role;
-        if (admin.role === 'editor') query.submittedBy = admin.username; // FIX: editors now scoped on every tab, not just pending
-
-        const [items, total] = await Promise.all([
-            User.find(query)
-                .select('username fullname email role status createdAt submittedBy lineManager assignedCategories lastLogin')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            User.countDocuments(query)
-        ]);
-
-        res.json({
-            items: items.map(i => ({ ...i, source: 'user' })),
-            total, page: parseInt(page), totalPages: Math.ceil(total / limit)
-        });
-    } catch (err) {
-        await logAction(req.session.user.username, 'get-managed-users-error', req.params.id, { error: err.message });
-        res.status(500).json({ error: 'Failed to load users' });
-    }
-};
 
 const bulkDeleteUsers = async (req, res) => {
     try {
@@ -491,9 +330,227 @@ const bulkDeleteUsers = async (req, res) => {
     }
 };
 
+// NEW: admin rejects with a reason, record persists instead of being deleted
+const rejectPendingUser = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ error: 'Rejection reason is required' });
+        }
+
+        const pending = await PendingUser.findOne({ _id: req.params.id });
+        if (!pending) return res.status(404).json({ error: 'Pending user not found' });
+
+        pending.status = 'rejected';
+        pending.rejectionReason = reason.trim();
+        await pending.save();
+
+        await logAction(req.session.user.username, 'user-rejected', pending.username, { reason: reason.trim() });
+        res.json({ message: 'User submission rejected', reason: reason.trim() });
+    } catch (err) {
+        await logAction(req.session.user?.username, 'user-reject-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to reject user' });
+    }
+};
+
+// NEW: editor edits & resubmits their own rejected (or pending) submission
+const updatePendingUser = async (req, res) => {
+    try {
+        const pending = await PendingUser.findOne({ _id: req.params.id });
+        if (!pending) return res.status(404).json({ error: 'Pending user not found' });
+
+        const requester = req.session.user;
+        if (requester.role === 'editor' && pending.submittedBy !== requester.username) {
+            return res.status(403).json({ error: 'You can only edit your own submissions' });
+        }
+
+        const { fullName, username, email, role, lineManager, assignedCategories } = req.body;
+
+        if (fullName) pending.fullname = fullName;
+        if (username) pending.username = username;
+        if (email) pending.email = email;
+        if (role) pending.role = role;
+        pending.lineManager = role === 'author' ? (lineManager || null) : null;
+        pending.assignedCategories = role === 'editor' ? parseCategories(assignedCategories) : [];
+
+        if (req.files?.avatar?.[0]) {
+            pending.avatarId = await uploadToGridFS(req.files.avatar[0], `${Date.now()}-${req.files.avatar[0].originalname}`);
+        }
+        if (req.files?.pdf?.[0]) {
+            pending.pdfId = await uploadToGridFS(req.files.pdf[0], `${Date.now()}-${req.files.pdf[0].originalname}`);
+            pending.pdfOriginalName = req.files.pdf[0].originalname;
+        }
+
+        // Resubmitting resets it back into the review queue
+        pending.status = 'pending';
+        pending.rejectionReason = '';
+
+        await pending.save();
+        await logAction(requester.username, 'user-resubmitted', pending.username);
+
+        const { password, ...safePending } = pending.toObject();
+        res.json({ message: 'Resubmitted for approval', user: safePending });
+    } catch (err) {
+        await logAction(req.session.user?.username, 'user-resubmit-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to resubmit user' });
+    }
+};
+
+// UPDATED: toggle status now checks lineManager, not submittedBy
+const toggleUserStatus = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const requester = req.session.user;
+        if (requester.role === 'editor' && user.lineManager !== requester.username) { // FIX: was submittedBy
+            return res.status(403).json({ error: 'Not authorized to modify this user' });
+        }
+
+        user.status = user.status === 'suspended' ? 'active' : 'suspended';
+        await user.save();
+
+        await logAction(requester.username, user.status === 'suspended' ? 'user-suspended' : 'user-activated', user.username);
+        res.json({ message: 'Status updated', status: user.status });
+    } catch (err) {
+        await logAction(req.session.user.username, 'suspend-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to update status' });
+    }
+};
+
+// UPDATED: editors can no longer edit/delete active users at all (admin-only); this stays as-is for pending/rejected via PendingUser now
+const updateUser = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-update-failed', req.params.id, { reason: 'Not found' });
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const requester = req.session.user;
+
+        // Editors never edit records in the User collection — only admin can, since these are already approved
+        if (requester.role === 'editor') {
+            return res.status(403).json({ error: 'Editors cannot edit approved users. Contact an admin.' });
+        }
+
+        const updateData = { ...req.body };
+        if (updateData.password) {
+            updateData.password = await bcrypt.hash(updateData.password, 10);
+        } else {
+            delete updateData.password;
+        }
+        if (updateData.assignedCategories !== undefined) {
+            updateData.assignedCategories = parseCategories(updateData.assignedCategories);
+        }
+        if (updateData.role && updateData.role !== 'author') updateData.lineManager = null;
+        if (updateData.role && updateData.role !== 'editor') updateData.assignedCategories = [];
+
+        if (req.files?.avatar?.[0]) {
+            updateData.avatarId = await uploadToGridFS(req.files.avatar[0], `${Date.now()}-${req.files.avatar[0].originalname}`);
+        }
+        if (req.files?.pdf?.[0]) {
+            updateData.pdfId = await uploadToGridFS(req.files.pdf[0], `${Date.now()}-${req.files.pdf[0].originalname}`);
+            updateData.pdfOriginalName = req.files.pdf[0].originalname;
+        }
+
+        await User.updateOne({ _id: req.params.id }, updateData);
+        await logAction(requester.username, 'user-updated', user.username || user.email, { changes: Object.keys(req.body) });
+
+        const updatedUser = await User.findOne({ _id: req.params.id }).lean();
+        const { password: _pw, ...safeUpdatedUser } = updatedUser;
+        res.json({ message: 'User updated', user: safeUpdatedUser });
+    } catch (err) {
+        await logAction(req.session.user.username, 'user-update-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to update user' });
+    }
+};
+
+// UPDATED: editors never delete approved users; admin-only for User collection
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findOne({ _id: req.params.id }).lean();
+        if (!user) {
+            await logAction(req.session.user.username, 'user-delete-failed', req.params.id, { reason: 'Not found' });
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const requester = req.session.user;
+        if (requester.role === 'editor') {
+            return res.status(403).json({ error: 'Editors cannot delete approved users. Contact an admin.' });
+        }
+
+        const safeUser = { id: user.id, fullname: user.fullname, username: user.username, email: user.email, role: user.role, createdAt: user.createdAt };
+        await User.deleteOne({ _id: req.params.id });
+        await logAction(requester.username, 'user-deleted', user.username || user.email, { role: user.role });
+
+        res.json({ message: 'User deleted', user: safeUser });
+    } catch (err) {
+        await logAction(req.session.user.username, 'user-delete-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to delete user', details: err.message });
+    }
+};
+
+// UPDATED: getManagedUsers — pending/rejected tabs query PendingUser by status; active/inactive scope editors by lineManager
+const getManagedUsers = async (req, res) => {
+    try {
+        const admin = req.session.user;
+        const { status = 'all', page = 1, search = '', role = '' } = req.query;
+        const limit = 20;
+        const skip = (parseInt(page) - 1) * limit;
+
+        if (status === 'pending' || status === 'rejected') {
+            let query = { status }; // FIX: explicit status filter now that both states can exist
+            if (admin.role === 'editor') query.submittedBy = admin.username;
+            if (search) query.username = { $regex: search, $options: 'i' };
+
+            const [items, total] = await Promise.all([
+                PendingUser.find(query)
+                    .select('username fullname email role createdAt requestedAt submittedBy status rejectionReason lineManager assignedCategories')
+                    .sort({ requestedAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                PendingUser.countDocuments(query)
+            ]);
+
+            return res.json({
+                items: items.map(i => ({ ...i, source: 'pending', createdAt: i.requestedAt })),
+                total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+            });
+        }
+
+        let query = {};
+        if (status === 'active') query.status = 'active';
+        if (status === 'inactive') query.status = { $in: ['inactive', 'suspended'] };
+        if (search) query.username = { $regex: search, $options: 'i' };
+        if (role) query.role = role;
+        if (admin.role === 'editor') query.lineManager = admin.username; // FIX: was submittedBy, now lineManager per your request
+
+        const [items, total] = await Promise.all([
+            User.find(query)
+                .select('username fullname email role status createdAt submittedBy lineManager assignedCategories lastLogin')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            User.countDocuments(query)
+        ]);
+
+        res.json({
+            items: items.map(i => ({ ...i, source: 'user' })),
+            total, page: parseInt(page), totalPages: Math.ceil(total / limit)
+        });
+    } catch (err) {
+        console.error('getManagedUsers error:', err);
+        res.status(500).json({ error: 'Failed to load users' });
+    }
+};
+
 module.exports = {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
-    getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,approvePendingUser,
+    getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
+    approvePendingUser, rejectPendingUser, updatePendingUser,
     submitPendingUser, getMyPendingUsers, assignLineManager, getEditorsList,
     assignEditorCategories, getManagedUsers, bulkDeleteUsers
 };
