@@ -161,7 +161,7 @@ const approvePendingUser = async (req, res) => {
         const { password, ...safeUser } = newUser;
         res.json({ message: 'User approved', user: safeUser });
     } catch (err) {
-        console.error('approvePendingUser error:', err);
+        await logAction(req.session.user?.username, 'user-approved-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to approve user' });
     }
 };
