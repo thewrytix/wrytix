@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const PendingUserSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
     fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },

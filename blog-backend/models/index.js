@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 
 // User Schema
 const UserSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
     fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
@@ -75,6 +76,7 @@ const CommentSchema = new Schema({
 });
 
 const PendingUserSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
     fullname: { type: String, required: true, unique: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
