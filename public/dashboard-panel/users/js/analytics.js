@@ -1,6 +1,5 @@
-
 let chartInstance = null;
-let currentRange = 'weekly';
+let currentRange = 'daily';
 
 document.addEventListener('DOMContentLoaded', () => {
     const userData = localStorage.getItem('user');
@@ -8,24 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const user = JSON.parse(userData);
     if (user.role !== 'admin') {
-        alert('Access denied. Admins only.');
+        showError('Access denied. Admins only.');
         window.location.href = '/login.html';
         return;
     }
 
     renderSidebar(window.RoleConfig.admin.sidebar);
-    setupSidebarCollapse()
+    setupSidebarCollapse();
     document.getElementById('profileBtn').textContent = user.username;
 
     setupEventListeners();
-    loadAnalytics('weekly');
+    loadAnalytics('daily');
 });
-
-function renderSidebar(links) {
-    document.getElementById('sidebarLinks').innerHTML = links.map(link => `
-        <li><a href="${link.href}"><i class="fa-solid ${link.icon}"></i> ${link.label}</a></li>
-    `).join('');
-}
 
 function setupEventListeners() {
     document.querySelectorAll('.range-tab').forEach(tab => {
@@ -38,7 +31,7 @@ function setupEventListeners() {
 
             if (range === 'custom') {
                 customInputs.classList.add('visible');
-                return; // wait for Apply button
+                return;
             }
 
             customInputs.classList.remove('visible');
@@ -50,12 +43,7 @@ function setupEventListeners() {
     document.getElementById('applyCustomRangeBtn').addEventListener('click', () => {
         const from = document.getElementById('fromDate').value;
         const to = document.getElementById('toDate').value;
-
-        if (!from || !to) {
-            alert('Please select both start and end dates.');
-            return;
-        }
-
+        if (!from || !to) { showError('Please select both start and end dates.'); return; }
         loadAnalytics('custom', from, to);
     });
 }
@@ -72,70 +60,95 @@ async function loadAnalytics(range, from = null, to = null) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
+        renderRangeLabel(data);
         renderSummary(data);
-        renderChart(data.dailyBreakdown);
+        renderChart(data.breakdown, range);
+        renderGeoList(data.geoBreakdown);
     } catch (err) {
-        console.error('Failed to load analytics:', err);
-        document.getElementById('totalVisitsValue').textContent = 'Error';
+        showError('Failed to load analytics: ' + err.message);
     }
+}
+
+function renderRangeLabel(data) {
+    const start = new Date(data.startDate).toLocaleDateString();
+    const end = new Date(data.endDate).toLocaleDateString();
+    document.getElementById('rangeLabel').textContent = `Showing ${start} – ${end}`;
 }
 
 function renderSummary(data) {
-    const totalAnonymous = data.dailyBreakdown.reduce((sum, d) => sum + d.anonymous, 0);
-    const totalLoggedIn = data.dailyBreakdown.reduce((sum, d) => sum + d.loggedIn, 0);
-
     document.getElementById('totalVisitsValue').textContent = data.totalVisits;
-    document.getElementById('anonymousVisitsValue').textContent = totalAnonymous;
-    document.getElementById('loggedInVisitsValue').textContent = totalLoggedIn;
+    document.getElementById('anonymousVisitsValue').textContent = data.totalAnonymous;
+    document.getElementById('loggedInVisitsValue').textContent = data.totalLoggedIn;
 }
 
-function renderChart(dailyBreakdown) {
-    const labels = dailyBreakdown.map(d => d.date);
-    const totals = dailyBreakdown.map(d => d.total);
-    const anonymous = dailyBreakdown.map(d => d.anonymous);
-    const loggedIn = dailyBreakdown.map(d => d.loggedIn);
+function renderChart(breakdown, range) {
+    const labels = breakdown.map(b => b.label);
+    const anonymous = breakdown.map(b => b.anonymous);
+    const loggedIn = breakdown.map(b => b.loggedIn);
 
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
+    if (chartInstance) chartInstance.destroy();
 
     chartInstance = new Chart(document.getElementById('visitsChart'), {
-        type: 'line',
+        type: 'bar',
         data: {
             labels,
             datasets: [
                 {
-                    label: 'Total Visits',
-                    data: totals,
-                    borderColor: '#1A237E',
-                    backgroundColor: 'rgba(26, 35, 126, 0.1)',
-                    tension: 0.3,
-                    fill: true
-                },
-                {
                     label: 'Anonymous',
                     data: anonymous,
-                    borderColor: '#CD7F32',
-                    backgroundColor: 'transparent',
-                    tension: 0.3
+                    backgroundColor: '#CD7F32',
+                    borderRadius: 4
                 },
                 {
                     label: 'Logged-in',
                     data: loggedIn,
-                    borderColor: '#28a745',
-                    backgroundColor: 'transparent',
-                    tension: 0.3
+                    backgroundColor: '#1A237E',
+                    borderRadius: 4
                 }
             ]
         },
         options: {
             responsive: true,
             scales: {
-                y: { beginAtZero: true }
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
             },
             plugins: {
-                legend: { display: true, position: 'top' }
+                legend: { display: true, position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
             }
         }
     });
+}
+
+// Converts an ISO 3166-1 alpha-2 code (e.g. "GH", "US") into a flag emoji — pure Unicode math, no assets/dependencies
+function countryCodeToFlagEmoji(code) {
+    if (!code || code.length !== 2) return '🏳️';
+    return code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt(0)));
+}
+
+function renderGeoList(geoBreakdown) {
+    const container = document.getElementById('geoList');
+
+    if (!geoBreakdown || geoBreakdown.length === 0) {
+        container.innerHTML = '<p>No visit data for this period.</p>';
+        return;
+    }
+
+    const maxTotal = Math.max(...geoBreakdown.map(g => g.total));
+
+    container.innerHTML = geoBreakdown.map(g => {
+        const isUnknown = g.country === 'Unknown';
+        const flag = isUnknown ? '🌐' : countryCodeToFlagEmoji(g.country);
+        const barWidth = maxTotal > 0 ? Math.round((g.total / maxTotal) * 100) : 0;
+
+        return `
+            <div class="geo-row">
+                <span class="geo-flag">${flag}</span>
+                <span class="geo-country-name">${isUnknown ? 'Unknown' : g.country}</span>
+                <div class="geo-bar-track"><div class="geo-bar-fill" style="width:${barWidth}%;"></div></div>
+                <span class="geo-count">${g.total}</span>
+            </div>
+        `;
+    }).join('');
 }

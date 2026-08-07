@@ -15,70 +15,63 @@
             margin-bottom: 1.5rem;
         }
 
-        .range-tabs {
-            display: flex;
-            gap: 0.5rem;
-        }
+        .range-tab.active { background: var(--primary-color); color: var(--neutral-color); border-color: var(--primary-color); }
 
-        .range-tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            background: var(--neutral-color);
-            color: var(--text-color);
-            cursor: pointer;
-            font-weight: var(--font-weight-bold);
-            font-size: var(--font-size-sm);
-        }
+        .custom-range { display: none; align-items: center; gap: 0.5rem; }
+        .custom-range.visible { display: flex; }
 
-        .range-tab.active {
-            background: var(--primary-color);
-            color: var(--neutral-color);
-            border-color: var(--primary-color);
-        }
-
-        .custom-range {
-            display: none;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .custom-range.visible {
-            display: flex;
-        }
-
-        .custom-range input[type="date"] {
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-        }
-
-        .custom-range button {
-            padding: 8px 16px;
-            background: var(--primary-color);
-            color: var(--neutral-color);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .analytics-summary {
+        .analytics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
         }
 
-        .chart-section {
+        @media (max-width: 900px) {
+            .analytics-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-section, .geo-section {
             background: var(--neutral-color);
             border-radius: 10px;
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
-        canvas {
-            max-width: 100%;
+        .geo-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .geo-row:last-child { border-bottom: none; }
+
+        .geo-flag { font-size: 1.4rem; }
+
+        .geo-country-name { flex: 1; font-weight: 600; }
+
+        .geo-bar-track {
+            flex: 2;
+            background: var(--background-light);
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .geo-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .geo-count { min-width: 40px; text-align: right; font-weight: 700; }
+
+        .range-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
         }
     </style>
 </head>
@@ -105,50 +98,49 @@
         <h1><i class="fa-solid fa-chart-line"></i> Visit Analytics</h1>
 
         <div class="analytics-filters">
-            <div class="range-tabs" id="rangeTabs">
-                <button class="range-tab" data-range="daily">Daily</button>
-                <button class="range-tab active" data-range="weekly">Weekly</button>
-                <button class="range-tab" data-range="monthly">Monthly</button>
-                <button class="range-tab" data-range="yearly">Yearly</button>
-                <button class="range-tab" data-range="custom">Custom</button>
+            <div class="status-tabs" id="rangeTabs">
+                <button class="status-tab range-tab active" data-range="daily">This Week</button>
+                <button class="status-tab range-tab" data-range="weekly">This Month</button>
+                <button class="status-tab range-tab" data-range="monthly">This Year</button>
+                <button class="status-tab range-tab" data-range="yearly">Last 5 Years</button>
+                <button class="status-tab range-tab" data-range="custom">Custom</button>
             </div>
 
             <div class="custom-range" id="customRangeInputs">
                 <input type="date" id="fromDate" />
                 <span>to</span>
                 <input type="date" id="toDate" />
-                <button id="applyCustomRangeBtn">Apply</button>
+                <button id="applyCustomRangeBtn" class="btn-add-post">Apply</button>
             </div>
         </div>
 
-        <div class="analytics-summary" id="analyticsSummary">
-            <div class="stat-box">
-                <h2 id="totalVisitsValue">0</h2>
-                <p>Total Visits</p>
-            </div>
-            <div class="stat-box">
-                <h2 id="anonymousVisitsValue">0</h2>
-                <p>Anonymous Visits</p>
-            </div>
-            <div class="stat-box">
-                <h2 id="loggedInVisitsValue">0</h2>
-                <p>Logged-in Visits</p>
-            </div>
+        <p class="range-label" id="rangeLabel"></p>
+
+        <div class="stats-container" id="analyticsSummary">
+            <div class="stat-box"><h2 id="totalVisitsValue">0</h2><p>Total Visits</p></div>
+            <div class="stat-box"><h2 id="anonymousVisitsValue">0</h2><p>Anonymous</p></div>
+            <div class="stat-box"><h2 id="loggedInVisitsValue">0</h2><p>Logged-in</p></div>
         </div>
 
-        <section class="chart-section">
-            <h2>Visits Over Time</h2>
-            <canvas id="visitsChart" height="90"></canvas>
-        </section>
+        <div class="analytics-grid">
+            <section class="chart-section">
+                <h2>Visits Over Time</h2>
+                <canvas id="visitsChart" height="110"></canvas>
+            </section>
+
+            <section class="geo-section">
+                <h2>Top Countries</h2>
+                <div id="geoList"><p>Loading...</p></div>
+            </section>
+        </div>
     </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/guard.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
 <script src="../js/roleConfig.js"></script>
-<script src="js/analytics.js"></script>
 <script src="../js/sideBar.js"></script>
-
+<script src="js/analytics.js"></script>
 </body>
 </html>

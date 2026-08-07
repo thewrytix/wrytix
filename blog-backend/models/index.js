@@ -174,12 +174,14 @@ const HeadlineSchema = new mongoose.Schema({
 });
 
 const VisitSchema = new mongoose.Schema({
-    path: String,              // e.g. '/posts/some-slug' or '/'
-    userId: { type: String, default: null }, // null = anonymous
+    path: String,
+    userId: { type: String, default: null },
     ip: String,
+    country: { type: String, default: 'Unknown' }, // NEW — ISO country code, resolved at write time
     userAgent: String,
     timestamp: { type: Date, default: Date.now }
 });
+
 
 const MaintenanceTaskSchema = new mongoose.Schema({
     title: String,

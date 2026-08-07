@@ -8,6 +8,7 @@
     "express-rate-limit": "^8.2.1",
     "express-session": "^1.18.1",
     "express-slow-down": "^3.0.1",
+    "geoip-lite": "^1.4.10",
     "mongodb": "^6.17.0",
     "mongoose": "^9.8.0",
     "multer": "^2.0.1",

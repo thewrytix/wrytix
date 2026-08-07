@@ -1,17 +1,19 @@
 const { Visit } = require('../models');
+const { getCountryFromIp } = require('../utils/geo');
 
 const logVisit = (req, res, next) => {
-    // Fire-and-forget — never await this in the request path, never let it fail the request
+    const ip = (req.headers['x-forwarded-for']?.split(',')[0].trim()) || req.ip || req.connection?.remoteAddress;
+    const country = getCountryFromIp(ip);
+
     Visit.create({
         path: req.originalUrl,
         userId: req.session?.user?.username || null,
-        ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+        ip,
+        country,
         userAgent: req.headers['user-agent'] || 'unknown'
-    }).catch(err => {
-        console.error('Visit logging failed (non-fatal):', err.message);
-    });
+    }).catch(err => console.error('Visit logging failed (non-fatal):', err.message));
 
-    next(); // always continue immediately, don't wait on the DB write
+    next();
 };
 
 module.exports = { logVisit };
