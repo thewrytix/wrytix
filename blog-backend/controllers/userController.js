@@ -531,7 +531,7 @@ const getManagedUsers = async (req, res) => {
             total, page: parseInt(page), totalPages: Math.ceil(total / limit)
         });
     } catch (err) {
-        console.error('getManagedUsers error:', err);
+        await logAction(req.session.user.username, 'get-managed-user-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Failed to load users' });
     }
 };
