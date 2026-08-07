@@ -34,7 +34,7 @@ router.put('/users/:id', requireRole(['admin', 'editor']), upload.fields([      
 router.delete('/users/:id', requireRole(['admin', 'editor']), deleteUser);
 
 router.get('/pendingUsers', requireEditorOrAdmin, getPendingUsers);
-router.post('/pendingUsers', requireAdmin, upload.fields([
+router.post('/pendingUsers', requireEditorOrAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
 ]), createPendingUser);
 
