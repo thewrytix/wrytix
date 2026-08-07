@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 const { User, PendingUser } = require('../models');
 const { logAction } = require('../utils/logger');
 const { uploadToGridFS } = require('../utils/fileHelpers');
@@ -61,7 +62,7 @@ const createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = {
-            id: Date.now().toString(),
+            id: uuidv4(),                                                  // ✅ changed from Date.now()
             fullname: fullName,
             username,
             email,
@@ -73,8 +74,8 @@ const createUser = async (req, res) => {
             submittedBy: submittedBy || req.session.user.username,
             status: 'active',
             createdAt: new Date(),
-            lineManager: role === 'author' ? (lineManager || null) : null,       // FIX: was missing entirely
-            assignedCategories: role === 'editor' ? parseCategories(assignedCategories) : [] // FIX: was missing entirely
+            lineManager: role === 'author' ? (lineManager || null) : null,
+            assignedCategories: role === 'editor' ? parseCategories(assignedCategories) : []
         };
 
         await User.create(newUser);
@@ -89,9 +90,6 @@ const createUser = async (req, res) => {
         res.status(500).json({ error: 'Failed to create user', details: err.message });
     }
 };
-
-
-
 
 const getPendingUsers = async (req, res) => {
     const pending = await PendingUser.find().lean();
@@ -115,7 +113,8 @@ const submitPendingUser = async (req, res) => {
 
         const newPendingUser = {
             ...req.body,
-            submittedBy: editor.username, // FIX: standardized on submittedBy, matching createPendingUser
+            id: uuidv4(),                          // ✅ added – was missing
+            submittedBy: editor.username,
             status: 'pending',
             createdAt: new Date()
         };
@@ -135,7 +134,7 @@ const approvePendingUser = async (req, res) => {
         if (!pending) return res.status(404).json({ error: 'Pending user not found' });
 
         const newUser = {
-            id: pending.id,
+            id: uuidv4(),                          // ✅ always generate a fresh UUID
             fullname: pending.fullname,
             username: pending.username,
             email: pending.email,
@@ -144,10 +143,10 @@ const approvePendingUser = async (req, res) => {
             avatarId: pending.avatarId || null,
             pdfId: pending.pdfId || null,
             pdfOriginalName: pending.pdfOriginalName || null,
-            submittedBy: pending.submittedBy,           // preserved explicitly
-            lineManager: pending.lineManager || null,    // preserved explicitly
+            submittedBy: pending.submittedBy,
+            lineManager: pending.lineManager || null,
             assignedCategories: pending.assignedCategories || [],
-            status: 'active',                             // FIX: explicitly set, never inherited from pending
+            status: 'active',
             createdAt: new Date()
         };
 
@@ -169,7 +168,7 @@ const approvePendingUser = async (req, res) => {
 const getMyPendingUsers = async (req, res) => {
     try {
         const editor = req.session.user;
-        const pending = await PendingUser.find({ submittedBy: editor.username }) // FIX: was createdBy
+        const pending = await PendingUser.find({ submittedBy: editor.username })
             .select('username email role status createdAt')
             .lean();
         res.json(pending);
@@ -207,7 +206,7 @@ const createPendingUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newPendingUser = {
-            id: Date.now().toString(),
+            id: uuidv4(),                                                  // ✅ changed from Date.now()
             fullname: fullName,
             username,
             email,
@@ -217,8 +216,8 @@ const createPendingUser = async (req, res) => {
             pdfId,
             pdfOriginalName,
             submittedBy: req.session.user.username,
-            lineManager: role === 'author' ? (lineManager || null) : null,       // FIX: was missing
-            assignedCategories: role === 'editor' ? parseCategories(assignedCategories) : [], // FIX: was missing
+            lineManager: role === 'author' ? (lineManager || null) : null,
+            assignedCategories: role === 'editor' ? parseCategories(assignedCategories) : [],
             requestedAt: new Date(),
             status: 'pending'
         };
@@ -310,8 +309,6 @@ const getEditorsList = async (req, res) => {
     }
 };
 
-
-
 const bulkDeleteUsers = async (req, res) => {
     try {
         const { ids } = req.body;
@@ -330,7 +327,6 @@ const bulkDeleteUsers = async (req, res) => {
     }
 };
 
-// NEW: admin rejects with a reason, record persists instead of being deleted
 const rejectPendingUser = async (req, res) => {
     try {
         const { reason } = req.body;
@@ -353,7 +349,6 @@ const rejectPendingUser = async (req, res) => {
     }
 };
 
-// NEW: editor edits & resubmits their own rejected (or pending) submission
 const updatePendingUser = async (req, res) => {
     try {
         const pending = await PendingUser.findOne({ _id: req.params.id });
@@ -381,7 +376,6 @@ const updatePendingUser = async (req, res) => {
             pending.pdfOriginalName = req.files.pdf[0].originalname;
         }
 
-        // Resubmitting resets it back into the review queue
         pending.status = 'pending';
         pending.rejectionReason = '';
 
@@ -396,14 +390,13 @@ const updatePendingUser = async (req, res) => {
     }
 };
 
-// UPDATED: toggle status now checks lineManager, not submittedBy
 const toggleUserStatus = async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const requester = req.session.user;
-        if (requester.role === 'editor' && user.lineManager !== requester.username) { // FIX: was submittedBy
+        if (requester.role === 'editor' && user.lineManager !== requester.username) {
             return res.status(403).json({ error: 'Not authorized to modify this user' });
         }
 
@@ -418,7 +411,6 @@ const toggleUserStatus = async (req, res) => {
     }
 };
 
-// UPDATED: editors can no longer edit/delete active users at all (admin-only); this stays as-is for pending/rejected via PendingUser now
 const updateUser = async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id }).lean();
@@ -429,7 +421,6 @@ const updateUser = async (req, res) => {
 
         const requester = req.session.user;
 
-        // Editors never edit records in the User collection — only admin can, since these are already approved
         if (requester.role === 'editor') {
             return res.status(403).json({ error: 'Editors cannot edit approved users. Contact an admin.' });
         }
@@ -466,7 +457,6 @@ const updateUser = async (req, res) => {
     }
 };
 
-// UPDATED: editors never delete approved users; admin-only for User collection
 const deleteUser = async (req, res) => {
     try {
         const user = await User.findOne({ _id: req.params.id }).lean();
@@ -491,7 +481,6 @@ const deleteUser = async (req, res) => {
     }
 };
 
-// UPDATED: getManagedUsers — pending/rejected tabs query PendingUser by status; active/inactive scope editors by lineManager
 const getManagedUsers = async (req, res) => {
     try {
         const admin = req.session.user;
@@ -500,7 +489,7 @@ const getManagedUsers = async (req, res) => {
         const skip = (parseInt(page) - 1) * limit;
 
         if (status === 'pending' || status === 'rejected') {
-            let query = { status }; // FIX: explicit status filter now that both states can exist
+            let query = { status };
             if (admin.role === 'editor') query.submittedBy = admin.username;
             if (search) query.username = { $regex: search, $options: 'i' };
 
@@ -525,7 +514,7 @@ const getManagedUsers = async (req, res) => {
         if (status === 'inactive') query.status = { $in: ['inactive', 'suspended'] };
         if (search) query.username = { $regex: search, $options: 'i' };
         if (role) query.role = role;
-        if (admin.role === 'editor') query.lineManager = admin.username; // FIX: was submittedBy, now lineManager per your request
+        if (admin.role === 'editor') query.lineManager = admin.username;
 
         const [items, total] = await Promise.all([
             User.find(query)
