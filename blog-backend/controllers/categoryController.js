@@ -92,11 +92,9 @@ const getById = async (req, res) => {
     }
 };
 
-
 const update = async (req, res) => {
     try {
         const { name, editor, authors } = req.body;
-        console.log('[category update] payload:', { name, editor, authors }); // TEMP DEBUG
         if (!name) {
             await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Name missing' });
             return res.status(400).json({ error: 'Name is required' });
@@ -104,9 +102,7 @@ const update = async (req, res) => {
 
         if (editor) {
             const editorUser = await User.findOne({ username: editor }); // FIX
-            console.log('[category update] editorUser found:', editorUser); // TEMP DEBUG
             if (!editorUser || editorUser.role !== 'editor') {
-                console.log('[category update] rejection reason:', !editorUser ? 'no user found for that username' : `found user but role is "${editorUser.role}"`); // TEMP DEBUG
                 await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Invalid or non-editor user' });
                 return res.status(400).json({ error: 'Invalid or non-editor user selected' });
             }
