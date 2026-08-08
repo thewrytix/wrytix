@@ -108,21 +108,23 @@ const PendingDeletionSchema = new Schema({
     status: { type: String, default: 'pending' },
 });
 
-const PostSubmissionSchema = new Schema({
+const PostSubmissionSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
     title: { type: String, required: true },
-    thumbnail: { type: String, required: true },
-    category: { type: String, required: true },
-    author: { type: String, required: true }, // Author submitting
-    content: { type: String },
     slug: { type: String, required: true, unique: true },
-    source: { type: String, required: true },
-    featured: { type: Boolean, default: false }, // Add featured
-    status: { type: String, default: 'pending' },
-    submittedBy: { type: String, required: true },
+    author: { type: String },            // display name (could be submittedBy's full name)
+    submittedBy: { type: String, required: true }, // username of submitter
+    category: { type: String, required: true },
+    thumbnail: { type: String, required: true },
+    content: { type: String, required: true },
+    source: { type: String },
+    featured: { type: Boolean, default: false },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    assignedEditor: { type: String, default: null },
     editorComments: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
-    schedule: { type: Date },
+    reviewedBy: { type: String },
+    reviewedAt: { type: Date }
 });
 
 const LogSchema = new Schema({
