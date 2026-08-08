@@ -1,5 +1,6 @@
 const express = require('express');
-const path = require('path'); // Add this line
+const path = require('path');
+require('dotenv').config();
 const { connectDB } = require('./config/database');
 const { setupMiddleware } = require('./config/middleware');
 const setupSession = require('./config/session');
@@ -7,7 +8,7 @@ const routes = require('./routes');
 const { logAction } = require('./utils/logger');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 // Setup middleware and session
 setupMiddleware(app);
