@@ -19,13 +19,13 @@ router.get('/users/manage', requireRole(['admin', 'editor']), getManagedUsers);
 router.post('/users/bulk-delete', requireRole(['admin', 'editor']), bulkDeleteUsers);
 router.put('/users/assign-line-manager', requireAdmin, assignLineManager);
 router.put('/users/assign-categories', requireAdmin, assignEditorCategories);
-router.get('/users/editors', requireRole(['admin', 'editor']), getEditorsList);
-router.get('/users/authors', requireRole(['admin', 'editor']), getAuthorsList); // NEW
 
 router.get('/users', requireAdmin, getUsers);
 router.post('/users', requireEditorOrAdmin, upload.fields([
     { name: 'avatar', maxCount: 1 }, { name: 'pdf', maxCount: 1 }
 ]), createUser);
+router.get('/users/editors', requireRole(['admin', 'editor']), getEditorsList);
+router.get('/users/authors', requireRole(['admin', 'editor']), getAuthorsList); // NEW
 
 router.put('/users/:id/status', requireRole(['admin', 'editor']), toggleUserStatus); // NEW
 router.get('/users/:id', requireLogin, getUserById);
