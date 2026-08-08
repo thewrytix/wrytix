@@ -553,6 +553,15 @@ async function handleFormSubmit(e) {
             });
         } else {
             const source = document.getElementById('postFormSource').value;
+
+            // FIX: editing a rejected/pending submission must reset it back into the review queue
+            if (source === 'submission') {
+                payload.status = 'pending';
+                payload.editorComments = '';
+                payload.reviewedBy = null;
+                payload.reviewedAt = null;
+            }
+
             const endpoint = source === 'submission'
                 ? `/postSubmissions/${document.getElementById('postFormSubmissionId').value}`
                 : `/posts/${document.getElementById('postFormSlug').value}`;
