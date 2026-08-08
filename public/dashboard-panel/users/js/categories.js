@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const user = JSON.parse(userData);
     if (user.role !== 'admin') {
-        alert('Access denied. Admins only.');
+        showError('Access denied. Admins only.');
         window.location.href = '/login.html';
         return;
     }
@@ -31,28 +31,34 @@ function setupEventListeners() {
 
 async function loadEditorsAndAuthors() {
     try {
-        const res = await fetch(`${API_BASE}/users/manage?status=active&role=editor`, { credentials: 'include' });
-        const editorData = await res.json();
-        allEditors = editorData.items || [];
+        const [editorsRes, authorsRes] = await Promise.all([
+            fetch(`${API_BASE}/users/editors`, { credentials: 'include' }),
+            fetch(`${API_BASE}/users/authors`, { credentials: 'include' })
+        ]);
 
-        const res2 = await fetch(`${API_BASE}/users/manage?status=active&role=author`, { credentials: 'include' });
-        const authorData = await res2.json();
-        allAuthors = authorData.items || [];
+        if (!editorsRes.ok) throw new Error(`Failed to load editors (HTTP ${editorsRes.status})`);
+        if (!authorsRes.ok) throw new Error(`Failed to load authors (HTTP ${authorsRes.status})`);
+
+        allEditors = await editorsRes.json();
+        allAuthors = await authorsRes.json();
+
+        console.log('[categories] editors loaded:', allEditors); // TEMP DEBUG — remove once confirmed working
+        console.log('[categories] authors loaded:', allAuthors); // TEMP DEBUG — remove once confirmed working
 
         document.getElementById('categoryEditorInput').innerHTML =
-            '<option value="">-- Select Editor --</option>' +
-            allEditors.map(e => `<option value="${e.id || e._id}">${e.fullname || e.username}</option>`).join('');
+            '<option value="">-- Unassigned --</option>' +
+            allEditors.map(e => `<option value="${e.username}">${e.fullname || e.username}</option>`).join('');
 
         document.getElementById('categoryAuthorsCheckboxes').innerHTML = allAuthors.length === 0
             ? '<p>No authors available.</p>'
             : allAuthors.map(a => `
                 <label style="display:block;margin-bottom:6px;">
-                    <input type="checkbox" class="author-checkbox" value="${a.id || a._id}" />
+                    <input type="checkbox" class="author-checkbox" value="${a.username}" />
                     ${a.fullname || a.username}
                 </label>
             `).join('');
     } catch (err) {
-        console.error('Failed to load editors/authors:', err);
+        showError('Failed to load editors/authors: ' + err.message);
     }
 }
 
@@ -66,7 +72,7 @@ async function loadCategories() {
         currentCategories = await res.json();
         renderTable(currentCategories);
     } catch (err) {
-        console.error(err);
+        showError('Failed to load categories: ' + err.message);
         tbody.innerHTML = '<tr><td colspan="4">Failed to load categories.</td></tr>';
     }
 }
@@ -110,24 +116,25 @@ function openEditModal(id) {
     openModal('edit');
     document.getElementById('categoryFormId').value = id;
     document.getElementById('categoryNameInput').value = cat.name;
-    document.getElementById('categoryEditorInput').value = cat.editor;
+    document.getElementById('categoryEditorInput').value = cat.editor || '';
 
-    const authorIds = (cat.authors || []).map(a => a.id);
+    const authorUsernames = (cat.authors || []).map(a => a.username);
     document.querySelectorAll('.author-checkbox').forEach(cb => {
-        cb.checked = authorIds.includes(cb.value);
+        cb.checked = authorUsernames.includes(cb.value);
     });
 }
 
 async function handleDelete(id) {
-    if (!confirm('Delete this category?')) return;
+    const ok = await showConfirm('This action cannot be undone.', { title: 'Delete this category?', confirmText: 'Delete' });
+    if (!ok) return;
 
     try {
         const res = await fetch(`${API_BASE}/category/${id}`, { method: 'DELETE', credentials: 'include' });
         if (!res.ok) throw new Error('Delete failed');
         await loadCategories();
+        showSuccess('Category deleted.');
     } catch (err) {
-        console.error(err);
-        alert('Failed to delete category.');
+        showError('Failed to delete category: ' + err.message);
     }
 }
 
@@ -136,10 +143,13 @@ async function handleFormSubmit(e) {
 
     const mode = document.getElementById('categoryFormMode').value;
     const authors = [...document.querySelectorAll('.author-checkbox:checked')].map(cb => cb.value);
+    const editorValue = document.getElementById('categoryEditorInput').value;
+
+    console.log('[categories] submitting:', { editor: editorValue, authors }); // TEMP DEBUG — remove once confirmed working
 
     const payload = {
         name: document.getElementById('categoryNameInput').value.trim(),
-        editor: document.getElementById('categoryEditorInput').value,
+        editor: editorValue,
         authors
     };
 
@@ -164,14 +174,14 @@ async function handleFormSubmit(e) {
 
         const resData = await res.json().catch(() => ({}));
         if (!res.ok) {
-            alert(resData?.error || 'Failed to save category.');
+            showError(resData?.error || 'Failed to save category.');
             return;
         }
 
         closeModal();
         await loadCategories();
+        showSuccess('Category saved successfully.');
     } catch (err) {
-        console.error(err);
-        alert('Failed to save category.');
+        showError('Failed to save category: ' + err.message);
     }
 }

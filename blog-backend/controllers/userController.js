@@ -299,15 +299,7 @@ const assignEditorCategories = async (req, res) => {
     }
 };
 
-const getEditorsList = async (req, res) => {
-    try {
-        const editors = await User.find({ role: 'editor', status: 'active' }).select('id username fullname').lean();
-        res.json(editors);
-    } catch (err) {
-        await logAction(req.session.user.username, 'editor-load-error', req.params.id, { error: err.message });
-        res.status(500).json({ error: 'Failed to load editors' });
-    }
-};
+
 
 const bulkDeleteUsers = async (req, res) => {
     try {
@@ -536,10 +528,33 @@ const getManagedUsers = async (req, res) => {
     }
 };
 
+const getEditorsList = async (req, res) => {
+    try {
+        const editors = await User.find({ role: 'editor', status: 'active' })
+            .select('username fullname')
+            .lean();
+        res.json(editors.map(e => ({ username: e.username, fullname: e.fullname })));
+    } catch (err) {
+        await logAction(req.session.user.username, 'editor-load-error', req.params.id, { error: err.message });
+        res.status(500).json({ error: 'Failed to load editors' });
+    }
+};
+
+const getAuthorsList = async (req, res) => {
+    try {
+        const authors = await User.find({ role: 'author', status: 'active' })
+            .select('username fullname')
+            .lean();
+        res.json(authors.map(a => ({ username: a.username, fullname: a.fullname })));
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load authors' });
+    }
+};
+
 module.exports = {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
     getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
     approvePendingUser, rejectPendingUser, updatePendingUser,
-    submitPendingUser, getMyPendingUsers, assignLineManager, getEditorsList,
+    submitPendingUser, getMyPendingUsers, assignLineManager, getEditorsList, getAuthorsList,
     assignEditorCategories, getManagedUsers, bulkDeleteUsers
 };

@@ -2,7 +2,7 @@ const express = require('express');
 const {
     getUsers, getUserById, createUser, updateUser, deleteUser, toggleUserStatus,
     getPendingUsers, getPendingUserById, createPendingUser, deletePendingUser,
-    assignLineManager, assignEditorCategories, getManagedUsers, rejectPendingUser,bulkDeleteUsers, updatePendingUser, getEditorsList, approvePendingUser
+    assignLineManager, assignEditorCategories, getAuthorsList, getManagedUsers, rejectPendingUser,bulkDeleteUsers, updatePendingUser, getEditorsList, approvePendingUser
 } = require('../controllers/userController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { requireAdmin, requireEditorOrAdmin, requireRole, requireLogin } = require('../middleware/auth');
@@ -16,10 +16,11 @@ router.get('/check-email', checkEmail);
 
 router.get('/users/analytics', requireAdmin, getVisitAnalytics);
 router.get('/users/manage', requireRole(['admin', 'editor']), getManagedUsers);
-router.get('/users/editors', requireRole(['admin', 'editor']), getEditorsList);
 router.post('/users/bulk-delete', requireRole(['admin', 'editor']), bulkDeleteUsers);
 router.put('/users/assign-line-manager', requireAdmin, assignLineManager);
 router.put('/users/assign-categories', requireAdmin, assignEditorCategories);
+router.get('/users/editors', requireRole(['admin', 'editor']), getEditorsList);
+router.get('/users/authors', requireRole(['admin', 'editor']), getAuthorsList); // NEW
 
 router.get('/users', requireAdmin, getUsers);
 router.post('/users', requireEditorOrAdmin, upload.fields([

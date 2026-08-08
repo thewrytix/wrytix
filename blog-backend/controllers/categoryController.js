@@ -25,23 +25,28 @@ const create = async (req, res) => {
     try {
         const { name, editor, authors } = req.body;
         if (!name) {
-            await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Name missing' });
             return res.status(400).json({ error: 'Name is required' });
         }
 
         if (editor) {
-            const editorUser = await User.findOne({ username: editor }); // FIX: was { id: editor }
-            if (!editorUser || editorUser.role !== 'editor') {
-                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Invalid or non-editor user' });
-                return res.status(400).json({ error: 'Invalid or non-editor user selected' });
+            const editorUser = await User.findOne({ username: editor }).lean();
+            if (!editorUser) {
+                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: `No user found with username "${editor}"` });
+                return res.status(400).json({ error: `No user found with username "${editor}"` });
+            }
+            if (editorUser.role !== 'editor') {
+                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: `User "${editor}" has role "${editorUser.role}", not editor` });
+                return res.status(400).json({ error: `"${editor}" is a ${editorUser.role}, not an editor` });
             }
         }
 
         if (authors && authors.length) {
-            const authorUsers = await User.find({ username: { $in: authors }, role: 'author' }); // FIX: was id: { $in: authors }
+            const authorUsers = await User.find({ username: { $in: authors }, role: 'author' }).lean();
             if (authorUsers.length !== authors.length) {
-                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: 'Invalid authors' });
-                return res.status(400).json({ error: 'One or more authors are invalid' });
+                const foundUsernames = authorUsers.map(a => a.username);
+                const missing = authors.filter(a => !foundUsernames.includes(a));
+                await logAction(req.session.user?.username || 'anonymous', 'category-create-failed', 'system', { reason: `Authors not found or not role=author: ${missing.join(', ')}` });
+                return res.status(400).json({ error: `These usernames are not valid authors: ${missing.join(', ')}` });
             }
         }
 
@@ -66,8 +71,7 @@ const create = async (req, res) => {
 
 const getAll = async (req, res) => {
     try {
-        const categories = await readCategories();
-        res.json(categories);
+        res.json(await readCategories());
     } catch (e) {
         res.status(500).json({ error: 'Failed to fetch categories' });
     }
@@ -95,32 +99,32 @@ const getById = async (req, res) => {
 const update = async (req, res) => {
     try {
         const { name, editor, authors } = req.body;
-        if (!name) {
-            await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Name missing' });
-            return res.status(400).json({ error: 'Name is required' });
-        }
+        if (!name) return res.status(400).json({ error: 'Name is required' });
 
         if (editor) {
-            const editorUser = await User.findOne({ username: editor }); // FIX
-            if (!editorUser || editorUser.role !== 'editor') {
-                await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Invalid or non-editor user' });
-                return res.status(400).json({ error: 'Invalid or non-editor user selected' });
+            const editorUser = await User.findOne({ username: editor }).lean();
+            if (!editorUser) {
+                await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: `No user found with username "${editor}"` });
+                return res.status(400).json({ error: `No user found with username "${editor}"` });
+            }
+            if (editorUser.role !== 'editor') {
+                await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: `User "${editor}" has role "${editorUser.role}", not editor` });
+                return res.status(400).json({ error: `"${editor}" is a ${editorUser.role}, not an editor` });
             }
         }
 
         if (authors && authors.length) {
-            const authorUsers = await User.find({ username: { $in: authors }, role: 'author' }); // FIX
+            const authorUsers = await User.find({ username: { $in: authors }, role: 'author' }).lean();
             if (authorUsers.length !== authors.length) {
-                await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Invalid authors' });
-                return res.status(400).json({ error: 'One or more authors are invalid' });
+                const foundUsernames = authorUsers.map(a => a.username);
+                const missing = authors.filter(a => !foundUsernames.includes(a));
+                await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: `Authors not found: ${missing.join(', ')}` });
+                return res.status(400).json({ error: `These usernames are not valid authors: ${missing.join(', ')}` });
             }
         }
 
         const category = await Category.findOne({ id: req.params.id });
-        if (!category) {
-            await logAction(req.session.user?.username || 'anonymous', 'category-update-failed', req.params.id, { reason: 'Not found' });
-            return res.status(404).json({ error: 'Category not found' });
-        }
+        if (!category) return res.status(404).json({ error: 'Category not found' });
 
         category.name = name.trim();
         category.editor = editor || null;
@@ -140,17 +144,13 @@ const update = async (req, res) => {
 const deleteCategory = async (req, res) => {
     try {
         const category = await Category.findOne({ id: req.params.id }).lean();
-        if (!category) {
-            await logAction(req.session.user?.username || 'anonymous', 'category-delete-failed', req.params.id, { reason: 'Not found' });
-            return res.status(404).json({ error: 'Category not found' });
-        }
+        if (!category) return res.status(404).json({ error: 'Category not found' });
 
         await Category.deleteOne({ id: req.params.id });
         await logAction(req.session.user?.username || 'anonymous', 'category-deleted', category.id, { name: category.name });
 
         res.json({ message: 'Category deleted successfully', deleted: category });
     } catch (err) {
-        await logAction(req.session.user?.username || 'anonymous', 'category-delete-error', req.params.id, { error: err.message });
         res.status(500).json({ error: 'Server error' });
     }
 };
