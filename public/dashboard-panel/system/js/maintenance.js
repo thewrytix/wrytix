@@ -1,4 +1,3 @@
-
 let allTasks = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,15 +46,10 @@ async function loadMaintenanceStatus() {
 function updateMaintenanceUI(isOn) {
     document.getElementById('maintenanceToggle').checked = isOn;
     const statusText = document.getElementById('maintenanceStatusText');
-    statusText.textContent = isOn ? showSuccess() : 'Maintenance Mode: OFF';
+    statusText.textContent = isOn ? 'Maintenance Mode: ON' : 'Maintenance Mode: OFF';
     statusText.className = `maintenance-status-text ${isOn ? 'on' : 'off'}`;
 
-if (isOn) {
-    showSuccess('Maintenance mode enabled');
-
-} else {
-    showSuccess('Maintenance mode disabled');
-}
+    document.getElementById('maintenancePanel')?.classList.toggle('is-active', isOn);
 }
 
 async function handleMaintenanceToggle(e) {
@@ -81,6 +75,7 @@ async function handleMaintenanceToggle(e) {
 
         if (!res.ok) throw new Error('Failed to update maintenance mode');
         updateMaintenanceUI(newValue);
+        showSuccess(newValue ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
     } catch (err) {
         console.error('Toggle failed:', err);
 
@@ -107,7 +102,7 @@ function renderTasks() {
     const container = document.getElementById('taskList');
 
     if (allTasks.length === 0) {
-        container.innerHTML = '<p>No tasks yet.</p>';
+        container.innerHTML = '<p class="tq-empty">No tasks yet. Add one above to get started.</p>';
         return;
     }
 

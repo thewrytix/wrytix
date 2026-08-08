@@ -2,20 +2,20 @@
    1️⃣ ROOT VARIABLES (Design Tokens)
    ============================================================ */
 :root {
-    /* Colors */
+    /* Colors — "instrument panel" palette: deep ink, brass, signal red */
     --primary-color: #1A237E;
-    --secondary-color: #D32F2F;
-    --accent-color: #CD7F32;
-    --text-color: #333;
-    --text-light: #777;
+    --secondary-color: #C43E3E;
+    --accent-color: #2E8FA0;
+    --text-color: #1F2430;
+    --text-light: #6B7280;
     --neutral-color: #ffffff;
-    --background-light: #f9f9f9;
-    --background-dark: #222;
-    --border-color: #ccc;
-    --status-green: #28a745 !important;
-    --status-neutral: #ffc107 !important;
-    --status-none: #6c757d !important;
-    --status-red: #D32F2F !important;
+    --background-light: #F4F5F7;
+    --background-dark: #0D1226;
+    --border-color: #E1E4EA;
+    --status-green: #2F9E64 !important;
+    --status-neutral: #D79A2C !important;
+    --status-none: #9CA3AF !important;
+    --status-red: #C43E3E !important;
 
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -24,9 +24,10 @@
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
 
-    /* Typography */
-    --font-family-primary: 'Roboto', sans-serif;
-    --font-family-secondary: 'Open Sans', sans-serif;
+    /* Typography — technical/engineering pairing */
+    --font-family-primary: 'Space Grotesk', sans-serif;
+    --font-family-secondary: 'Inter', sans-serif;
+    --font-family-mono: 'JetBrains Mono', monospace;
     --font-size-sm: 0.875rem;
     --font-size-md: 1rem;
     --font-size-lg: 1.25rem;
@@ -76,7 +77,7 @@ html:focus-within {
 
 body {
     margin: 0;
-    font-family: var(--font-family-primary);
+    font-family: var(--font-family-secondary);
     background: var(--background-light);
     padding: 0;
 }
@@ -85,6 +86,7 @@ body {
    3️⃣ TYPOGRAPHY
    ============================================================ */
 h1, h2, h3, h4 {
+    font-family: var(--font-family-primary);
     line-height: 1.2;
     margin-bottom: var(--spacing-md);
 }
@@ -101,6 +103,14 @@ a {
 
 i {
     color: var(--primary-color);
+}
+
+button i,
+.btn i,
+a.btn-edit i,
+a.btn-view i,
+a.quick-links i {
+    color: inherit;
 }
 
 /* ============================================================
@@ -193,7 +203,7 @@ i {
 }
 
 .sidebar-header h2 {
-    
+
     margin: var(--spacing-md);
     display: flex;
     align-items: center;
@@ -250,7 +260,7 @@ i {
     text-align: center;
     font-size: var(--font-size-lg);
     color: var(--neutral-color);
-    
+
 }
 
 .admin-sidebar > nav > ul > li > button > span {
@@ -877,7 +887,7 @@ form button {
 
 #searchInput:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 0 4px rgba(22, 33, 62, 0.3);
     outline: none;
 }
 
@@ -945,7 +955,7 @@ form button {
     background-color: var(--primary-color);
     color: var(--neutral-color);
     font-weight: var(--font-weight-normal);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+    box-shadow: 0 0 0 2px rgba(22, 33, 62, 0.3);
 }
 
 /* ============================================================

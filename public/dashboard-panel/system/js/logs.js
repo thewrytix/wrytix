@@ -45,9 +45,21 @@ function setupEventListeners() {
         renderLogs();
     });
 
-    document.getElementById('clearLogs').addEventListener('click', () => {
-        if (!confirm('Are you sure you want to delete ALL logs? This action cannot be undone.')) return;
-        clearAllLogs();
+    // ✅ Fixed: Make the callback async and use only showConfirm
+    document.getElementById('clearLogs').addEventListener('click', async () => {
+        const ok = await showConfirm(
+            'Are you sure you want to delete ALL logs? This action cannot be undone.',
+            { title: 'Delete logs', confirmText: 'Delete' }
+        );
+        if (!ok) return;
+
+        try {
+            await clearAllLogs();
+            showSuccess('All logs cleared successfully.');
+            renderLogs(); // refresh the log list
+        } catch (err) {
+            showError('Failed to clear logs: ' + err.message);
+        }
     });
 }
 
