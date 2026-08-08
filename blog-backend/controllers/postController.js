@@ -495,27 +495,26 @@ const deletePostSubmission = async (req, res) => {
     }
 };
 
-// Author submits a post — route to their lineManager, or admin if none
 const createPostSubmission = async (req, res) => {
     try {
         const author = req.session.user;
-        console.log('[createPostSubmission] session user:', author); // TEMP DEBUG
-
         const authorRecord = await User.findOne({ username: author.username }).lean();
-        console.log('[createPostSubmission] authorRecord found:', authorRecord); // TEMP DEBUG
 
         const newSubmission = {
             id: Date.now().toString(),
             ...req.body,
             status: 'pending',
             submittedBy: author.username,
-            assignedEditor: authorRecord?.lineManager || null,
+            assignedEditor: authorRecord?.lineManager || null,  // ← THIS LINE must be present and executing
             editorComments: '',
             createdAt: new Date()
         };
-        
+
         await PostSubmission.create(newSubmission);
-        await logAction(author.username, 'post-submitted', newSubmission.title);
+        await logAction(author.username, 'post-submitted', newSubmission.title, {
+            assignedEditor: newSubmission.assignedEditor || 'admin (no line manager)'
+        });
+
         res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
     } catch (err) {
         console.error('createPostSubmission error:', err);
