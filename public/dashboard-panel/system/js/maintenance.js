@@ -54,23 +54,20 @@ if (isOn) {
     showSuccess('Maintenance mode enabled');
 
 } else {
-    showError('Maintenance mode disabled');
+    showSuccess('Maintenance mode disabled');
 }
 }
 
 async function handleMaintenanceToggle(e) {
+
     const newValue = e.target.checked;
 
-    const confirmed = confirm(
-        newValue
-            ? 'This will suspend all editors and authors from the admin panel. Continue?'
-            : 'This will restore access for all suspended editors and authors. Continue?'
-    );
+    const ok = await showConfirm(newValue
+        ? 'This will suspend all editors and authors from the admin panel. Continue?'
+        : 'This will restore access for all suspended editors and authors. Continue?',{ title: 'Maintenance Mode', confirmText: 'Okay' });
+    e.target.checked = !newValue;
 
-    if (!confirmed) {
-        e.target.checked = !newValue; // revert toggle
-        return;
-    }
+    if (!ok) return;
 
     try {
         const res = await fetch(`${API_BASE}/system/maintenance`, {
@@ -189,7 +186,8 @@ async function toggleTaskStatus(id, newStatus) {
 }
 
 async function deleteTask(id) {
-    if (!confirm('Delete this task?')) return;
+    const ok = await showConfirm('Delete this task?', { title: 'Task', confirmText: 'Delete' });
+    if (!ok) return;
 
     try {
         const res = await fetch(`${API_BASE}/system/tasks/${id}`, {
