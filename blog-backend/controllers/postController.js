@@ -513,9 +513,7 @@ const createPostSubmission = async (req, res) => {
             editorComments: '',
             createdAt: new Date()
         };
-
-        console.log('[createPostSubmission] saving submittedBy as:', newSubmission.submittedBy); // TEMP DEBUG
-
+        
         await PostSubmission.create(newSubmission);
         await logAction(author.username, 'post-submitted', newSubmission.title);
         res.status(201).json({ message: 'Post submitted for approval', post: newSubmission });
