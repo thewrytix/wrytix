@@ -447,18 +447,25 @@ const updatePostSubmission = async (req, res) => {
 
         const user = req.session.user;
 
-        // Editors can only act on submissions assigned to them; admin can act on any
         if (user.role === 'editor' && submission.assignedEditor !== user.username) {
-            await logAction(user.username, 'post-approval-denied', submission.title, {
-                reason: 'Not assigned to this editor'
-            });
             return res.status(403).json({ error: 'This submission is not assigned to you' });
         }
 
-        const update = req.body;
+        const update = { ...req.body };
+
+        // FIX: whenever a submission is put back into 'pending' (resubmit after rejection,
+        // or any pending-status update), re-resolve assignedEditor from the author's CURRENT
+        // lineManager, rather than trusting a stale/missing value from the client payload.
+        if (update.status === 'pending') {
+            const authorRecord = await User.findOne({ username: submission.submittedBy }).lean();
+            update.assignedEditor = authorRecord?.lineManager || null;
+        }
+
         await PostSubmission.updateOne({ id: req.params.id }, update);
 
-        const logType = update.status === 'approved' ? 'post-approved' : update.status === 'rejected' ? 'post-rejected' : 'post-updated';
+        const logType = update.status === 'approved' ? 'post-approved'
+            : update.status === 'rejected' ? 'post-rejected'
+                : 'post-updated';
         await logAction(user.username, logType, submission.title);
 
         if (update.status === 'approved') {
@@ -469,6 +476,7 @@ const updatePostSubmission = async (req, res) => {
 
         res.json({ message: 'Submission updated', post: { ...submission, ...update } });
     } catch (err) {
+        console.error('updatePostSubmission error:', err);
         res.status(500).json({ error: 'Failed to update submission' });
     }
 };
