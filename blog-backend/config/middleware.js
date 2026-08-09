@@ -1,45 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const multer = require('multer');
 const { ddosProtection, loginSlowDown } = require('../middleware/slowDown'); // ✅ capital D
-const { apiLimiter, authLimiter } = require('../middleware/rateLimit'); // 👈
+const { apiLimiter, authLimiter } = require('../middleware/rateLimit');
+const {corsOptions} = require("./cors");
+const {use} = require("bcrypt/promises");
+const {upload} = require("./multer"); // 👈
 
 /* -----------------------------------------
    1️⃣ Multer Configuration
 ------------------------------------------ */
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-        if (file.fieldname === "avatar") {
-            if (!["image/jpeg", "image/png", "image/gif"].includes(file.mimetype)) {
-                return cb(new Error("Avatar must be an image (JPEG, PNG, GIF)"));
-            }
-        } else if (file.fieldname === "pdf") {
-            if (file.mimetype !== "application/pdf") {
-                return cb(new Error("Document must be a PDF"));
-            }
-        }
-        cb(null, true);
-    }
-});
+use(upload)
 
 /* -----------------------------------------
    2️⃣ CORS Configuration
 ------------------------------------------ */
-const corsOptions = {
-    origin: [
-        "https://wrytix.netlify.app",
-        "https://wry-tix.com",
-        "https://www.wry-tix.com",
-        "http://localhost:63342"
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control']
-};
+use(cors(corsOptions));
 
 /* -----------------------------------------
    3️⃣ Setup Middleware
