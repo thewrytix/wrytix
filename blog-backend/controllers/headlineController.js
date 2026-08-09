@@ -1,5 +1,5 @@
 const { Headline } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 const getHeadline = async (req, res) => {
     try {

@@ -1,4 +1,4 @@
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 const { SystemConfig } = require('../models');
 
 

@@ -1,4 +1,4 @@
 const { Log } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 module.exports = { logAction };

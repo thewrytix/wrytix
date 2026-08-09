@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const { User, PendingUser } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 const { uploadToGridFS } = require('../utils/fileHelpers');
 
 const getUsers = async (req, res) => {

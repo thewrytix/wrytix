@@ -1,5 +1,5 @@
 const { Post, PostSubmission, User } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');

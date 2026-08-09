@@ -19,7 +19,7 @@ try {
 
     // Test logger
     console.log('\n3. Testing logger...');
-    const { logAction } = require('./utils/logger');
+    const { logAction } = require('./config/logger');
     console.log('✅ Logger loaded successfully');
 
     // Test auth middleware

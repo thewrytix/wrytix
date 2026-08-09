@@ -1,5 +1,5 @@
 const { Ad } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 // Background job only — never called during a GET request
 const expireOldAds = async () => {

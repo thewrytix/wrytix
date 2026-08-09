@@ -36,7 +36,7 @@ router.get('/debug/timecheck', async (req, res) => {
         const now = new Date();
         const samplePost = posts.length > 0 ? posts[0] : null;
 
-        const { logAction } = require('../utils/logger');
+        const { logAction } = require('../config/logger');
         await logAction(req.session.user?.username, 'timecheck-requested', 'system');
         res.json({
             serverTime: now.toISOString(),
@@ -51,7 +51,7 @@ router.get('/debug/timecheck', async (req, res) => {
             note: "Remember: /posts filters by schedule, /posts/all shows all"
         });
     } catch (err) {
-        const { logAction } = require('../utils/logger');
+        const { logAction } = require('../config/logger');
         await logAction(req.session.user?.username, 'timecheck-failed', 'system', {
             error: err.message
         });

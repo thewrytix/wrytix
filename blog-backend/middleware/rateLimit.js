@@ -1,16 +1,93 @@
-const rateLimit = require("express-rate-limit");
+// middleware/rateLimit.js
+const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // Helper for IPv6 normalization
 
-// Global (or export variants for routes)
-const apiRateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,  // 15 min (longer window = burst-friendly)
-    max: 1000,                 // 1000 req/IP (way up – safe for blog)
-    message: { error: "Rate limit hit – try again in a bit! 😌" },
-    standardHeaders: true,     // Add X-RateLimit headers for frontend hints
-    legacyHeaders: false,      // Cleaner
-    skip: (req) => {           // Bypass for key endpoints
-        return req.path === '/posts' || req.path.startsWith('/api/forex') || req.path === '/check';
-    }
-    // Per-IP default; add store: memoryStore({}) if needed
+// ============================================================
+// 1. HELPER: Get username from request body
+//    Extracts email or username for key generation
+// ============================================================
+const getUsername = (req) => req.body?.email || req.body?.username || null;
+
+// ============================================================
+// 2. GLOBAL API LIMITER (Blocks scrapers)
+//    Protects all routes from excessive traffic
+// ============================================================
+const apiLimiter = rateLimit({
+    // --- Time Window ---
+    windowMs: 15 * 60 * 1000, // 15 minutes
+
+    // --- Request Limit ---
+    // v7 uses 'limit' (formerly 'max')
+    limit: process.env.NODE_ENV === 'production' ? 100 : 1000,
+
+    // --- Headers ---
+    standardHeaders: true, // Send standard RateLimit-* headers
+    legacyHeaders: false,   // Disable X-RateLimit-* headers (cleaner)
+
+    // --- Response ---
+    message: { error: 'Too many requests. Please wait.' },
+
+    // --- Skip Rules ---
+    skip: (req) => req.path === '/health' || req.path === '/', // Never block health checks
+
+    // --- FIX: IPv6‑safe keyGenerator ---
+    // Using req.ip directly would cause each IPv6 address to be treated separately.
+    // ipKeyGenerator() normalises IPv6 to /56 subnet → fair grouping.
+    keyGenerator: (req) => {
+        const ip = req.ip ?? req.socket?.remoteAddress;
+        return ip ? ipKeyGenerator(ip) : 'unknown';
+    },
 });
 
-module.exports = apiRateLimiter;
+// ============================================================
+// 3. AUTH LIMITER (Blocks brute-force attacks)
+//    Protects login/register endpoints from password guessing
+// ============================================================
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 5,                 // 5 failures → hard block
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true, // Successful logins don't count toward limit
+    message: { error: 'Excessive login attempts. Try again later.' },
+
+    // --- Key Generator (Username + IP for precision) ---
+    // Also IPv6‑safe
+    keyGenerator: (req) => {
+        const user = getUsername(req) || 'anon';
+        const ip = req.ip ?? req.socket?.remoteAddress;
+        const normalizedIp = ip ? ipKeyGenerator(ip) : 'unknown';
+        return `auth_${user}_${normalizedIp}`;
+    },
+
+    skip: (req) => !getUsername(req), // Ignore malformed requests
+});
+
+// ============================================================
+// 4. RESET LIMITER (Protects email sending budget)
+//    Prevents abuse of password reset endpoint
+// ============================================================
+const resetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    limit: 3,                 // Only 3 reset attempts per hour
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many reset attempts. Wait an hour.' },
+
+    // --- IPv6‑safe keyGenerator ---
+    keyGenerator: (req) => {
+        const user = getUsername(req) || 'anon';
+        const ip = req.ip ?? req.socket?.remoteAddress;
+        const normalizedIp = ip ? ipKeyGenerator(ip) : 'unknown';
+        return `reset_${user}_${normalizedIp}`;
+    },
+});
+
+// ============================================================
+// 5. EXPORT
+// ============================================================
+module.exports = {
+    apiLimiter,
+    authLimiter,
+    resetLimiter,
+};

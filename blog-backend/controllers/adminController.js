@@ -1,5 +1,5 @@
 const { User, PendingUser, PendingDeletion, Log } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 const approveUser = async (req, res) => {
     try {

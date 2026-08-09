@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const multer = require('multer');
-const apiRateLimiter = require('../middleware/rateLimit');
-const ddosProtection = require('../middleware/ddos');
+const { ddosProtection, loginSlowDown } = require('../middleware/slowDown'); // 👈 camelCase
+const { apiLimiter, authLimiter } = require('../middleware/rateLimit'); // 👈
 
 /* -----------------------------------------
    1️⃣ Multer Configuration
@@ -120,7 +120,7 @@ const setupMiddleware = (app) => {
         // Skip login route for both protections
         if (req.path.startsWith('/auth/login')) return next();
 
-        apiRateLimiter(req, res, () => {
+        apiLimiter(req, res, () => {
             ddosProtection(req, res, next);
         });
     });

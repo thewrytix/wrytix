@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
 const mongoose = require('mongoose');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 // Brute force protection storage (in production, use Redis)
 const failedAttempts = new Map();

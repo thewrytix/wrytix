@@ -1,5 +1,5 @@
 const { Comment } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 const getComments = async (req, res) => {
     const slug = req.query.slug;

@@ -1,5 +1,5 @@
 const { Category, User } = require('../models');
-const { logAction } = require('../utils/logger');
+const { logAction } = require('../config/logger');
 
 const readCategories = async () => {
     try {

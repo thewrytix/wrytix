@@ -5,7 +5,7 @@ const { connectDB } = require('./config/database');
 const { setupMiddleware } = require('./config/middleware');
 const setupSession = require('./config/session');
 const routes = require('./routes');
-const { logAction } = require('./utils/logger');
+const { logAction } = require('./config/logger');
 
 const app = express();
 const PORT = process.env.PORT;
