@@ -50,9 +50,7 @@ const setupMiddleware = (app) => {
         res.send("Backend is running 🚀");
     });
 
-    // --- Error Handling (LAST - before return) ---
-    app.use(notFound);
-    app.use(errorHandler);
+
 
     // --- Return upload helper ---
     return { upload };

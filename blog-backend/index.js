@@ -5,7 +5,9 @@ const { connectDB } = require('./config/database');
 const { setupMiddleware } = require('./config/middleware');
 const setupSession = require('./config/session');
 const routes = require('./routes');
-const { logAction } = require('./config/logger');
+const { logger, logAction } = require('./config/logger');
+const { notFound, errorHandler } = require('./middleware/errorHandler');
+const {upload} = require("./config/multer"); // ✅ added
 
 const app = express();
 const PORT = process.env.PORT;
@@ -22,6 +24,10 @@ app.use('/posts', express.static(path.join(__dirname, 'public', 'posts')));
 
 // Setup routes
 app.use(routes);
+
+// --- Error Handling (LAST - before return) ---
+app.use(notFound);
+app.use(errorHandler);
 
 // Health check
 app.get('/health', (req, res) => {
