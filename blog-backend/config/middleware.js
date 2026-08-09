@@ -1,12 +1,13 @@
+// config/middleware.js
 const express = require('express');
 const cors = require('cors');
 const { ddosProtection, loginSlowDown } = require('../middleware/slowDown');
 const { apiLimiter, authLimiter } = require('../middleware/rateLimit');
 const { corsOptions } = require('./cors');
 const { upload } = require('./multer');
-const { requestLogger } = require("../middleware/requestLogger");
+const { requestLogger } = require('../middleware/requestLogger'); // ✅ destructured
 const { errorHandler, notFound } = require('../middleware/errorHandler');
-const {helmet} = require('./helmet'); // ✅ already configured
+const helmet = require('./helmet'); // ✅ this exports the configured middleware (function)
 
 /* -----------------------------------------
    Setup Middleware
@@ -16,7 +17,7 @@ const setupMiddleware = (app) => {
     app.set('trust proxy', 1);
 
     // --- Helmet security headers ---
-    app.use(helmet); // ✅ no () – it's already configured
+    app.use(helmet); // ✅ helmet is a function – no parentheses needed
 
     // --- Strict-Transport-Security (HTTPS only) ---
     if (process.env.NODE_ENV === "production") {
@@ -34,7 +35,7 @@ const setupMiddleware = (app) => {
     app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
     // --- Request Logger ---
-    app.use(requestLogger);
+    app.use(requestLogger); // ✅ a function
 
     // --- Global API rate limiter + DDoS protection (skip login) ---
     app.use((req, res, next) => {
