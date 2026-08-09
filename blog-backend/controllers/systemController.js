@@ -39,6 +39,7 @@ const checkCloudinary = async () => {
         const result = await checkEndpoint('https://api.cloudinary.com/v1_1/ping', 5000);
         return result;
     } catch (err) {
+
         return { status: 'down', error: err.message };
     }
 };
@@ -50,9 +51,8 @@ const getSystemHealth = async (req, res) => {
         const memoryUsage = process.memoryUsage();
 
         // Redis status
-        const redisClient = getRedisClient();
         const redisStatus = getRedisStatus();
-        const redisUp = redisClient && redisClient.status === 'ready' ? 'up' : 'down';
+        const redisUp = redisStatus === 'connected' || redisStatus === 'ready' ? 'up' : 'down';
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const endpointsToCheck = [
