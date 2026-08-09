@@ -1,47 +1,65 @@
-const express = require('express');
-const path = require('path');
 require('dotenv').config();
+const app = require('./app');
+const mongoose = require('mongoose');
 const { connectDB } = require('./config/database');
-const { setupMiddleware } = require('./config/middleware');
-const setupSession = require('./config/session');
-const { logger, logAction } = require('./config/logger');
+const { logger } = require('./config/logger');
 
-
-const app = express();
 const PORT = process.env.PORT;
+let server = null;
 
-// Setup middleware and session
-setupMiddleware(app);
-setupSession(app);
+const startServer = async () => {
+    try {
+        await connectDB();
+        logger.info('✅ Database connected');
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
+        server = app.listen(PORT, () => {
+            logger.info(`🚀 Server running on port ${PORT}`);
+            logger.info(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+            logger.info(`🌐 URL: http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        logger.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+};
 
-// Serve static post pages from the posts directory
-app.use('/posts', express.static(path.join(__dirname, 'public', 'posts')));
+const gracefulShutdown = async (signal) => {
+    logger.warn(`⚠️ Received ${signal}, shutting down gracefully...`);
 
+    if (server) {
+        server.close(() => {
+            logger.info('✅ HTTP server closed');
+        });
+        // Force close after 10 seconds if not closed
+        setTimeout(() => {
+            logger.error('❌ Force closing connections...');
+            process.exit(1);
+        }, 10000);
+    }
 
+    try {
+        await mongoose.connection.close();
+        logger.info('✅ Database connection closed');
+    } catch (err) {
+        logger.error('❌ Error closing database:', err);
+    }
 
-// Health check
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
+    process.exit(0);
+};
+
+// --- Process event handlers ---
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('💥 Unhandled Rejection at:', promise);
+    logger.error('💥 Reason:', reason);
+    gracefulShutdown('unhandledRejection');
 });
 
-// Ping endpoint
-app.get('/ping', (req, res) => {
-    logAction(req.session?.user?.username, 'ping', 'admin');
-    res.json({ message: 'Backend is alive!!!' });
+process.on('uncaughtException', (error) => {
+    logger.error('💥 Uncaught Exception:', error);
+    gracefulShutdown('uncaughtException');
 });
 
-// Start server after DB connection
-connectDB().then(() => {
-    app.listen(PORT, () => {
-        logger.info(`✅ Server is running at http://localhost:${PORT}`);
-        logger.info(`Current server time: ${new Date().toISOString()}`);
-        logAction('admin', 'server-started', `port: ${PORT}`);
-    });
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+startServer();
