@@ -164,9 +164,5 @@ const authenticateJWT = async (req, res, next) => {
 // 5. EXPORTS
 // ============================================================
 module.exports = {
-    requireAuth, // Unified (Session + JWT) - RECOMMENDED
-    isAuthenticated, // Session only (web browsers)
-    attachUser, // Attach user to req.user (optional)
-    authenticateJWT, // JWT only (mobile/APIs)
     blockIfMaintenanceMode,
 };

@@ -1,9 +1,5 @@
 const { logAction } = require('../config/logger');
 
-
-
-
-
 const verifySession = (req, res, next) => {
     if (req.session && req.session.user) {
         return next();
