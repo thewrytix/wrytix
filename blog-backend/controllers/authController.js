@@ -264,11 +264,20 @@ const signup = async (req, res) => {
 
 const logout = (req, res) => {
     const username = req.session.user?.username || 'anonymous';
+    const role = req.session.user?.role || 'unknown';
+    const clientIP = req.ip || req.connection.remoteAddress;
     req.session.destroy((err) => {
-        if (err) console.error('Session destroy error:', err);
+        if (err) {
+            console.error('Session destroy error:', err);
+            // Still log the attempt
+        }
+
+        logAction(username, 'logout', 'system', {
+            ip: clientIP,
+            role: role
+        });
+        res.json({ message: 'Logged out' });
     });
-    logAction(username, 'logout', 'system');
-    res.json({ message: 'Logged out' });
 };
 
 const checkAuth = (req, res) => {
