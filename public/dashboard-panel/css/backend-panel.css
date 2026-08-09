@@ -203,7 +203,6 @@ a.quick-links i {
 }
 
 .sidebar-header h2 {
-
     margin: var(--spacing-md);
     display: flex;
     align-items: center;
@@ -212,11 +211,9 @@ a.quick-links i {
     overflow: hidden;
 }
 
-.sidebar-header h2 > span{
+.sidebar-header h2 > span {
     color: var(--neutral-color);
 }
-
-
 
 .sidebar-collapse-btn {
     display: flex;
@@ -231,11 +228,11 @@ a.quick-links i {
     transition: background-color var(--transition-fast);
 }
 
-.sidebar-collapse-btn:hover i{
+.sidebar-collapse-btn:hover i {
     background: rgba(255, 255, 255, 0.1);
 }
 
-.admin-sidebar > nav > ul > li > button{
+.admin-sidebar > nav > ul > li > button {
     background: none;
     border: none;
     display: flex;
@@ -246,21 +243,19 @@ a.quick-links i {
     cursor: pointer;
     font-weight: var(--font-weight-bold);
     transition: background-color var(--transition-fast), color var(--transition-fast);
-
     margin-bottom: var(--spacing-lg);
 }
 
-.admin-sidebar > nav > ul > li > button:hover{
+.admin-sidebar > nav > ul > li > button:hover {
     background-color: var(--primary-color);
 }
 
-.admin-sidebar > nav > ul > li > button > #sidebar-icons{
+.admin-sidebar > nav > ul > li > button > #sidebar-icons {
     margin-right: 8px;
     width: 18px;
     text-align: center;
     font-size: var(--font-size-lg);
     color: var(--neutral-color);
-
 }
 
 .admin-sidebar > nav > ul > li > button > span {
@@ -272,7 +267,6 @@ a.quick-links i {
 .admin-sidebar > nav > ul > li > button > .fa-chevron-down {
     font-size: var(--font-size-md);
     color: var(--neutral-color);
-
 }
 
 .admin-sidebar nav ul li a {
@@ -294,7 +288,6 @@ a.quick-links i {
 
 .sidebar-group.open .sidebar-caret {
     transform: rotate(180deg);
-
 }
 
 .sidebar-submenu {
@@ -328,10 +321,9 @@ a.quick-links i {
     color: var(--neutral-color);
 }
 
-.sidebar-submenu li a.active{
+.sidebar-submenu li a.active {
     background-color: var(--primary-color);
     color: var(--neutral-color);
-
 }
 
 /* Sidebar Collapsed */
@@ -340,14 +332,13 @@ a.quick-links i {
     padding: 24px 12px;
 }
 
-.admin-sidebar.collapsed .sidebar-header{
+.admin-sidebar.collapsed .sidebar-header {
     justify-content: center;
     margin-right: var(--spacing-md);
 }
 
 .admin-sidebar.collapsed .sidebar-header .sidebar-collapse-btn {
     margin-left: 0;
-
 }
 
 .admin-sidebar.collapsed .sidebar-label,
@@ -369,7 +360,14 @@ a.quick-links i {
 
 /* ============================================================
    6️⃣ DASHBOARD COMPONENTS
+   (control-deck language: gauge cards, manifest lists — extends
+   the visual system established on Maintenance)
    ============================================================ */
+
+#dashboardTitle {
+    font-size: 1.9rem;
+    margin-bottom: 1.5rem;
+}
 
 /* ---- Dashboard Cards ---- */
 .dashboard-cards {
@@ -392,35 +390,41 @@ a.quick-links i {
     color: var(--neutral-color);
 }
 
-/* ---- Stats ---- */
+/* ---- Stats (gauge-style stat cards) ---- */
 .stats-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
 }
 
 .stat-box {
     background: var(--primary-color);
-    padding: 1.5rem;
+    padding: 1.3rem 1.4rem;
     border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    box-shadow: var(--shadow-sm);
 }
 
 .stat-box:hover {
-    transform: translateY(-3px);
+    transform: none;
 }
 
 .stat-box h2 {
+    font-family: var(--font-family-mono);
+    font-size: 2.1rem;
+    font-weight: 600;
     color: var(--neutral-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
 }
 
 .stat-box p {
-    color: var(--neutral-color);
-    margin-top: 0.5rem;
-    font-size: 1.1rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 0;
 }
 
 .stat-box.views {
@@ -428,9 +432,20 @@ a.quick-links i {
     box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
 }
 
-/* ---- Quick Links ---- */
+.stat-box.skeleton-stat {
+    background: linear-gradient(100deg, var(--primary-color) 30%, #232c4d 50%, var(--background-dark) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.stat-box.skeleton-stat h2,
+.stat-box.skeleton-stat p {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ---- Quick Links (instrument rail) ---- */
 .quick-links {
-    margin: 2rem 0;
+    margin: 0 0 2rem 0;
 }
 
 .quick-links h2 {
@@ -439,87 +454,55 @@ a.quick-links i {
 
 .quick-links a {
     display: inline-block;
-    background: var(--primary-color);
-    color: var(--neutral-color);
-    padding: 0.8rem 1.4rem;
+    background: var(--neutral-color);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    font-family: var(--font-family-secondary);
+    font-size: 0.9rem;
+    padding: 0.7rem 1.2rem;
     border-radius: 8px;
     text-decoration: none;
     margin: 0 1rem 1rem 0;
     font-weight: 600;
+    box-shadow: none;
     transition: background 0.3s;
 }
 
 .quick-links a:hover {
     background: var(--primary-color);
+    color: var(--neutral-color);
+    border-color: var(--primary-color);
 }
 
-/* ---- Recent Activity ---- */
-#recentActivity {
-    margin-top: 30px;
-    background: var(--neutral-color);
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    max-width: 600px;
-    width: 100%;
-    height: 300px;
-    overflow: hidden;
-}
 
-#recentActivity h2 {
-    margin-bottom: 15px;
-    font-size: 1.5rem;
-    color: var(--primary-color);
-}
-
-#recentActivity ul {
-    list-style: none;
-}
-
-#recentActivity ul li {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--neutral-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#recentActivity ul li:last-child {
-    border-bottom: none;
-}
-
-.activity-title {
-    font-weight: 600;
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-.activity-title:hover {
-    text-decoration: underline;
-}
-
-.activity-date {
-    font-size: 0.85rem;
-    color: var(--text-color);
-}
-
-/* ---- Reusable List Section ---- */
+/* ---- Reusable List Section (manifest-style) ---- */
 .dashboard-list-section {
     margin-top: 30px;
     background: var(--neutral-color);
     padding: 15px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
     max-width: 600px;
     width: 100%;
-    max-height: 300px;
+    max-height: none;
     overflow-y: auto;
 }
 
 .dashboard-list-section h2 {
     margin-bottom: 15px;
-    font-size: 1.5rem;
+    font-size: 1rem;
     color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-list-section h2 i {
+    color: var(--accent-color);
+    font-size: 0.9rem;
 }
 
 .dashboard-list-section ul {
@@ -528,10 +511,14 @@ a.quick-links i {
 
 .dashboard-list-section ul li {
     padding: 12px 0;
-    border-bottom: 1px solid var(--neutral-color);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.dashboard-list-section ul li:first-child {
+    padding-top: 14px;
 }
 
 .dashboard-list-section ul li:last-child {
@@ -555,6 +542,7 @@ a.quick-links i {
 
 .ads-panel {
     background: var(--neutral-color);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 1.25rem 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -575,6 +563,44 @@ a.quick-links i {
     background-color: #fff3cd;
     font-weight: 600;
 }
+
+/* ---- Ads / Activity Table ---- */
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+
+.activity-table th,
+.activity-table td {
+    padding: 0.65rem 0.7rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+.activity-table th {
+    font-family: var(--font-family-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.status-active,
+.status-expired,
+.status-inactive {
+    font-family: var(--font-family-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-active { color: var(--status-green); }
+.status-expired { color: var(--status-red); }
+.status-inactive { color: var(--status-none); }
 
 /* ============================================================
    7️⃣ TABLES
@@ -1100,30 +1126,39 @@ form button {
 /* ---- Headline Editor ---- */
 .admin-headline {
     max-width: 600px;
-    margin: 30px auto;
-    background-color: var(--background-light);
-    border: 1px solid var(--neutral-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    margin: 0 auto 1.75rem auto;
+    background: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .toggle-headline {
     width: 100%;
-    background-color: var(--background-light);
+    background: transparent;
+    color: var(--neutral-color);
     border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 14px;
+    font-family: var(--font-family-primary);
     font-size: 1.1rem;
     font-weight: bold;
     text-align: left;
     cursor: pointer;
-    border-bottom: 1px solid var(--neutral-color);
-    border-radius: 12px 12px 0 0;
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
     transition: background-color 0.3s ease;
 }
 
 .toggle-headline:hover {
-    background-color: var(--background-light);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.toggle-headline i {
+    color: var(--neutral-color);
 }
 
 .headline-editor-content {
@@ -1133,17 +1168,20 @@ form button {
 }
 
 .headline-editor-content h3 {
-    text-align: center;
-    color: var(--text-color);
+    text-align: left;
+    color: var(--neutral-color);
     margin-bottom: 12px;
 }
 
 .headline-editor-content textarea {
     width: 100%;
+    background: var(--neutral-color);
+    color: var(--text-color);
     font-size: 1rem;
-    border: 1px solid var(--neutral-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 10px;
+    margin-bottom: var(--spacing-sm);
     resize: vertical;
     font-family: inherit;
     min-height: 100px;
@@ -1151,8 +1189,9 @@ form button {
 
 .headline-editor-content button {
     display: block;
-    background-color: var(--primary-color);
-    color: var(--neutral-color);
+    background: var(--neutral-color);
+    color: #241a05;
+    font-weight: 700;
     border: none;
     padding: 10px 18px;
     border-radius: 6px;
@@ -1166,7 +1205,7 @@ form button {
     text-align: center;
     margin-top: 10px;
     font-weight: bold;
-    color: var(--status-green);
+    color: #9be7bd;
     display: none;
 }
 
@@ -1176,4 +1215,9 @@ form button {
 @keyframes fadeIn {
     from { opacity: 0; transform: scaleY(0.95); }
     to { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }

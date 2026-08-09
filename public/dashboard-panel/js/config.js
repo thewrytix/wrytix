@@ -1,4 +1,4 @@
-const API_BASE = "https://wrytix.onrender.com";
+const API_BASE = 'https://wrytix.onrender.com';
 const CLOUDINARY_CLOUD_NAME = 'dbtgim7l0';
 const CLOUDINARY_UPLOAD_PRESET = 'wrytix_unsigned';
 

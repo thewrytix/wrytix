@@ -189,7 +189,8 @@ function setupHeadlineEditor() {
     fetch(`${API_BASE}/headline`)
         .then(res => res.json())
         .then(data => { headlineInput.value = data.text || ''; })
-        .catch(err => console.error('Error loading headline:', err));
+        .catch(err =>
+           showError('Error loading headline:', err));
 
     saveBtn?.addEventListener('click', async () => {
         const newHeadline = headlineInput.value.trim();
@@ -202,10 +203,10 @@ function setupHeadlineEditor() {
                 body: JSON.stringify({ text: newHeadline }),
                 credentials: 'include'
             });
-            message.style.display = 'block';
-            setTimeout(() => (message.style.display = 'none'), 2000);
+            showSuccess('Headline saved successfully.');
+
+
         } catch (err) {
-            console.error('Error saving headline:', err);
 
             showError('Failed to update headline.');
         }
