@@ -6,7 +6,7 @@ const { corsOptions } = require('./cors');
 const { upload } = require('./multer');
 const { requestLogger } = require("../middleware/requestLogger");
 const { errorHandler, notFound } = require('../middleware/errorHandler');
-const helmet = require('./helmet'); // ✅ already configured
+const {helmet} = require('./helmet'); // ✅ already configured
 
 /* -----------------------------------------
    Setup Middleware
