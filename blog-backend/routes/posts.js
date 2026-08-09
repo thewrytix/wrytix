@@ -29,7 +29,8 @@ const {
     getManagedPosts,
     bulkDeletePosts,
 } = require('../controllers/postController');
-const { requireRole, blockIfMaintenanceMode, requireLogin } = require('../middleware/auth');
+const { requireRole, requireLogin } = require('../middleware/rbac');
+const {  blockIfMaintenanceMode, } = require('../middleware/auth');
 const { Post } = require('../models');
 const { logVisit } = require("../middleware/visitLogger");
 

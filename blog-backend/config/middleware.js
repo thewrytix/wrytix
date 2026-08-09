@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const { ddosProtection, loginSlowDown } = require('../middleware/slowDown'); // ✅ capital D
 const { apiLimiter, authLimiter } = require('../middleware/rateLimit');
 const {corsOptions} = require("./cors");
 const {use} = require("bcrypt/promises");
-const {upload} = require("./multer"); // 👈
+const {upload} = require("./multer");
+const {requestLogger} = require("../middleware/requestLogger");
+const {errorHandler, notFound} = require("../middleware/errorHandler");
+const helmet = require("helmet");
 
 /* -----------------------------------------
    1️⃣ Multer Configuration
@@ -29,36 +31,7 @@ const setupMiddleware = (app) => {
        Helmet security headers
     -------------------------- */
     app.use(
-        helmet({
-            contentSecurityPolicy: {
-                directives: {
-                    defaultSrc: ["'self'"],
-                    scriptSrc: [
-                        "'self'",
-                        "'unsafe-inline'",
-                        "https://wry-tix.com",
-                        "https://www.wry-tix.com",
-                        "https://cdn.jsdelivr.net",
-                        "https://cdnjs.cloudflare.com"
-                    ],
-                    imgSrc: ["'self'", "data:", "https:"],
-                    connectSrc: [
-                        "'self'",
-                        "https://wrytix.onrender.com",
-                        "https://www.wry-tix.com"
-                    ],
-                    styleSrc: [
-                        "'self'",
-                        "'unsafe-inline'",
-                        "https://fonts.googleapis.com",
-                        "https://cdn.jsdelivr.net"
-                    ],
-                    fontSrc: ["'self'", "data:", "https:"]
-                },
-            },
-            crossOriginEmbedderPolicy: false,
-            crossOriginResourcePolicy: { policy: "cross-origin" }
-        })
+        helmet()
     );
 
     /* -----------------------------------------
@@ -85,10 +58,7 @@ const setupMiddleware = (app) => {
     /* -----------------------------------------
        Request Logger
     ------------------------------------------ */
-    app.use((req, res, next) => {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-        next();
-    });
+    app.use(requestLogger);
     // -----------------------------
     // Apply global API rate limiter and DDoS protection
     // -----------------------------
@@ -107,7 +77,15 @@ const setupMiddleware = (app) => {
         res.send("Backend is running 🚀");
     });
 
+
+
     return { upload };
+
+    // ============================================================
+// 8. ERROR HANDLING (LAST)
+// ============================================================
+    app.use(notFound);
+    app.use(errorHandler);
 };
 
 module.exports = { setupMiddleware, upload, corsOptions };

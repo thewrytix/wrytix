@@ -1,6 +1,6 @@
 const express = require("express");
 const { create, getAll, getById, update, deleteCategory } = require('../controllers/categoryController');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/rbac');
 
 const router = express.Router();
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const { getHeadline, updateHeadline } = require('../controllers/headlineController');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/rbac');
 
 const router = express.Router();
 

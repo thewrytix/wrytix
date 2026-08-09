@@ -1,5 +1,5 @@
 const express = require('express');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/rbac');
 const {
     createAd,
     getAds,

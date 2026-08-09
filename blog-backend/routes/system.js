@@ -8,7 +8,7 @@ const {
     updateTask,
     deleteTask
 } = require('../controllers/systemController');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/rbac');
 
 const router = express.Router();
 

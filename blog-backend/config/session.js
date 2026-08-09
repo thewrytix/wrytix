@@ -14,7 +14,7 @@ const sessionStore = MongoStore.create({
 
 // --- Log store errors for debugging ---
 sessionStore.on('error', (error) => {
-    console.error('❌ Session store error:', error);
+    logger.error('❌ Session store error:', error);
 });
 
 // ============================================================

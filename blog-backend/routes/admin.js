@@ -11,7 +11,7 @@ const {
     getLogs,
     clearLogs
 } = require('../controllers/adminController');
-const { requireAdmin, verifySession } = require('../middleware/auth');
+const { requireAdmin, verifySession } = require('../middleware/rbac');
 const { corsOptions } = require('../config/middleware');
 const { getFileById } = require('../utils/fileHelpers');
 
