@@ -197,7 +197,7 @@ const login = async (req, res) => {
         res.json({ message: 'Login successful', user: req.session.user });
 
     } catch (err) {
-        console.error('Login error:', err);
+        logger.error('Login error:', err);
         res.status(500).json({ error: 'Server error: ' + err.message });
     }
 };
@@ -276,7 +276,7 @@ const logout = (req, res) => {
             ip: clientIP,
             role: role
         });
-        res.json({ message: 'Logged out' });
+        res.json({ message: 'Logged out Successfully', user: req.session.user });
     });
 };
 
