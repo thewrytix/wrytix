@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const multer = require('multer');
-const { ddosProtection, loginSlowDown } = require('../middleware/slowDown'); // 👈 camelCase
+const { ddosProtection, loginSlowDown } = require('../middleware/slowDown'); // ✅ capital D
 const { apiLimiter, authLimiter } = require('../middleware/rateLimit'); // 👈
 
 /* -----------------------------------------
