@@ -55,10 +55,8 @@ const getSystemHealth = async (req, res) => {
         const redisRawStatus = redisClient ? redisClient.status : null;
         const redisIsReady = redisClient && (redisClient.isReady || redisRawStatus === 'ready' || redisRawStatus === 'open');
         const redisUp = redisIsReady ? 'up' : 'down';
-        const redisStatus = redisRawStatus || 'disconnected';// 🔍 DEBUG: log the raw values
-       logger.info('🔍 Redis client exists?', !!getRedisClient());
-        logger.info('🔍 Redis client status:', getRedisClient()?.status);
-        logger.info('🔍 getRedisStatus() returns:', redisStatus);
+        const redisStatus = redisRawStatus || 'disconnected';
+
 
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -73,6 +71,7 @@ const getSystemHealth = async (req, res) => {
         try {
             cloudinaryResult = await checkCloudinary();
         } catch (err) {
+            logger.error(err);
             await logAction(req.session.user?.username, 'check-cloudinary-error', 'system', {
                 error: err.message
             });
