@@ -7,7 +7,7 @@ const {use} = require("bcrypt/promises");
 const {upload} = require("./multer");
 const {requestLogger} = require("../middleware/requestLogger");
 const {errorHandler, notFound} = require("../middleware/errorHandler");
-const helmet = require("helmet");
+const helmet = require("./helmet");
 
 /* -----------------------------------------
    1️⃣ Multer Configuration
@@ -30,8 +30,7 @@ const setupMiddleware = (app) => {
     /* -------------------------
        Helmet security headers
     -------------------------- */
-    app.use(
-        helmet()
+    app.use(helmet()
     );
 
     /* -----------------------------------------
@@ -59,6 +58,7 @@ const setupMiddleware = (app) => {
        Request Logger
     ------------------------------------------ */
     app.use(requestLogger);
+
     // -----------------------------
     // Apply global API rate limiter and DDoS protection
     // -----------------------------
@@ -88,4 +88,4 @@ const setupMiddleware = (app) => {
     app.use(errorHandler);
 };
 
-module.exports = { setupMiddleware, upload, corsOptions };
+module.exports = { setupMiddleware };
