@@ -2,6 +2,7 @@ require('dotenv').config();
 const app = require('./app');
 const mongoose = require('mongoose');
 const { connectDB } = require('./config/database');
+const { connectRedis } = require('./config/redis');   // ✅ your Redis config
 const { logger } = require('./config/logger');
 
 const PORT = process.env.PORT;
@@ -11,6 +12,8 @@ const startServer = async () => {
     try {
         await connectDB();
         logger.info('✅ Database connected');
+        await connectRedis();
+        logger.info('✅ Redis connected');
 
         server = app.listen(PORT, () => {
             logger.info(`🚀 Server running on port ${PORT}`);
