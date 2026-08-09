@@ -1,5 +1,5 @@
-// config/cors.config.js
-const cors = require('cors');
+
+
 
 const { logger } = require('./logger');
 
