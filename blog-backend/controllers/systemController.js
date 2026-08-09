@@ -50,9 +50,16 @@ const getSystemHealth = async (req, res) => {
         const uptimeSeconds = Math.floor(process.uptime());
         const memoryUsage = process.memoryUsage();
 
-        // Redis status
-        const redisStatus = getRedisStatus();
-        const redisUp = redisStatus === 'connected' || redisStatus === 'ready' ? 'up' : 'down';
+// --- Redis status (robust) ---
+        const redisClient = getRedisClient();
+        const redisRawStatus = redisClient ? redisClient.status : null;
+        const redisIsReady = redisClient && (redisClient.isReady || redisRawStatus === 'ready' || redisRawStatus === 'open');
+        const redisUp = redisIsReady ? 'up' : 'down';
+        const redisStatus = redisRawStatus || 'disconnected';// 🔍 DEBUG: log the raw values
+       logger.info('🔍 Redis client exists?', !!getRedisClient());
+        logger.info('🔍 Redis client status:', getRedisClient()?.status);
+        logger.info('🔍 getRedisStatus() returns:', redisStatus);
+
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const endpointsToCheck = [
