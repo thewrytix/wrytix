@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const https = require('https');
 const { MaintenanceTask, SystemConfig, User } = require('../models');
-const { logAction } = require('../config/logger');
+const { logAction, logger } = require('../config/logger');
 const { getRedisClient, getRedisStatus } = require('../config/redis');
 
 /* ============================================
