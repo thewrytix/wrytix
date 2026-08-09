@@ -62,6 +62,7 @@ const getRedisStatus = () => {
     if (!redisClient) return 'disconnected';
     const states = {
         'ready': 'connected',
+        'open': 'connected',
         'connecting': 'connecting',
         'reconnecting': 'reconnecting',
         'end': 'disconnected',
