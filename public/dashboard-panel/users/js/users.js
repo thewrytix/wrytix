@@ -145,10 +145,10 @@ function renderTable(items) {
         const isOwn = item.submittedBy === currentUser.username;
 
         let statusLabel;
-        if (isPending) statusLabel = '<span class="status-scheduled">Pending</span>';
-        else if (isRejected) statusLabel = '<span class="status-none">Rejected</span>';
-        else if (isSuspended) statusLabel = '<span class="status-none">Suspended</span>';
-        else statusLabel = item.status === 'active' ? '<span class="status-live">Active</span>' : '<span class="status-none">Inactive</span>';
+        if (isPending) statusLabel = '<span class="status-pending">Pending</span>';
+        else if (isRejected) statusLabel = '<span class="status-danger">Rejected</span>';
+        else if (isSuspended) statusLabel = '<span class="status-danger">Suspended</span>';
+        else statusLabel = item.status === 'active' ? '<span class="status-active">Active</span>' : '<span class="status-none">Inactive</span>';
 
         let actionButtons = `<button class="btn-edit" onclick="openViewModal('${key}', ${item.source === 'pending'})">View</button>`;
 
@@ -266,7 +266,7 @@ async function openViewModal(id, isPending) {
                      <img src="${avatarUrl}" alt="Avatar" style="max-width:150px;border-radius:8px;border:1px solid var(--border-color);" />
                      <br><a href="${avatarUrl}" download="avatar" class="btn-edit" style="display:inline-block;margin-top:0.5rem;">Download Avatar</a>
                    </div>`
-                : '<p style="color:red;">Failed to load avatar</p>';
+                : '<p style="color:var(--status-red);">Failed to load avatar</p>';
         }
 
         let documentHtml = '<p><em>No document attached</em></p>';
@@ -278,7 +278,7 @@ async function openViewModal(id, isPending) {
                         <i class="fa-solid fa-file-pdf"></i> Download ${user.pdfOriginalName || 'Document'}
                      </a>
                    </div>`
-                : '<p style="color:red;">Failed to load document</p>';
+                : '<p style="color:var(--status-red);">Failed to load document</p>';
         }
 
         document.getElementById('viewModalBody').innerHTML = `
@@ -431,7 +431,7 @@ async function handleToggleStatus(id, currentlySuspended) {
         const res = await fetch(`${API_BASE}/users/${id}/status`, { method: 'PUT', credentials: 'include' });
         if (!res.ok) throw new Error('Failed to update status');
         await loadUsers();
-        showSuccess(`User ${action}d.`);
+        showSuccess(`User ${action}.`);
     } catch (err) {
         showError('Failed to update status: ' + err.message);
     }

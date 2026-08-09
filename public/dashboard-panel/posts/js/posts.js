@@ -169,13 +169,13 @@ function renderTable(items) {
         let statusLabel;
         if (item.source === 'submission') {
             const statusText = item.status === 'rejected' ? 'Rejected' : 'Pending';
-            const statusClass = item.status === 'rejected' ? 'status-none' : 'status-scheduled';
+            const statusClass = item.status === 'rejected' ? 'status-danger' : 'status-pending';
             statusLabel = `<span class="${statusClass}">${statusText}</span>`;
         } else {
             const isLive = new Date(item.schedule) <= new Date();
             statusLabel = isAuthor
-                ? `<span class="status-live">Approved</span>`
-                : (isLive ? `<span class="status-live">Live</span>` : `<span class="status-scheduled">Scheduled</span>`);
+                ? `<span class="status-active">Approved</span>`
+                : (isLive ? `<span class="status-active">Live</span>` : `<span class="status-pending">Scheduled</span>`);
         }
 
         const authorDisplay = item.author || item.submittedBy || 'Unknown';

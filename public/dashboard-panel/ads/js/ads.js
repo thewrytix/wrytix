@@ -135,10 +135,10 @@ function renderTable(items) {
             <td>${ad.category}</td>
             <td>${ad.company || '—'}</td>
             <td>${ad.startDate?.split('T')[0] || ''}</td>
-            <td>${ad.endDate?.split('T')[0] || ''}${new Date(ad.endDate) < new Date() ? ' <span style="color:red;font-weight:bold;">⚠️</span>' : ''}</td>
-            <td>${ad.active ? '✅' : '❌'}</td>
+            <td>${ad.endDate?.split('T')[0] || ''}${new Date(ad.endDate) < new Date() ? ' <span class="status-expired">Expired️</span>' : ''}</td>
+            <td>${ad.active ? '<span class="status-active">Active</span>' : '<span class="status-danger">Suspended</span>'}</td>
             <td class="action-buttons">
-                <button class="btn-edit" onclick="openEditModal('${ad.id}')">Edit</button>
+                <button class="btn-edit" onclick="openEditModal('${ad.id}')">Edit</button>  
                 <button class="status-btn" onclick="handleSingleToggle('${ad.id}', ${ad.active})">${ad.active ? 'Deactivate' : 'Activate'}</button>
                 <button class="delete-btn" onclick="handleSingleDelete('${ad.id}')">Delete</button>
             </td>

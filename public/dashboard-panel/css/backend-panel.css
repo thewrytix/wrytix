@@ -599,7 +599,9 @@ a.quick-links i {
 }
 
 .status-active { color: var(--status-green); }
-.status-expired { color: var(--status-red); }
+.status-pending {color: var(--status-neutral); }
+.status-danger { color: var(--status-red); }
+.status-expired { color: var(--status-red); font-style: italic; }
 .status-inactive { color: var(--status-none); }
 
 /* ============================================================
@@ -1201,13 +1203,7 @@ form button {
     transition: background-color 0.3s ease;
 }
 
-#headlineSavedMessage {
-    text-align: center;
-    margin-top: 10px;
-    font-weight: bold;
-    color: #9be7bd;
-    display: none;
-}
+
 
 /* ============================================================
    1️⃣6️⃣ ANIMATIONS
