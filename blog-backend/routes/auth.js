@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { login, logout, checkAuth, verifySession, signup} = require('../controllers/authController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
-const { corsOptions } = require('../config/middleware');
+const { corsOptions } = require('../config/cors');
 
 const router = express.Router();
 
