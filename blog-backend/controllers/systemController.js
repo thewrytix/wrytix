@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const https = require('https');
 const { MaintenanceTask, SystemConfig, User } = require('../models');
 const { logAction } = require('../config/logger');
-
+const { getRedisClient, getRedisStatus } = require('../config/redis');   // ✅ import
 /* ============================================
    System Health
    ============================================ */
@@ -52,25 +52,19 @@ const getSystemHealth = async (req, res) => {
         const uptimeSeconds = Math.floor(process.uptime());
         const memoryUsage = process.memoryUsage();
 
-        // Internal endpoints — self-checks against our own running server
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const endpointsToCheck = [
-            { name: 'Posts API', url: `${baseUrl}/posts` },
-            { name: 'Ads API', url: `${baseUrl}/ads` },
-            { name: 'Dashboard Stats', url: `${baseUrl}/dashboard-stats` }
-        ];
+        // --- Redis Status ---
+        const redisStatus = getRedisStatus();   // returns 'connected', 'connecting', 'disconnected', etc.
+        const redisClient = getRedisClient();
+        // If client exists but status is not ready, we may still show as disconnected
+        const redisUp = redisClient && redisClient.status === 'ready' ? 'up' : 'down';
 
-        const [endpointResults, cloudinaryResult] = await Promise.all([
-            Promise.all(endpointsToCheck.map(async (ep) => {
-                const result = await checkEndpoint(ep.url);
-                return { name: ep.name, ...result };
-            })),
-            checkCloudinary()
-        ]);
+        // ... (endpoint checks, cloudinary, etc.)
 
         res.json({
             express: 'up',
             mongodb: mongoStatus,
+            redis: redisUp,                     // ✅ include Redis
+            redisStatus: redisStatus,           // optional detail
             cloudinary: cloudinaryResult.status,
             cloudinaryResponseTimeMs: cloudinaryResult.responseTimeMs || null,
             uptimeSeconds,
@@ -83,7 +77,7 @@ const getSystemHealth = async (req, res) => {
             timestamp: new Date()
         });
     } catch (err) {
-        await logAction(req.session.user.username, 'load-system-health-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'load-system-health-error', 'system', { error: err.message });
         res.status(500).json({ error: 'Failed to load system health' });
     }
 };

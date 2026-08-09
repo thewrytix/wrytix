@@ -41,6 +41,13 @@ function renderHealthCards(health) {
             desc: health.mongodb === 'up' ? 'Connected' : 'Connection issue detected'
         },
         {
+            title: 'Redis',
+            status: health.redis || 'unknown',
+            desc: health.redis === 'up'
+                ? `Connected (${health.redisStatus || 'ready'})`
+                : health.redisStatus === 'connecting' ? 'Connecting...' : 'Disconnected'
+        },
+        {
             title: 'Cloudinary',
             status: health.cloudinary,
             desc: health.cloudinary === 'up'
