@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
 const mongoose = require('mongoose');
-const { logAction } = require('../config/logger');
+const { logAction, logger } = require('../config/logger');
 
 // Brute force protection storage (in production, use Redis)
 const failedAttempts = new Map();
@@ -266,17 +266,19 @@ const logout = (req, res) => {
     const username = req.session.user?.username || 'anonymous';
     const role = req.session.user?.role || 'unknown';
     const clientIP = req.ip || req.connection.remoteAddress;
+
+    // ✅ Log the logout action BEFORE destroying the session
+    logAction(username, 'logout', 'system', {
+        ip: clientIP,
+        role: role
+    });
+
     req.session.destroy((err) => {
         if (err) {
-            console.error('Session destroy error:', err);
-            // Still log the attempt
+            logger.error('Session destroy error:', err);
+            // Still respond with success, but log the error
         }
-
-        logAction(username, 'logout', 'system', {
-            ip: clientIP,
-            role: role
-        });
-        res.json({ message: 'Logged out Successfully', user: req.session.user });
+        res.json({ message: 'Logged out Successfully' });
     });
 };
 
