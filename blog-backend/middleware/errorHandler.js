@@ -1,6 +1,6 @@
 // middleware/errorHandler.js
 const { logger,logAction } = require('../config/logger');
-const { AppError } = require('../utils/AppError');
+const { AppError } = require('../utils/appError');
 
 // ============================================================
 // 1. 404 NOT FOUND HANDLER
