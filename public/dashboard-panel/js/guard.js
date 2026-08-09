@@ -19,7 +19,7 @@ async function verifyAndSetSession(requiredRole = 'admin') {
         });
         // If server session expired, still use local session
         if (!res.ok) {
-            console.debug('Server session expired, using local session');
+           
         }
     } catch (err) {
 

@@ -1,28 +1,49 @@
-
-/* ====== Modern Login Page ====== */
+/* ====== Login Page — glass card, brand-tinted background ====== */
 .login-container {
     min-height: 100vh;
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #1f1f1f 0%, #2e2e2e 100%);
+    /* Solid brand-dark background, no color gradient */
+    background: var(--background-dark);
     position: relative;
     padding: 20px;
     overflow: hidden;
 }
 
-/* Animated background particles */
 .login-container::before {
     content: '';
     position: absolute;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-image:
-            radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
     animation: float 20s ease-in-out infinite;
+}
+
+/* Faint dot grid — reads as "instrument panel" texture, still monochrome */
+.login-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(circle at 50% 45%, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, black 0%, transparent 75%);
+}
+
+/* Mouse-follow glow — same brand color, just an interactive spotlight, no new hues */
+.login-container__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+            600px circle at var(--glow-x, 50%) var(--glow-y, 40%),
+            rgba(26, 35, 126, 0.35),
+            transparent 60%
+    );
+    transition: background 0.15s ease-out;
+    pointer-events: none;
 }
 
 @keyframes float {
@@ -30,12 +51,18 @@
     50% { transform: translateY(-20px); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .login-container::before,
+    .login-container__glow,
+    .logo-icon,
+    .login-box { animation: none !important; transition: none !important; }
+}
+
 .login-box {
-    background: #f9f9f9;
-    backdrop-filter: blur(10px);
+    background: var(--neutral-color);
     padding: 50px 40px;
     border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
     width: 100%;
     max-width: 440px;
     position: relative;
@@ -44,14 +71,8 @@
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .logo-container {
@@ -62,89 +83,114 @@
 .logo-icon {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
+    background: var(--primary-color);
     border-radius: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    color: white;
     font-weight: bold;
+    color: var(--neutral-color);
     margin-bottom: 15px;
     box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
     animation: bounce 2s ease-in-out infinite;
 }
 
 @keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-15px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
 }
 
-h2 {
-    color: #2d3748;
+.logo-container h2 {
+    color: var(--text-color);
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 8px;
 }
 
 .subtitle {
-    color: #718096;
+    color: var(--text-light);
     font-size: 0.95rem;
     margin-bottom: 30px;
 }
 
-
+/* ---- Inputs (icons moved left to free the right side for the eye-toggle) ---- */
 .input-group {
     position: relative;
     margin-bottom: 25px;
 }
 
 .login-box .input-group input {
-    width: 100% !important;
-    padding: 16px 50px 16px 20px !important;
-    margin-bottom: 0 !important; /* Remove margin since input-group handles it */
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    font-size: 1rem !important;
-    background-color: #ffffff !important;
-    transition: all 0.3s ease !important;
-    color: #2d3748 !important;
-    box-sizing: border-box !important;
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    margin-bottom: 0;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    background-color: var(--neutral-color);
+    transition: all 0.3s ease;
+    color: var(--text-color);
+    box-sizing: border-box;
 }
 
 .login-box .input-group input:focus {
-    outline: none !important;
-    border-color: #1A237E !important;
-    background-color: white !important;
-    box-shadow: 0 0 0 4px rgba(26, 35, 126, 0.1) !important;
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(26, 35, 126, 0.1);
 }
 
-
-
 .input-group input::placeholder {
-    color: #a0aec0;
+    color: var(--text-light);
 }
 
 .input-icon {
     position: absolute;
-    right: 18px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    color: #a0aec0;
-    font-size: 1.1rem;
-    pointer-events: none; /* Prevents icon from blocking input clicks */
+    color: var(--text-light);
+    font-size: 1.05rem;
+    pointer-events: none;
 }
 
+.input-group input#password {
+    padding-right: 46px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+
+.toggle-password:hover,
+.toggle-password:focus-visible {
+    color: var(--primary-color);
+}
+
+.toggle-password:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* ---- Submit ---- */
 button[type="submit"] {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
+    background: var(--primary-color);
     border: none;
-    color: #ffffff;
+    color: var(--neutral-color);
     font-size: 1.05rem;
     font-weight: 600;
     border-radius: 12px;
@@ -154,30 +200,30 @@ button[type="submit"] {
     margin-top: 10px;
 }
 
+/* backend-panel.css's universal `* { color: var(--text-color) }` reset
+   targets this span directly and overrides the inherited white — pin it explicitly */
+button[type="submit"] span {
+    color: var(--neutral-color);
+}
+
 button[type="submit"]:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(26, 35, 126, 0.5);
 }
 
-button[type="submit"]:active {
-    transform: translateY(0);
+button[type="submit"]:active { transform: translateY(0); }
+
+button[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
 }
 
+button[type="submit"].is-loading span::after { content: "…"; }
 
-
-/* Responsive design */
+/* ---- Responsive ---- */
 @media (max-width: 480px) {
-    .login-box {
-        padding: 40px 30px;
-    }
-
-    h2 {
-        font-size: 1.5rem;
-    }
-
-    .logo-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 1.7rem;
-    }
+    .login-box { padding: 40px 30px; }
+    .logo-container h2 { font-size: 1.5rem; }
+    .logo-icon { width: 60px; height: 60px; font-size: 1.6rem; }
 }
