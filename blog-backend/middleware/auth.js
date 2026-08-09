@@ -1,5 +1,6 @@
 // middleware/auth.js
 const { User } = require('../models');
+const { SystemConfig } = require('../models');
 const { logger } = require('../config/logger');
 
 // ============================================================
