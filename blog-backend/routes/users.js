@@ -7,7 +7,7 @@ const {
 } = require('../controllers/userController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { requireAdmin, requireEditorOrAdmin, requireRole, requireLogin } = require('../middleware/rbac');
-const { upload } = require('../config/middleware');
+const { upload } = require('../config/multer');
 const { getVisitAnalytics } = require('../controllers/analyticsController');
 
 const router = express.Router();
