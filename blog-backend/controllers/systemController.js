@@ -2,12 +2,11 @@ const mongoose = require('mongoose');
 const https = require('https');
 const { MaintenanceTask, SystemConfig, User } = require('../models');
 const { logAction } = require('../config/logger');
-const { getRedisClient, getRedisStatus } = require('../config/redis');   // ✅ import
+const { getRedisClient, getRedisStatus } = require('../config/redis');
+
 /* ============================================
    System Health
    ============================================ */
-
-
 
 // Ping a URL and measure response time, with a timeout so a hung service doesn't hang the whole health check
 const checkEndpoint = (url, timeoutMs = 5000) => {
@@ -34,14 +33,12 @@ const checkEndpoint = (url, timeoutMs = 5000) => {
     });
 };
 
+// ✅ No logAction here – just returns status
 const checkCloudinary = async () => {
     try {
-        // Lightweight check: Cloudinary's status/ping isn't a public unauthenticated endpoint,
-        // so we check reachability of the API host itself as a proxy for "is Cloudinary reachable"
         const result = await checkEndpoint('https://api.cloudinary.com/v1_1/ping', 5000);
         return result;
     } catch (err) {
-        await logAction(req.session.user.username, 'check-claudinary-error', req.params.id, { error: err.message });
         return { status: 'down', error: err.message };
     }
 };
@@ -52,20 +49,42 @@ const getSystemHealth = async (req, res) => {
         const uptimeSeconds = Math.floor(process.uptime());
         const memoryUsage = process.memoryUsage();
 
-        // --- Redis Status ---
-        const redisStatus = getRedisStatus();   // returns 'connected', 'connecting', 'disconnected', etc.
+        // Redis status
         const redisClient = getRedisClient();
-        // If client exists but status is not ready, we may still show as disconnected
+        const redisStatus = getRedisStatus();
         const redisUp = redisClient && redisClient.status === 'ready' ? 'up' : 'down';
 
-        // ... (endpoint checks, cloudinary, etc.)
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const endpointsToCheck = [
+            { name: 'Posts API', url: `${baseUrl}/posts` },
+            { name: 'Ads API', url: `${baseUrl}/ads` },
+            { name: 'Dashboard Stats', url: `${baseUrl}/dashboard-stats` }
+        ];
+
+        // Handle Cloudinary separately – log error if it fails
+        let cloudinaryResult;
+        try {
+            cloudinaryResult = await checkCloudinary();
+        } catch (err) {
+            await logAction(req.session.user?.username, 'check-cloudinary-error', 'system', {
+                error: err.message
+            });
+            cloudinaryResult = { status: 'down', error: err.message };
+        }
+
+        const endpointResults = await Promise.all(
+            endpointsToCheck.map(async (ep) => {
+                const result = await checkEndpoint(ep.url);
+                return { name: ep.name, ...result };
+            })
+        );
 
         res.json({
             express: 'up',
             mongodb: mongoStatus,
-            redis: redisUp,                     // ✅ include Redis
-            redisStatus: redisStatus,           // optional detail
-            cloudinary: cloudinaryResult.status,
+            redis: redisUp,
+            redisStatus: redisStatus || 'unknown',
+            cloudinary: cloudinaryResult.status || 'unknown',
             cloudinaryResponseTimeMs: cloudinaryResult.responseTimeMs || null,
             uptimeSeconds,
             memory: {
@@ -77,12 +96,12 @@ const getSystemHealth = async (req, res) => {
             timestamp: new Date()
         });
     } catch (err) {
-        await logAction(req.session.user?.username, 'load-system-health-error', 'system', { error: err.message });
+        await logAction(req.session.user?.username, 'load-system-health-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to load system health' });
     }
 };
-
-
 
 /* ============================================
    Maintenance Mode
@@ -97,11 +116,12 @@ const getMaintenanceMode = async (req, res) => {
             updatedAt: config?.updatedAt || null
         });
     } catch (err) {
-        await logAction(req.session.user.username, 'load-maintenance-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'load-maintenance-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to load maintenance status' });
     }
 };
-
 
 const setMaintenanceMode = async (req, res) => {
     try {
@@ -140,7 +160,9 @@ const setMaintenanceMode = async (req, res) => {
 
         res.json({ message: 'Maintenance mode updated', maintenanceMode });
     } catch (err) {
-        await logAction(req.session.user.username, 'update-maintenance-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'update-maintenance-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to update maintenance mode' });
     }
 };
@@ -154,7 +176,9 @@ const getTasks = async (req, res) => {
         const tasks = await MaintenanceTask.find().sort({ createdAt: -1 }).lean();
         res.json(tasks);
     } catch (err) {
-        await logAction(req.session.user.username, 'load-task-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'load-task-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to load tasks' });
     }
 };
@@ -175,7 +199,9 @@ const createTask = async (req, res) => {
         await logAction(req.session.user?.username, 'task-created', task.title);
         res.status(201).json({ message: 'Task created', task });
     } catch (err) {
-        await logAction(req.session.user.username, 'create-task-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'create-task-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to create task' });
     }
 };
@@ -196,7 +222,9 @@ const updateTask = async (req, res) => {
 
         res.json({ message: 'Task updated', task });
     } catch (err) {
-        await logAction(req.session.user.username, 'update-task-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'update-task-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to update task' });
     }
 };
@@ -209,7 +237,9 @@ const deleteTask = async (req, res) => {
         await logAction(req.session.user?.username, 'task-deleted', task.title);
         res.json({ message: 'Task deleted' });
     } catch (err) {
-        await logAction(req.session.user.username, 'delete-task-error', req.params.id, { error: err.message });
+        await logAction(req.session.user?.username, 'delete-task-error', 'system', {
+            error: err.message
+        });
         res.status(500).json({ error: 'Failed to delete task' });
     }
 };
