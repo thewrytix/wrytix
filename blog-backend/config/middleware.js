@@ -7,7 +7,9 @@ const { corsOptions } = require('./cors');
 const { upload } = require('./multer');
 const { requestLogger } = require('../middleware/requestLogger'); // ✅ destructured
 const { errorHandler, notFound } = require('../middleware/errorHandler');
-const helmet = require('./helmet'); // ✅ this exports the configured middleware (function)
+const helmet = require('./helmet');
+const cookieParser = require("cookie-parser"); // ✅ this exports the configured middleware (function)
+const routes = require('../routes');
 
 /* -----------------------------------------
    Setup Middleware
@@ -27,12 +29,14 @@ const setupMiddleware = (app) => {
         });
     }
 
+    app.use(cookieParser()); // ✅ add this
+
     // --- CORS ---
     app.use(cors(corsOptions));
 
     // --- Body Parsers ---
-    app.use(express.json({ limit: '50mb' }));
-    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    app.use(express.json({ limit: '10mb' }));
+    app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // --- Request Logger ---
     app.use(requestLogger); // ✅ a function
@@ -49,6 +53,13 @@ const setupMiddleware = (app) => {
     app.get("/", (req, res) => {
         res.send("Backend is running 🚀");
     });
+
+    // Setup routes
+    app.use(routes);
+
+// --- Error Handling (LAST - before return) ---
+    app.use(notFound);
+    app.use(errorHandler);
 
 
 
