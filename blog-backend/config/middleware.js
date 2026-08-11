@@ -1,8 +1,8 @@
 // config/middleware.js
 const express = require('express');
 const cors = require('cors');
-const { ddosProtection } = require('../middleware/slowDown');
-const { apiLimiter } = require('../middleware/rateLimit');
+const { ddosProtection,loginSlowDown } = require('../middleware/slowDown');
+const { apiLimiter ,authLimiter} = require('../middleware/rateLimit');
 const { corsOptions } = require('./cors');
 const { upload } = require('./multer');
 const { requestLogger } = require('../middleware/requestLogger');
@@ -33,7 +33,7 @@ const setupMiddleware = (app) => {
 
     // Rate limiter + DDoS (skip login)
     app.use((req, res, next) => {
-        if (req.path.startsWith('/auth/login')) return next();
+        if (req.path.startsWith('/auth/login',)) return next();
         apiLimiter(req, res, () => {
             ddosProtection(req, res, next);
         });

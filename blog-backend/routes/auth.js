@@ -3,6 +3,8 @@ const cors = require('cors');
 const { login, logout, checkAuth, verifySession, signup} = require('../controllers/authController');
 const { checkUsername, checkEmail } = require('../middleware/validation');
 const { corsOptions } = require('../config/cors');
+const { authLimiter } = require('../middleware/rateLimit');
+const { loginSlowDown } = require('../middleware/slowDown');
 
 const router = express.Router();
 
@@ -10,8 +12,8 @@ const router = express.Router();
 router.options('/check-username', cors(corsOptions));
 router.options('/check-email', cors(corsOptions));
 
-router.post('/signup', signup);
-router.post('/login', login);
+router.post('/signup', authLimiter, loginSlowDown, signup);
+router.post('/login', authLimiter, loginSlowDown, login);
 router.post('/logout', logout);
 router.get('/check', checkAuth);
 router.get('/verify-session', verifySession);

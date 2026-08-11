@@ -11,9 +11,9 @@ function renderSidebar(links) {
             const isOpenGroup = item.children.some(c => currentPath.startsWith(c.href.split('?')[0]));
             return `
                 <li class="sidebar-group ${isOpenGroup ? 'open' : ''}">
-                    <button class="sidebar-group-toggle" data-group="${index}">
+                    <button class="sidebar-group-toggle" data-group="${index}" >
                         <i class="fa-solid ${item.icon}" id="sidebar-icons"></i>
-                        <span class="sidebar-label">${item.label}</span>
+                        <span class="sidebar-label" >${item.label}</span>
                         <i class="fa-solid fa-chevron-down sidebar-caret"></i>
                     </button>
                     <ul class="sidebar-submenu">

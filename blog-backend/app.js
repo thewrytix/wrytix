@@ -2,6 +2,7 @@
 const express = require('express');
 const path = require('path');
 const { setupMiddleware } = require('./config/middleware');
+const { corsOptions } = require('./config/cors');
 const routes = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { logAction } = require('./config/logger');

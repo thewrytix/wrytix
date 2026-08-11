@@ -3,7 +3,10 @@ window.RoleConfig = {
         title: 'Admin Dashboard',
         sidebar: [
             { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html',
+                children: [
+                    { label: 'Dashboard', href: '../dashboard/dashboard.html'},
 
+                ]
             },
             {
                 label: 'Posts', icon: 'fa-newspaper',
