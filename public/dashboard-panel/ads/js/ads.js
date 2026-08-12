@@ -1,5 +1,3 @@
-
-
 let currentStatus = 'all';
 let currentPage = 1;
 let currentItems = [];
@@ -74,6 +72,9 @@ function setupEventListeners() {
 
     document.getElementById('adFileInput').addEventListener('change', handleFilePreview);
     document.getElementById('adForm').addEventListener('submit', handleFormSubmit);
+
+    document.getElementById('adTypeInput').addEventListener('change', updateAdTypeVisibility);
+    document.getElementById('adCategoryInput').addEventListener('change', updateAdCategoryVisibility);
 }
 
 /* ============ Load & Render ============ */
@@ -257,12 +258,45 @@ async function handleSingleToggle(id, currentStatus) {
     }
 }
 
+/* ============ Conditional Field Visibility ============ */
+
+function updateAdTypeVisibility() {
+    const type = document.getElementById('adTypeInput').value;
+    const uploadGroup = document.getElementById('uploadFieldGroup');
+    const htmlGroup = document.getElementById('htmlFieldGroup');
+    const textGroup = document.getElementById('textFieldGroup');
+
+    uploadGroup.style.display = 'none';
+    htmlGroup.style.display = 'none';
+    textGroup.style.display = 'none';
+
+    if (type === 'image' || type === 'video') {
+        uploadGroup.style.display = '';
+    } else if (type === 'html') {
+        htmlGroup.style.display = '';
+    } else if (type === 'text') {
+        textGroup.style.display = '';
+    }
+}
+
+function updateAdCategoryVisibility() {
+    const category = document.getElementById('adCategoryInput').value;
+    document.getElementById('positionFieldGroup').style.display =
+        category === 'home-category' ? '' : 'none';
+}
+
+function updateAdFormVisibility() {
+    updateAdTypeVisibility();
+    updateAdCategoryVisibility();
+}
+
 /* ============ Modal: Add / Edit ============ */
 
 function openModal(mode) {
     document.getElementById('modalTitle').textContent = mode === 'add' ? 'Add New Ad' : 'Edit Ad';
     document.getElementById('adFormMode').value = mode;
     document.getElementById('adModal').classList.add('visible');
+    updateAdFormVisibility();
 }
 
 function closeModal() {
@@ -270,6 +304,7 @@ function closeModal() {
     document.getElementById('adForm').reset();
     document.getElementById('filePreviewContainer').style.display = 'none';
     document.getElementById('currentAdFileUrl').value = '';
+    updateAdFormVisibility();
 }
 
 function openEditModal(id) {
@@ -293,6 +328,10 @@ function openEditModal(id) {
     if (ad.file) {
         showPreview(ad.type, ad.file);
     }
+
+    // Values above were set programmatically, not via user interaction,
+    // so no native "change" event fired — re-sync visibility explicitly.
+    updateAdFormVisibility();
 }
 
 function showPreview(type, url) {

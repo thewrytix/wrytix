@@ -12,7 +12,7 @@ const buildAdminStats = async () => {
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000); // kept for other uses
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 *   1000); // kept for other uses
 
     const [posts, ads, users, pendingUserCount, pendingApprovals, visitsToday] = await Promise.all([
         Post.find().select('title slug schedule views lastViewed').lean(),
@@ -20,7 +20,7 @@ const buildAdminStats = async () => {
         User.find().select('status role').lean(),
         PendingUser.countDocuments(),
         PostSubmission.countDocuments({ status: 'pending' }),
-        Visit.countDocuments({ timestamp: { $gte: todayStart } }) // ✅ today's visits, not last 24h
+        Visit.countDocuments({ timestamp: { $gte: todayStart } })
     ]);
 
     const live = posts.filter(p => new Date(p.schedule) <= now).length;
