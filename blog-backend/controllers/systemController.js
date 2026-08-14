@@ -1,8 +1,90 @@
 const mongoose = require('mongoose');
 const https = require('https');
+const axios = require('axios');
 const { MaintenanceTask, SystemConfig, User } = require('../models');
 const { logAction, logger } = require('../config/logger');
 const { getRedisClient, getRedisStatus } = require('../config/redis');
+
+
+// ============================================================
+// RELOAD (clear caches, re‑init services, no restart)
+// ============================================================
+const reloadSystem = async (req, res) => {
+    try {
+        const user = req.session.user;
+
+        // 1️⃣ Clear any in‑memory caches (if you use node‑cache)
+        //    Example: if you have a cache instance, call flushAll()
+        //    const cache = require('../cache'); if (cache.flushAll) cache.flushAll();
+
+        // 2️⃣ Re‑initialize Redis (if used)
+        const redis = require('../config/redis');
+        if (redis && redis.getRedisClient) {
+            const client = redis.getRedisClient();
+            if (client && client.disconnect) {
+                await client.disconnect();
+                await client.connect();
+                logger.info('🔄 Redis reconnected');
+            }
+        }
+
+        // 3️⃣ Reload any dynamic configuration (e.g., from a config file)
+        //    const config = require('../config/appConfig'); if (config.reload) await config.reload();
+
+        // 4️⃣ Log the action
+        await logAction(user?.username, 'system-reload', 'system', {
+            message: 'System reload triggered'
+        });
+
+        logger.info(`🔄 System reloaded by ${user?.username || 'unknown'}`);
+        res.json({ message: 'System reloaded successfully.' });
+    } catch (err) {
+        logger.error('❌ Reload failed:', err);
+        await logAction(req.session.user?.username, 'system-reload-error', 'system', {
+            error: err.message
+        });
+        res.status(500).json({ error: 'Reload failed: ' + err.message });
+    }
+};
+
+// ============================================================
+// RESTART via Render API (full server restart)
+// ============================================================
+const restartSystem = async (req, res) => {
+    try {
+        const user = req.session.user;
+        const apiKey = process.env.RENDER_API_KEY;
+        const serviceId = process.env.RENDER_SERVICE_ID;
+
+        if (!apiKey || !serviceId) {
+            return res.status(500).json({ error: 'Render API credentials not set.' });
+        }
+
+        await axios.post(
+            `https://api.render.com/v1/services/${serviceId}/restart`,
+            {},
+            {
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        await logAction(user?.username, 'system-restart', 'system', {
+            message: 'Restart triggered via Render API'
+        });
+
+        logger.info(`🚀 Server restart triggered by ${user?.username || 'unknown'}`);
+        res.json({ message: 'Restart triggered. Server will restart in a few seconds.' });
+    } catch (err) {
+        logger.error('❌ Restart API call failed:', err.response?.data || err.message);
+        await logAction(req.session.user?.username, 'system-restart-error', 'system', {
+            error: err.message
+        });
+        res.status(500).json({ error: 'Failed to trigger restart: ' + err.message });
+    }
+};
 
 /* ============================================
    System Health
@@ -257,5 +339,7 @@ module.exports = {
     getTasks,
     createTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    restartSystem,
+    reloadSystem
 };

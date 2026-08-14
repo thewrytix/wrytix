@@ -6,11 +6,17 @@ const {
     getTasks,
     createTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    reloadSystem,
+    restartSystem
 } = require('../controllers/systemController');
 const { requireAdmin } = require('../middleware/rbac');
 
 const router = express.Router();
+
+// ✅ New admin‑only routes
+router.post('/system/reload', requireAdmin, reloadSystem);
+router.post('/system/restart', requireAdmin, restartSystem);
 
 router.get('/system/health', requireAdmin, getSystemHealth);
 router.get('/system/maintenance', requireAdmin, getMaintenanceMode);

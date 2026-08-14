@@ -21,6 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+document.getElementById('reloadBtn').addEventListener('click', async () => {
+    const res = await fetch(`${API_BASE}/system/reload`, {
+        method: 'POST',
+        credentials: 'include'
+    });
+    if (res.ok) showSuccess('System reloaded.');
+    else showError('Reload failed.');
+});
+
+document.getElementById('restartBtn').addEventListener('click', async () => {
+    if (!confirm('Restart the server? This will cause a brief downtime.')) return;
+    const res = await fetch(`${API_BASE}/system/restart`, {
+        method: 'POST',
+        credentials: 'include'
+    });
+    if (res.ok) showSuccess('Restart triggered.');
+    else showError('Restart failed.');
+});
+
 
 function statusColor(status) {
     if (status === 'up') return 'green';
