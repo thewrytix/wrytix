@@ -263,12 +263,13 @@ const signup = async (req, res) => {
 };
 
 const logout = (req, res) => {
+    // Safely extract user data before destroying the session
     const username = req.session.user?.username || 'anonymous';
     const role = req.session.user?.role || 'unknown';
     const clientIP = req.ip || req.connection.remoteAddress;
 
     // ✅ Log the logout action BEFORE destroying the session
-    logAction(username, 'logout', 'system', {
+    logAction(username, 'logout', req.params.id || 'system', {
         ip: clientIP,
         role: role
     });
@@ -276,7 +277,7 @@ const logout = (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             logger.error('Session destroy error:', err);
-            // Still respond with success, but log the error
+            // Still respond with success, but the error is logged
         }
         res.json({ message: 'Logged out Successfully' });
     });
