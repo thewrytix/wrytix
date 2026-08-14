@@ -6,3 +6,7 @@ publish = "public"
 from = "/*"
 to = "/index.html"
 status = 200
+
+[[edge_functions]]
+path = "/posts/view-post.html"
+function = "post-meta"

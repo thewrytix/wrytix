@@ -364,10 +364,7 @@ a.quick-links i {
    the visual system established on Maintenance)
    ============================================================ */
 
-#dashboardTitle {
-    font-size: 1.9rem;
-    margin-bottom: 1.5rem;
-}
+
 
 /* ---- Dashboard Cards ---- */
 .dashboard-cards {
@@ -429,7 +426,6 @@ a.quick-links i {
 
 .stat-box.views {
     background: var(--primary-color);
-    box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
 }
 
 .stat-box.skeleton-stat {
@@ -501,7 +497,7 @@ a.quick-links i {
 }
 
 .dashboard-list-section h2 i {
-    color: var(--accent-color);
+    color: var(--primary-color);
     font-size: 0.9rem;
 }
 
@@ -580,8 +576,6 @@ a.quick-links i {
 }
 
 .activity-table th {
-    font-family: var(--font-family-mono);
-    font-size: 0.68rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--text-light);
@@ -591,6 +585,7 @@ a.quick-links i {
 
 .status-active,
 .status-expired,
+.status-danger,
 .status-inactive {
     font-family: var(--font-family-mono);
     font-size: 0.72rem;
@@ -1127,7 +1122,7 @@ form button {
 
 /* ---- Headline Editor ---- */
 .admin-headline {
-    max-width: 600px;
+    max-width: 1000px;
     margin: 0 auto 1.75rem auto;
     background: var(--primary-color);
     border: none;
