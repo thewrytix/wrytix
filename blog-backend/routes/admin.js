@@ -27,7 +27,7 @@ router.delete('/pendingDeletions/:id', cancelDeletion);
 router.get('/logs', requireAdmin, getLogs);
 router.delete('/logs', requireAdmin, clearLogs);
 
-router.get('/files/:id', requireAdmin, cors(corsOptions), getFileById);
+router.get('/files/:id', cors(corsOptions), requireAdmin, getFileById);
 
 router.get('/debug/timecheck', async (req, res) => {
     try {
