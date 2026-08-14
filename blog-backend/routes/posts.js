@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const escapeHtml = require('../utils/escapeHtml');
+const { escapeHtml } = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator');
 const {
     getPosts,

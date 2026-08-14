@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
-const escapeHtml = require('../utils/escapeHtml');
+const { escapeHtml } = require('../utils/escapeHtml');
+const { logger } = require('../config/logger');
 class StaticPostGenerator {
     constructor() {
         this.postsDir = path.join(__dirname, '../static-posts');
@@ -32,7 +33,7 @@ class StaticPostGenerator {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${escapeHtml(post.title)}</title>
-    <meta name="description" content="${this.escapeHtml(desc)}" />
+    <meta name="description" content="${escapeHtml(desc)}" />
     
     <!-- Open Graph -->
     <meta property="og:title" content="${escapeHtml(post.title)}" />
@@ -172,7 +173,7 @@ class StaticPostGenerator {
     <script src="../js/frontend.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Static post loaded: ${post.title}');
+           logger.info('Static post loaded: ${post.title}');
             // Any post-specific JS can go here
         });
     </script>
@@ -186,10 +187,10 @@ class StaticPostGenerator {
             const html = this.generateHTML(post);
             const filePath = path.join(this.postsDir, `${post.slug}.html`);
             await fs.writeFile(filePath, html);
-            console.log(`✅ Static post generated: ${post.slug}.html`);
+          logger.info(`✅ Static post generated: ${post.slug}.html`);
             return filePath;
         } catch (error) {
-            console.error(`❌ Failed to generate static post ${post.slug}:`, error);
+            logger.error(`❌ Failed to generate static post ${post.slug}:`, error);
             throw error;
         }
     }
@@ -198,11 +199,11 @@ class StaticPostGenerator {
         try {
             const filePath = path.join(this.postsDir, `${slug}.html`);
             await fs.unlink(filePath);
-            console.log(`🗑️ Static post deleted: ${slug}.html`);
+            logger.info(`🗑️ Static post deleted: ${slug}.html`);
         } catch (error) {
             // File might not exist, which is fine
             if (error.code !== 'ENOENT') {
-                console.error(`❌ Failed to delete static post ${slug}:`, error);
+                logger.error(`❌ Failed to delete static post ${slug}:`, error);
             }
         }
     }
@@ -212,15 +213,15 @@ class StaticPostGenerator {
             const { Post } = require('../models');
             const posts = await Post.find().lean();
 
-            console.log(`Generating static posts for ${posts.length} posts...`);
+            logger.info(`Generating static posts for ${posts.length} posts...`);
 
             for (const post of posts) {
                 await this.generateStaticPost(post);
             }
 
-            console.log(`🎉 Generated ${posts.length} static posts`);
+            logger.info(`🎉 Generated ${posts.length} static posts`);
         } catch (error) {
-            console.error('Error generating all static posts:', error);
+            logger.error('Error generating all static posts:', error);
             throw error;
         }
     }
