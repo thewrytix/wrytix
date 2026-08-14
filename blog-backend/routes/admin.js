@@ -12,7 +12,7 @@ const {
     clearLogs
 } = require('../controllers/adminController');
 const { requireAdmin, verifySession } = require('../middleware/rbac');
-const { corsOptions } = require('../config/middleware');
+const { corsOptions } = require('../config/cors');
 const { getFileById } = require('../utils/fileHelpers');
 
 const router = express.Router();
