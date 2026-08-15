@@ -371,7 +371,7 @@ const getRelatedPosts = async (req, res) => {
         const others = candidates.filter(p => p.category !== currentPost.category);
 
         const related = [...sameCategory.sort((a, b) => b.views - a.views), ...others]
-            .slice(0, 5)
+            .slice(0, 10)
             .map(({ title, slug, thumbnail, views }) => ({ title, slug, thumbnail, views }));
 
         res.set('Cache-Control', 'public, max-age=180');

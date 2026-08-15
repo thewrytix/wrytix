@@ -240,7 +240,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function setupShareFeatures() {
-        console.log("Share features will be initialized by post-share-icons.js");
+      //  console.log("Share features will be initialized by post-share-icons.js");
     }
 
     function setupCommentSystem() {
