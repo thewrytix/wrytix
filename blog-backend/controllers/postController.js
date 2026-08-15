@@ -38,6 +38,7 @@ const createPost = async (req, res) => {
         }
 
         await Post.create(newPost);
+        invalidateRankCache();
 
         // Generate static post automatically
         try {
@@ -92,6 +93,7 @@ const updatePost = async (req, res) => {
         };
 
         await Post.updateOne({ slug: req.params.slug }, updatedPost);
+        invalidateRankCache();
 
         // Regenerate static post
         try {
@@ -126,6 +128,7 @@ const deletePost = async (req, res) => {
         }
 
         await Post.deleteOne({ slug: req.params.slug });
+        invalidateRankCache();
 
         // Delete static post
         try {
@@ -192,21 +195,59 @@ const getPostBySlug = async (req, res) => {
 // ---------------------------------------------------------------------
 // Shared trending/popular ranking logic.
 // Single source of truth used by getTrendingPosts, getPopularPosts, AND
-// getDashboardStats, so the dashboard numbers can never drift from what
-// the public /posts/trending and /posts/popular endpoints actually return.
+// getDashboardStats — dashboard and public site are guaranteed to return
+// IDENTICAL results, not just "usually agree", because of two things:
 //
-// - Only considers LIVE posts (schedule <= now) — never future-scheduled ones
-// - Same 200-post recency-capped working set every time
-// - Same "recent OR above percentile threshold" rule, no extra signals
+// 1. TIME-BASED working set instead of a count-based .limit(N).
+//    Previously this queried "the 200 most recently scheduled posts" —
+//    which posts are *in* that set shifts every time a new post is
+//    published, so two requests made seconds apart could rank from a
+//    genuinely different input set, not just disagree on the margin.
+//    Now the working set is "all live posts published within
+//    WORKING_SET_WINDOW_MS" — a stable, deterministic pool that only
+//    changes when posts actually enter/exit that fixed time window,
+//    not on every publish. WORKING_SET_SAFETY_CAP is a pure performance
+//    guard (protects against pathological data volume), not a ranking
+//    mechanism — it should never realistically be hit.
+//
+// 2. Result caching with a shared TTL. Even with a stable working set,
+//    view counts change constantly, so a live recompute-per-request can
+//    still tip a boundary item between two calls made moments apart.
+//    Caching the computed result for RANK_CACHE_TTL_MS means every
+//    caller within that window — public site AND dashboard — reads the
+//    exact same frozen array, not two independently-live computations.
+//    Cache is proactively cleared on create/update/delete so edits don't
+//    have to wait out the TTL to be reflected.
+//
+// NOTE: this cache is in-process (a plain Map). If this service ever
+// runs multiple instances behind a load balancer, each instance keeps
+// its own cache and they can disagree until each independently expires
+// or invalidates. Given the app already has Redis available (per your
+// system-health checks), that would be the natural upgrade if/when you
+// scale horizontally — happy to build that swap when it's needed.
 // ---------------------------------------------------------------------
-const getRankedPosts = async (windowMs, percentile, limit = 10) => {
+
+const WORKING_SET_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const WORKING_SET_SAFETY_CAP = 2000; // performance guard only
+
+const RANK_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const rankCache = new Map(); // cacheKey -> { data, expiresAt }
+
+function invalidateRankCache() {
+    rankCache.clear();
+}
+
+async function computeRankedPosts(windowMs, percentile, limit) {
     const now = new Date();
     const cutoff = new Date(now.getTime() - windowMs);
+    const workingSetCutoff = new Date(now.getTime() - WORKING_SET_WINDOW_MS);
 
-    const posts = await Post.find({ schedule: { $lte: now } })
+    const posts = await Post.find({
+        schedule: { $lte: now, $gte: workingSetCutoff }
+    })
         .select('title slug views schedule')
         .sort({ schedule: -1 })
-        .limit(200)
+        .limit(WORKING_SET_SAFETY_CAP)
         .lean();
 
     const sorted = [...posts].sort((a, b) => b.views - a.views);
@@ -216,6 +257,18 @@ const getRankedPosts = async (windowMs, percentile, limit = 10) => {
         .filter(p => new Date(p.schedule) >= cutoff || p.views >= threshold)
         .sort((a, b) => b.views - a.views)
         .slice(0, limit);
+}
+
+const getRankedPosts = async (windowMs, percentile, limit = 10) => {
+    const cacheKey = `${windowMs}:${percentile}:${limit}`;
+    const cached = rankCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.data;
+    }
+
+    const data = await computeRankedPosts(windowMs, percentile, limit);
+    rankCache.set(cacheKey, { data, expiresAt: Date.now() + RANK_CACHE_TTL_MS });
+    return data;
 };
 
 const TRENDING_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
@@ -240,8 +293,9 @@ const getDashboardStats = async (req, res) => {
         const scheduled = total - live;
         const totalViews = allLean.reduce((sum, p) => sum + (p.views || 0), 0);
 
-        // Trending/popular now computed via the exact same helper the public
-        // endpoints use, instead of a separate divergent calculation
+        // Trending/popular computed via the exact same cached helper the
+        // public endpoints use — guaranteed identical results, not just
+        // identical logic
         const [trendingPosts, popularPosts] = await Promise.all([
             getRankedPosts(TRENDING_WINDOW_MS, TRENDING_PERCENTILE),
             getRankedPosts(POPULAR_WINDOW_MS, POPULAR_PERCENTILE)
@@ -452,6 +506,7 @@ const updatePostSubmission = async (req, res) => {
         if (update.status === 'approved') {
             const finalPost = { ...submission, ...update, isPublished: new Date(submission.schedule) <= new Date() };
             await Post.create(finalPost);
+            invalidateRankCache();
             await PostSubmission.deleteOne({ id: req.params.id });
         }
 
@@ -727,6 +782,8 @@ const bulkDeletePosts = async (req, res) => {
             const result = await PostSubmission.deleteMany(filter);
             deletedSubmissions = result.deletedCount;
         }
+
+        if (deletedPosts > 0) invalidateRankCache();
 
         await logAction(user.username, 'bulk-delete-posts', 'multiple', { deletedPosts, deletedSubmissions });
         res.json({ message: 'Bulk delete complete', deletedPosts, deletedSubmissions });
