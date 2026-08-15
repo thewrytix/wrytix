@@ -3,7 +3,7 @@ const { logAction } = require('../config/logger');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
-const { escapeHtml } = require('../utils/escapeHtml');
+const escapeHtml = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator'); // Add this
 
 
@@ -188,46 +188,15 @@ const getPostBySlug = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-
-// ---------------------------------------------------------------------
-// Shared trending/popular ranking logic.
-// Single source of truth used by getTrendingPosts, getPopularPosts, AND
-// getDashboardStats, so the dashboard numbers can never drift from what
-// the public /posts/trending and /posts/popular endpoints actually return.
-//
-// - Only considers LIVE posts (schedule <= now) — never future-scheduled ones
-// - Same 200-post recency-capped working set every time
-// - Same "recent OR above percentile threshold" rule, no extra signals
-// ---------------------------------------------------------------------
-const getRankedPosts = async (windowMs, percentile, limit = 10) => {
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - windowMs);
-
-    const posts = await Post.find({ schedule: { $lte: now } })
-        .select('title slug views schedule')
-        .sort({ schedule: -1 })
-        .limit(200)
-        .lean();
-
-    const sorted = [...posts].sort((a, b) => b.views - a.views);
-    const threshold = sorted[Math.floor(sorted.length * percentile)]?.views || 0;
-
-    return posts
-        .filter(p => new Date(p.schedule) >= cutoff || p.views >= threshold)
-        .sort((a, b) => b.views - a.views)
-        .slice(0, limit);
-};
-
-const TRENDING_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
-const TRENDING_PERCENTILE = 0.1;
-const POPULAR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;  // 1 month
-const POPULAR_PERCENTILE = 0.05;
+// postController.js
 
 const getDashboardStats = async (req, res) => {
     try {
         const now = new Date();
+        const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-        // Lean pool used only for totals/live/scheduled/recentActivity — cheap fields only
+        // Lean pool used only to compute dynamic view-thresholds (same logic as before, cheap fields only)
         const allLean = await Post.find()
             .select('title slug schedule views lastViewed')
             .lean();
@@ -240,12 +209,31 @@ const getDashboardStats = async (req, res) => {
         const scheduled = total - live;
         const totalViews = allLean.reduce((sum, p) => sum + (p.views || 0), 0);
 
-        // Trending/popular now computed via the exact same helper the public
-        // endpoints use, instead of a separate divergent calculation
-        const [trendingPosts, popularPosts] = await Promise.all([
-            getRankedPosts(TRENDING_WINDOW_MS, TRENDING_PERCENTILE),
-            getRankedPosts(POPULAR_WINDOW_MS, POPULAR_PERCENTILE)
-        ]);
+        const getDynamicThreshold = (posts, percentage) => {
+            if (posts.length === 0) return 0;
+            const sorted = [...posts].sort((a, b) => b.views - a.views);
+            const index = Math.max(Math.floor(sorted.length * percentage), 0);
+            return sorted[index]?.views || 0;
+        };
+
+        const trendingThreshold = getDynamicThreshold(allLean, 0.1);
+        const popularThreshold = getDynamicThreshold(allLean, 0.05);
+
+        const isRecent = (post, cutoff) => {
+            const scheduleDate = new Date(post.schedule);
+            const lastViewed = post.lastViewed ? new Date(post.lastViewed) : null;
+            return scheduleDate >= cutoff || (lastViewed && lastViewed >= cutoff);
+        };
+
+        const trendingPosts = allLean
+            .filter(p => isRecent(p, twoWeeksAgo) || p.views >= trendingThreshold)
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 10);
+
+        const popularPosts = allLean
+            .filter(p => isRecent(p, oneMonthAgo) || p.views >= popularThreshold)
+            .sort((a, b) => (b.views || 0) - (a.views || 0))
+            .slice(0, 10);
 
         const recentActivity = [...allLean]
             .sort((a, b) => new Date(b.schedule) - new Date(a.schedule))
@@ -323,7 +311,23 @@ const getHomepageCategoryPosts = async (req, res) => {
 
 const getTrendingPosts = async (req, res) => {
     try {
-        const trending = await getRankedPosts(TRENDING_WINDOW_MS, TRENDING_PERCENTILE);
+        const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+        const posts = await Post.find({ schedule: { $lte: new Date() } })
+            .select('title slug views schedule')
+            .sort({ schedule: -1 })
+            .limit(200) // reasonable working set to rank from
+            .lean();
+
+        // Same dynamic-threshold logic as before, now run once server-side
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+        const threshold = sorted[Math.floor(sorted.length * 0.1)]?.views || 0;
+
+        const trending = posts
+            .filter(p => new Date(p.schedule) >= twoWeeksAgo || p.views >= threshold)
+            .sort((a, b) => b.views - a.views)
+            .slice(0, 10);
+
         res.set('Cache-Control', 'public, max-age=120');
         res.json(trending);
     } catch (err) {
@@ -379,7 +383,22 @@ const getRelatedPosts = async (req, res) => {
 
 const getPopularPosts = async (req, res) => {
     try {
-        const popular = await getRankedPosts(POPULAR_WINDOW_MS, POPULAR_PERCENTILE);
+        const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+        const posts = await Post.find({ schedule: { $lte: new Date() } })
+            .select('title slug views schedule')
+            .sort({ schedule: -1 })
+            .limit(200)
+            .lean();
+
+        const sorted = [...posts].sort((a, b) => b.views - a.views);
+        const threshold = sorted[Math.floor(sorted.length * 0.05)]?.views || 0;
+
+        const popular = posts
+            .filter(p => new Date(p.schedule) >= oneMonthAgo || p.views >= threshold)
+            .sort((a, b) => b.views - a.views)
+            .slice(0, 10);
+
         res.set('Cache-Control', 'public, max-age=120');
         res.json(popular);
     } catch (err) {
