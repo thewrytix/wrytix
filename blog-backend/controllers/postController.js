@@ -196,39 +196,14 @@ const getPostBySlug = async (req, res) => {
 // Shared trending/popular ranking logic.
 // Single source of truth used by getTrendingPosts, getPopularPosts, AND
 // getDashboardStats — dashboard and public site are guaranteed to return
-// IDENTICAL results, not just "usually agree", because of two things:
+// IDENTICAL results, not just "usually agree".
 //
-// 1. TIME-BASED working set instead of a count-based .limit(N).
-//    Previously this queried "the 200 most recently scheduled posts" —
-//    which posts are *in* that set shifts every time a new post is
-//    published, so two requests made seconds apart could rank from a
-//    genuinely different input set, not just disagree on the margin.
-//    Now the working set is "all live posts published within
-//    WORKING_SET_WINDOW_MS" — a stable, deterministic pool that only
-//    changes when posts actually enter/exit that fixed time window,
-//    not on every publish. WORKING_SET_SAFETY_CAP is a pure performance
-//    guard (protects against pathological data volume), not a ranking
-//    mechanism — it should never realistically be hit.
-//
-// 2. Result caching with a shared TTL. Even with a stable working set,
-//    view counts change constantly, so a live recompute-per-request can
-//    still tip a boundary item between two calls made moments apart.
-//    Caching the computed result for RANK_CACHE_TTL_MS means every
-//    caller within that window — public site AND dashboard — reads the
-//    exact same frozen array, not two independently-live computations.
-//    Cache is proactively cleared on create/update/delete so edits don't
-//    have to wait out the TTL to be reflected.
-//
-// NOTE: this cache is in-process (a plain Map). If this service ever
-// runs multiple instances behind a load balancer, each instance keeps
-// its own cache and they can disagree until each independently expires
-// or invalidates. Given the app already has Redis available (per your
-// system-health checks), that would be the natural upgrade if/when you
-// scale horizontally — happy to build that swap when it's needed.
+// Deliberately simple: "most-viewed post published within the window."
+// No percentile threshold, no separate working-set cap. The date range
+// itself scopes the query at the DB level before sorting, so there's
+// nothing left to drift between two calls except live view-count
+// changes between requests — which the cache below eliminates too.
 // ---------------------------------------------------------------------
-
-const WORKING_SET_WINDOW_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
-const WORKING_SET_SAFETY_CAP = 2000; // performance guard only
 
 const RANK_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const rankCache = new Map(); // cacheKey -> { data, expiresAt }
@@ -237,44 +212,31 @@ function invalidateRankCache() {
     rankCache.clear();
 }
 
-async function computeRankedPosts(windowMs, percentile, limit) {
+async function computeMostViewedInWindow(windowMs, limit) {
     const now = new Date();
     const cutoff = new Date(now.getTime() - windowMs);
-    const workingSetCutoff = new Date(now.getTime() - WORKING_SET_WINDOW_MS);
 
-    const posts = await Post.find({
-        schedule: { $lte: now, $gte: workingSetCutoff }
-    })
+    return Post.find({ schedule: { $lte: now, $gte: cutoff } })
         .select('title slug views schedule')
-        .sort({ schedule: -1 })
-        .limit(WORKING_SET_SAFETY_CAP)
+        .sort({ views: -1 })
+        .limit(limit)
         .lean();
-
-    const sorted = [...posts].sort((a, b) => b.views - a.views);
-    const threshold = sorted[Math.floor(sorted.length * percentile)]?.views || 0;
-
-    return posts
-        .filter(p => new Date(p.schedule) >= cutoff || p.views >= threshold)
-        .sort((a, b) => b.views - a.views)
-        .slice(0, limit);
 }
 
-const getRankedPosts = async (windowMs, percentile, limit = 10) => {
-    const cacheKey = `${windowMs}:${percentile}:${limit}`;
+const getRankedPosts = async (windowMs, limit = 10) => {
+    const cacheKey = `${windowMs}:${limit}`;
     const cached = rankCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
         return cached.data;
     }
 
-    const data = await computeRankedPosts(windowMs, percentile, limit);
+    const data = await computeMostViewedInWindow(windowMs, limit);
     rankCache.set(cacheKey, { data, expiresAt: Date.now() + RANK_CACHE_TTL_MS });
     return data;
 };
 
 const TRENDING_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
-const TRENDING_PERCENTILE = 0.1;
 const POPULAR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;  // 1 month
-const POPULAR_PERCENTILE = 0.05;
 
 const getDashboardStats = async (req, res) => {
     try {
@@ -297,8 +259,8 @@ const getDashboardStats = async (req, res) => {
         // public endpoints use — guaranteed identical results, not just
         // identical logic
         const [trendingPosts, popularPosts] = await Promise.all([
-            getRankedPosts(TRENDING_WINDOW_MS, TRENDING_PERCENTILE),
-            getRankedPosts(POPULAR_WINDOW_MS, POPULAR_PERCENTILE)
+            getRankedPosts(TRENDING_WINDOW_MS),
+            getRankedPosts(POPULAR_WINDOW_MS)
         ]);
 
         const recentActivity = [...allLean]
@@ -377,7 +339,7 @@ const getHomepageCategoryPosts = async (req, res) => {
 
 const getTrendingPosts = async (req, res) => {
     try {
-        const trending = await getRankedPosts(TRENDING_WINDOW_MS, TRENDING_PERCENTILE);
+        const trending = await getRankedPosts(TRENDING_WINDOW_MS);
         res.set('Cache-Control', 'public, max-age=120');
         res.json(trending);
     } catch (err) {
@@ -433,7 +395,7 @@ const getRelatedPosts = async (req, res) => {
 
 const getPopularPosts = async (req, res) => {
     try {
-        const popular = await getRankedPosts(POPULAR_WINDOW_MS, POPULAR_PERCENTILE);
+        const popular = await getRankedPosts(POPULAR_WINDOW_MS);
         res.set('Cache-Control', 'public, max-age=120');
         res.json(popular);
     } catch (err) {
