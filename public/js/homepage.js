@@ -112,111 +112,151 @@ const CategorySections = (() => {
 })();
 
 /* =========================================================
-   Ad Rotator (Sidebar) — unchanged, separate data source
+   Category Inline Ads Loader (homepage-specific)
    ========================================================= */
 
-const AdSlider = ((trackId, containerId, category) => {
-    const CACHE_TTL_MS = 5 * 60 * 1000;
-    const cacheKey = `wrytix-ads-${category}`;
+function renderInlineAdSlides(ads, container) {
+    if (!container) {
+        console.warn("Container is null");
+        return;
+    }
 
-    const getCached = () => {
-        const cached = localStorage.getItem(cacheKey);
-        if (!cached) return null;
-        try {
-            const { ads, timestamp } = JSON.parse(cached);
-            return Date.now() - timestamp < CACHE_TTL_MS ? ads : null;
-        } catch {
-            localStorage.removeItem(cacheKey);
-            return null;
-        }
-    };
+    container.innerHTML = '';
 
-    const setCached = (ads) => {
-        localStorage.setItem(cacheKey, JSON.stringify({ ads, timestamp: Date.now() }));
-    };
+    if (ads.length === 0) {
+        container.innerHTML = '<p class="placeholder">No media to display.</p>';
+        return;
+    }
 
-    const renderSlideContent = (ad) => {
+    if (ads.length > 1) {
+        const slidesWrapper = document.createElement('div');
+        slidesWrapper.className = 'slides-wrapper';
+        slidesWrapper.style.transition = 'transform 0.5s ease';
+
+        ads.forEach(ad => {
+            const slide = document.createElement("div");
+            slide.className = "media-slide";
+            slide.style.height = '600px';
+            slide.style.overflow = 'hidden';
+
+            let content = '';
+            if (ad.type === "image" && ad.file) {
+                content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image" style="width:100%; height:100%; object-fit:cover;"></a>`;
+            } else if (ad.type === "video" && ad.file) {
+                content = `<video src="${ad.file}" controls style="width:100%; height:100%; object-fit:cover;"></video>`;
+            } else if (ad.type === "html" && ad.html) {
+                content = `<div class="custom-content">${ad.html}</div>`;
+            } else if (ad.type === "text" && ad.text) {
+                content = `<div class="promo-text" style="padding:20px;">${ad.text}</div>`;
+            }
+
+            slide.innerHTML = content;
+            slidesWrapper.appendChild(slide);
+        });
+
+        container.appendChild(slidesWrapper);
+        enableInlineSlider(slidesWrapper, ads.length, container);
+    } else {
+        const ad = ads[0];
+        let content = '';
         if (ad.type === "image" && ad.file) {
-            return `<a href="${ad.link || "#"}" target="_blank"><img src="${ad.file}" alt="Media Image" loading="lazy"></a>`;
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image" style="width:100%;"></a>`;
+        } else if (ad.type === "video" && ad.file) {
+            content = `<video src="${ad.file}" controls style="width:100%;"></video>`;
+        } else if (ad.type === "html" && ad.html) {
+            content = `<div class="custom-content">${ad.html}</div>`;
+        } else if (ad.type === "text" && ad.text) {
+            content = `<div class="promo-text">${ad.text}</div>`;
         }
-        if (ad.type === "video" && ad.file) {
-            return `<video src="${ad.file}" controls></video>`;
-        }
-        if (ad.type === "html" && ad.html) {
-            return `<div class="custom-content">${ad.html}</div>`;
-        }
-        if (ad.type === "text" && ad.text) {
-            return `<div class="promo-text">${ad.text}</div>`;
-        }
-        return "";
-    };
+        container.innerHTML = content;
+    }
+}
 
-    const enableRotation = (track, count) => {
-        let index = 0;
-        let paused = false;
-        const wrapper = document.getElementById(containerId);
+function enableInlineSlider(sliderWrapper, count, parentContainer) {
+    let index = 0;
+    let paused = false;
 
-        wrapper.addEventListener("mouseenter", () => (paused = true));
-        wrapper.addEventListener("mouseleave", () => (paused = false));
+    const mediaContainer = parentContainer.closest('.media-container');
 
-        setInterval(() => {
-            if (paused) return;
-            index = (index + 1) % count;
-            track.style.transform = `translateY(-${index * 600}px)`;
-        }, 4000);
-    };
+    if (mediaContainer) {
+        mediaContainer.addEventListener("mouseenter", () => paused = true);
+        mediaContainer.addEventListener("mouseleave", () => paused = false);
+    }
 
-    const render = (ads) => {
-        const track = document.getElementById(trackId);
-        if (!track) return;
+    if (parentContainer._sliderInterval) {
+        clearInterval(parentContainer._sliderInterval);
+    }
 
-        if (ads.length === 0) {
-            track.innerHTML = "<p>No media to display.</p>";
-            return;
-        }
+    parentContainer._sliderInterval = setInterval(() => {
+        if (paused) return;
+        index = (index + 1) % count;
+        sliderWrapper.style.transform = `translateY(-${index * 600}px)`;
+    }, 4000);
+}
 
-        track.innerHTML = ads.map(ad => `<div class="media-item">${renderSlideContent(ad)}</div>`).join("");
+/**
+ * Loads all category inline ads on the homepage
+ * Uses: category = "home-category" + position (e.g., "news", "business")
+ */
+async function loadAllCategoryAds() {
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
+        });
+    }
 
-        if (ads.length > 1) enableRotation(track, ads.length);
-    };
+    const mediaSections = document.querySelectorAll('.media-section[data-ad-position]');
+    if (mediaSections.length === 0) return;
 
-    const init = async () => {
-        const cached = getCached();
-        if (cached) {
-            render(cached);
-            return;
-        }
+    let allAds;
+    try {
+        allAds = await window.WrytixAds.getAds();
+    } catch (err) {
+        mediaSections.forEach(section => {
+            const mediaContent = section.querySelector('.media-content');
+            if (mediaContent) mediaContent.innerHTML = "<p class='placeholder'>⚠️ Failed to load media.</p>";
+        });
+        return;
+    }
 
-        try {
-            const ads = await window.WrytixAds.getAds();
-            const now = new Date();
+    const now = new Date();
+    // ✅ Inline ads use category: "home-category"
+    const articleCategory = document.querySelector("article")?.dataset.category || "home-category";
 
-            const filtered = ads.filter(ad =>
-                ad.category === category &&
-                ad.active &&
-                new Date(ad.startDate) <= now &&
-                new Date(ad.endDate) >= now
-            );
+    mediaSections.forEach(section => {
+        const position = section.dataset.adPosition;
+        const mediaContent = section.querySelector('.media-content');
+        if (!mediaContent) return;
 
-            setCached(filtered);
-            render(filtered);
-        } catch (error) {
-            console.error("AdSlider: failed to load ads:", error);
-            const track = document.getElementById(trackId);
-            if (track) track.innerHTML = "<p>⚠️ Failed to load media.</p>";
-        }
-    };
+        const filtered = allAds.filter(ad =>
+            ad.category === articleCategory &&
+            ad.position === position &&
+            ad.active &&
+            new Date(ad.startDate) <= now &&
+            new Date(ad.endDate) >= now
+        );
 
-    return { init };
-})("mediaTrack", "rotContainer", document.querySelector("article")?.dataset.category || "homepage");
+        renderInlineAdSlides(filtered, mediaContent);
+    });
+}
 
 /* =========================================================
    Init — fetch everything in parallel, then render
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-    AdSlider.init(); // independent data source, runs concurrently with the rest
+    // 1. Load sidebar ads (from frontend.js global loader)
+    // ✅ Sidebar ads use category: "homepage" (no position)
+    window.loadSidebarAds({
+        sliderId: 'mediaTrack',
+        wrapperId: 'rotContainer',
+        defaultCategory: 'homepage'
+    });
 
+    // 2. Load category inline ads (homepage-specific)
+    loadAllCategoryAds();
+
+    // 3. Load main content
     try {
         const [featured, categoryPosts, trending, popular] = await Promise.all([
             fetch(`${API_BASE}/posts/featured`).then(r => r.json()),

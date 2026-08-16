@@ -1,13 +1,17 @@
 const { Visit } = require('../models');
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function getMonday(date) {
+/**
+ * Returns the Sunday of the week containing the given date.
+ * (Sunday is considered the start of the week.)
+ */
+function getSunday(date) {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = (day === 0 ? -6 : 1) - day; // shift back to Monday
-    d.setDate(d.getDate() + diff);
+    const day = d.getDay(); // 0 = Sunday, 1 = Monday, ...
+    // If day is Sunday (0), we don't need to subtract, else subtract `day` days
+    d.setDate(d.getDate() - day);
     d.setHours(0, 0, 0, 0);
     return d;
 }
@@ -24,22 +28,22 @@ const countPipeline = (matchStage, groupId) => Visit.aggregate([
     }
 ]);
 
-// Daily: current week, Monday through Sunday
+// Daily: current week, Sunday through Saturday
 async function buildDailyBreakdown(referenceDate) {
-    const monday = getMonday(referenceDate);
-    const sunday = new Date(monday);
-    sunday.setDate(sunday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
+    const sunday = getSunday(referenceDate);
+    const saturday = new Date(sunday);
+    saturday.setDate(saturday.getDate() + 6);
+    saturday.setHours(23, 59, 59, 999);
 
     const results = await countPipeline(
-        { timestamp: { $gte: monday, $lte: sunday } },
+        { timestamp: { $gte: sunday, $lte: saturday } },
         { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } }
     );
 
     const byDate = Object.fromEntries(results.map(r => [r._id, r]));
 
     const breakdown = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(monday);
+        const d = new Date(sunday);
         d.setDate(d.getDate() + i);
         const key = d.toISOString().slice(0, 10);
         const found = byDate[key];
@@ -52,10 +56,10 @@ async function buildDailyBreakdown(referenceDate) {
         };
     });
 
-    return { startDate: monday, endDate: sunday, breakdown };
+    return { startDate: sunday, endDate: saturday, breakdown };
 }
 
-// Weekly: Week 1 - Week 4/5 of the current month
+// Weekly: Week 1 - Week 4/5 of the current month (unchanged)
 async function buildWeeklyBreakdown(referenceDate) {
     const year = referenceDate.getFullYear();
     const month = referenceDate.getMonth();
@@ -86,7 +90,7 @@ async function buildWeeklyBreakdown(referenceDate) {
     return { startDate, endDate, breakdown };
 }
 
-// Monthly: Jan - Dec of the current year
+// Monthly: Jan - Dec of the current year (unchanged)
 async function buildMonthlyBreakdown(referenceDate) {
     const year = referenceDate.getFullYear();
     const startDate = new Date(year, 0, 1);
@@ -94,7 +98,7 @@ async function buildMonthlyBreakdown(referenceDate) {
 
     const results = await countPipeline(
         { timestamp: { $gte: startDate, $lte: endDate } },
-        { $month: '$timestamp' } // 1-indexed
+        { $month: '$timestamp' }
     );
 
     const byMonth = Object.fromEntries(results.map(r => [r._id, r]));
@@ -106,7 +110,7 @@ async function buildMonthlyBreakdown(referenceDate) {
     return { startDate, endDate, breakdown };
 }
 
-// Yearly: last 5 years through current year
+// Yearly: last 5 years through current year (unchanged)
 async function buildYearlyBreakdown(referenceDate, yearsBack = 5) {
     const currentYear = referenceDate.getFullYear();
     const startYear = currentYear - (yearsBack - 1);
@@ -128,6 +132,7 @@ async function buildYearlyBreakdown(referenceDate, yearsBack = 5) {
     return { startDate, endDate, breakdown };
 }
 
+// Custom range (unchanged)
 async function buildCustomBreakdown(from, to) {
     const startDate = new Date(from);
     const endDate = new Date(to);
@@ -145,7 +150,7 @@ async function buildCustomBreakdown(from, to) {
     return { startDate, endDate, breakdown };
 }
 
-// Country breakdown for whatever date range was selected — top 15
+// Country breakdown (unchanged)
 async function buildGeoBreakdown(startDate, endDate) {
     const results = await Visit.aggregate([
         { $match: { timestamp: { $gte: startDate, $lte: endDate } } },

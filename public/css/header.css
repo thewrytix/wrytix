@@ -191,7 +191,7 @@
 
 .main-nav a span{
     color: var(--neutral-color);
-    text-transform: uppercase;
+    text-transform: capitalize;
 }
 
 .main-nav .nav-links {
