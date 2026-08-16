@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { escapeHtml } = require('../utils/escapeHtml');
 const staticGenerator = require('../utils/staticGenerator'); // Add this
+const { getRankedPosts, invalidateRankCache, TRENDING_WINDOW_MS, POPULAR_WINDOW_MS } = require('../utils/postRanking');
 
 
 
@@ -193,50 +194,12 @@ const getPostBySlug = async (req, res) => {
 };
 
 // ---------------------------------------------------------------------
-// Shared trending/popular ranking logic.
-// Single source of truth used by getTrendingPosts, getPopularPosts, AND
-// getDashboardStats — dashboard and public site are guaranteed to return
-// IDENTICAL results, not just "usually agree".
-//
-// Deliberately simple: "most-viewed post published within the window."
-// No percentile threshold, no separate working-set cap. The date range
-// itself scopes the query at the DB level before sorting, so there's
-// nothing left to drift between two calls except live view-count
-// changes between requests — which the cache below eliminates too.
+// Trending/popular ranking now lives in utils/postRanking.js — imported
+// here (see top of file) so this is the ONLY implementation in the
+// codebase, shared with dashboardController.js too. Do not re-implement
+// this locally again; that duplication is exactly what caused dashboard
+// and public-site trending/popular to silently diverge before.
 // ---------------------------------------------------------------------
-
-const RANK_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const rankCache = new Map(); // cacheKey -> { data, expiresAt }
-
-function invalidateRankCache() {
-    rankCache.clear();
-}
-
-async function computeMostViewedInWindow(windowMs, limit) {
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - windowMs);
-
-    return Post.find({ schedule: { $lte: now, $gte: cutoff } })
-        .select('title slug views schedule')
-        .sort({ views: -1 })
-        .limit(limit)
-        .lean();
-}
-
-const getRankedPosts = async (windowMs, limit = 10) => {
-    const cacheKey = `${windowMs}:${limit}`;
-    const cached = rankCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-        return cached.data;
-    }
-
-    const data = await computeMostViewedInWindow(windowMs, limit);
-    rankCache.set(cacheKey, { data, expiresAt: Date.now() + RANK_CACHE_TTL_MS });
-    return data;
-};
-
-const TRENDING_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
-const POPULAR_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;  // 1 month
 
 const getDashboardStats = async (req, res) => {
     try {
