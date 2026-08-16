@@ -1,4 +1,7 @@
-//Contact-Form
+// js/contact.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
+// Contact Form
 const form = document.querySelector('.contact-form');
 form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -15,7 +18,7 @@ form.addEventListener('submit', async function (e) {
     };
 
     try {
-        const response = await fetch('https://wrytix.onrender.com/contact', {
+        const response = await fetch(`${API_BASE}/contact`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,7 +38,8 @@ form.addEventListener('submit', async function (e) {
         form.innerHTML = "<p style='color: red;'>Network error. Please check your connection and try again.</p>";
     }
 });
-// Ads Show
+
+// Ads Show — now uses API_BASE
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "contact";
     const cacheKey = `wrytix-ads-${articleCategory}`;
@@ -58,7 +62,7 @@ async function loadSidebarAds() {
     }
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/ads");
+        const res = await fetch(`${API_BASE}/ads`);
         const ads = await res.json();
         const now = new Date();
         const filtered = ads.filter(ad =>

@@ -1,3 +1,6 @@
+// js/ads.js (or inline wherever you have this)
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 // Ads Show
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "about";
@@ -21,7 +24,7 @@ async function loadSidebarAds() {
     }
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/ads");
+        const res = await fetch(`${API_BASE}/ads`);
         const ads = await res.json();
         const now = new Date();
         const filtered = ads.filter(ad =>

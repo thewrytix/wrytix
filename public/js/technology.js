@@ -1,5 +1,7 @@
+// js/technology.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE = "https://wrytix.onrender.com";
     const CATEGORY = "technology";
 
     const newsContainer = document.getElementById("latest-technology");
@@ -79,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchCategoryPage(1);
 });
 
-// Ads Show (unchanged)
+// Ads Show — now uses API_BASE
 async function loadSidebarAds() {
     const articleCategory = document.querySelector("article")?.dataset.category || "technology";
     const cacheKey = `wrytix-ads-${articleCategory}`;
@@ -99,7 +101,7 @@ async function loadSidebarAds() {
     }
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/ads");
+        const res = await fetch(`${API_BASE}/ads`);
         const ads = await res.json();
         const now = new Date();
         const filtered = ads.filter(ad =>

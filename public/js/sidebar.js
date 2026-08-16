@@ -1,3 +1,6 @@
+// js/sidebar-loader.js (or wherever this code lives)
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", () => {
 
     /* =================== SIDEBAR LISTS =================== */
@@ -7,10 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadContent() {
         try {
             // Single fetch for all data (no redundancy)
-            const response = await fetch('https://wrytix.onrender.com/posts');
+            const response = await fetch(`${API_BASE}/posts`);
             if (!response.ok) throw new Error(`API error: ${response.status}`);
             const allData = await response.json(); // Expect: {featured: {large: {}, small: []}, categories: {...}, sidebar: {...}}
-
 
             // Inject Sidebar
             sidebarLists.forEach(list => {
@@ -39,5 +41,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     loadContent();
-
 });

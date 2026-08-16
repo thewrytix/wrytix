@@ -1,4 +1,6 @@
 // Enhanced Comments Script Using Backend (JSON API) - SECURE VERSION
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", () => {
     // Check if SecurityUtils is available
     if (typeof SecurityUtils === 'undefined') {
@@ -87,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchComments = async () => {
         try {
-            const res = await fetch(`https://wrytix.onrender.com/comments?slug=${encodeURIComponent(slug)}`);
+            const res = await fetch(`${API_BASE}/comments?slug=${encodeURIComponent(slug)}`);
             if (!res.ok) throw new Error('Failed to fetch comments');
 
             const data = await res.json();
@@ -121,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await fetch("https://wrytix.onrender.com/comments", {
+            const res = await fetch(`${API_BASE}/comments`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

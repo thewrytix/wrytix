@@ -1,5 +1,7 @@
+// js/business.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE = "https://wrytix.onrender.com";
     const CATEGORY = "business";
 
     const newsContainer = document.getElementById("latest-business");
@@ -132,7 +134,7 @@ async function loadSidebarAds() {
     }
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/ads");
+        const res = await fetch(`${API_BASE}/ads`);
         const ads = await res.json();
         const now = new Date();
         const filtered = ads.filter(ad =>
@@ -192,7 +194,7 @@ function enableVerticalSlider(slider, count) {
 loadSidebarAds();
 
 
-// Live market Data — unchanged, separate feature, not affected by post-fetching migration
+// Live market Data — now uses API_BASE
 (function () {
     const app = {
         refreshInterval: 30000,
@@ -216,7 +218,7 @@ loadSidebarAds();
             }
 
             try {
-                const res = await this.fetchWithRetry('https://wrytix.onrender.com/api/market-data');
+                const res = await this.fetchWithRetry(`${API_BASE}/api/market-data`);
                 data = await res.json();
                 this.cacheData(data);
                 this.renderAll(data);

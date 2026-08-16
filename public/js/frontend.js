@@ -1,7 +1,8 @@
 /**
  * frontend.js
  * Handles: loading skeletons, forex ticker, back-to-top button,
- * mobile nav (hamburger), header clock, and social icon injection.
+ * mobile nav (hamburger), header clock, social icon injection,
+ * and copyright year updater.
  *
  * Note: Featured/category/sidebar post rendering is handled by homepage.js.
  */
@@ -263,6 +264,25 @@ const SocialIcons = (() => {
 })();
 
 /* =========================================================
+   Copyright Year Updater
+   ========================================================= */
+
+const CopyrightUpdater = (() => {
+    const updateYear = () => {
+        const el = document.querySelector('p.copyright');
+        if (!el) return;
+        const year = new Date().getFullYear();
+        el.innerHTML = `&copy; ${year} Wrytix. All rights reserved.`;
+    };
+
+    const init = () => {
+        updateYear();
+    };
+
+    return { init };
+})();
+
+/* =========================================================
    Init
    ========================================================= */
 
@@ -273,4 +293,5 @@ document.addEventListener("DOMContentLoaded", () => {
     MobileNav.init();
     HeaderClock.init();
     SocialIcons.init();
+    CopyrightUpdater.init();  // <-- now runs on every page
 });

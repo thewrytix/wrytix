@@ -1,3 +1,6 @@
+// js/viewer-login.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", () => {
     // Elements
     const loginModal = document.getElementById("loginModal");
@@ -8,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
     const closes = document.querySelectorAll(".close");
-    const API_BASE = 'https://wrytix.onrender.com'; // Root, flat mount
 
     let currentUser = null;
 
@@ -31,19 +33,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check session on load (populates currentUser)
     async function checkAuthOnLoad() {
         try {
-          //  console.log('🔍 Checking auth...');
             const res = await fetch(`${API_BASE}/check`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' }
             });
-          //  console.log('/check Status:', res.status); // Quick debug
 
             if (res.status === 401) {
-               // console.warn('👋 Guest detected—staying in guest mode'); // Softer log
                 currentUser = null;
                 updateViewerUI();
-                return; // Clean exit, no error
+                return;
             }
             if (!res.ok) {
                 throw new Error(`Unexpected status ${res.status}`);
@@ -52,14 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
             if (data.username) {
                 currentUser = data;
-                //console.log('✅ User mode activated:', data.username);
             }
         } catch (err) {
-            if (err.message.includes('401')) {
-                //console.warn('Auth soft-fail (guest):', err.message); // Demote to warn
-            } else {
-               // console.error('Real auth error:', err); // Only error on weird stuff
-            }
             currentUser = null;
         } finally {
             updateViewerUI(); // Always ensure UI syncs
@@ -81,7 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 localStorage.removeItem('user');
             })
             .catch((error) => {
-               // console.error('Logout error:', error);
                 // Still update UI even if logout request fails
                 currentUser = null;
                 updateViewerUI();
@@ -132,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorEl) errorEl.style.display = 'none';
 
         try {
-            const res = await fetch(`${API_BASE}/login`, { // Flat /login
+            const res = await fetch(`${API_BASE}/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usernameOrEmail, password }),
@@ -151,7 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('password').value = '';
         } catch (err) {
             showError(loginModal, err.message);
-         //   console.error('Login error:', err);
         } finally {
             showLoading(loginModal, false);
         }
@@ -197,7 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch(`${API_BASE}/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Send RAW data to API (backend should validate)
                 body: JSON.stringify({
                     fullname: rawFullname,
                     username: rawUsername,
@@ -208,7 +198,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const rawText = await res.text();
-          //  console.log('Signup raw (first 200):', rawText.substring(0, 200), 'Status:', res.status);
 
             if (!res.ok) {
                 let data;
@@ -223,7 +212,6 @@ document.addEventListener("DOMContentLoaded", () => {
             showError(loginModal, 'Account created successfully! Please log in.', true);
         } catch (err) {
             showError(signupModal, err.message);
-           // console.error('Signup error:', err);
         } finally {
             showLoading(signupModal, false);
         }
@@ -275,13 +263,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('viewProfile').addEventListener('click', (e) => {
         e.preventDefault();
-      //  console.log('Opening profile...');
         profileMenu.style.display = 'none';
     });
 
     document.getElementById('viewSettings').addEventListener('click', (e) => {
         e.preventDefault();
-      //  console.log('Opening settings...');
         profileMenu.style.display = 'none';
     });
 
@@ -298,5 +284,3 @@ document.addEventListener("DOMContentLoaded", () => {
     // Init
     checkAuthOnLoad();
 });
-
-

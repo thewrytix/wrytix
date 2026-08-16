@@ -1,3 +1,6 @@
+// js/football-standings.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 class FootballStandingsManager {
     constructor() {
         this.leagues = [
@@ -21,7 +24,7 @@ class FootballStandingsManager {
 
         for (const league of this.leagues) {
             try {
-                const res = await fetch(`https://wrytix.onrender.com/standings/${league.id}`);
+                const res = await fetch(`${API_BASE}/standings/${league.id}`);
                 const data = await res.json();
                 this.standingsData.push({ league, data });
             } catch (err) {

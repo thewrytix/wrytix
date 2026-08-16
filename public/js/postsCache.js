@@ -1,10 +1,13 @@
+// js/shared-utils.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 // Shared, deduplicated fetch for /posts — used across all pages
 window.WrytixPosts = (() => {
     let promise = null;
 
     function getPosts() {
         if (!promise) {
-            promise = fetch('https://wrytix.onrender.com/posts')
+            promise = fetch(`${API_BASE}/posts`)
                 .then(res => {
                     if (!res.ok) throw new Error(`API: ${res.status}`);
                     return res.json();
@@ -32,7 +35,7 @@ window.WrytixAds = (() => {
 
     function getAds() {
         if (!promise) {
-            promise = fetch('https://wrytix.onrender.com/ads')
+            promise = fetch(`${API_BASE}/ads`)
                 .then(res => {
                     if (!res.ok) throw new Error(`API: ${res.status}`);
                     return res.json();

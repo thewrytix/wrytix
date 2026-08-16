@@ -1,5 +1,7 @@
+// js/view-post.js
+// API_BASE is defined globally in config.js – must be loaded before this script.
+
 document.addEventListener("DOMContentLoaded", async function () {
-    const API_BASE = "https://wrytix.onrender.com";
     const params = new URLSearchParams(window.location.search);
     const slug = params.get("slug");
 
@@ -240,7 +242,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     function setupShareFeatures() {
-      //  console.log("Share features will be initialized by post-share-icons.js");
+        //  console.log("Share features will be initialized by post-share-icons.js");
     }
 
     function setupCommentSystem() {
@@ -271,13 +273,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 });
 
-// Ads Show
+// Ads Show — now uses API_BASE
 async function loadSidebarAds() {
     const adContainer = document.getElementById("adSlider");
     const category = adContainer?.dataset.category || "view-post";
 
     try {
-        const res = await fetch("https://wrytix.onrender.com/ads");
+        const res = await fetch(`${API_BASE}/ads`);
         const ads = await res.json();
         const now = new Date();
 

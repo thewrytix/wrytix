@@ -2,9 +2,9 @@
  * homepage.js
  * Fetches all homepage data in parallel via lean, purpose-built endpoints,
  * then renders each section from the pre-fetched data.
+ *
+ * API_BASE is defined globally in config.js – must be loaded before this script.
  */
-
-const API_BASE = "https://wrytix.onrender.com";
 
 /* =========================================================
    Utilities
