@@ -231,7 +231,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (relatedList) {
             relatedList.innerHTML = relatedPosts.length > 0
                 ? relatedPosts.map(p => `
-                    <li><a href="/posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
+                    <li><a href="../posts/view-post.html?slug=${encodeURIComponent(p.slug)}">${p.title}</a></li>
                 `).join('')
                 : "<li>No related posts found.</li>";
         }

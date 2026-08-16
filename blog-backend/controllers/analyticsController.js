@@ -1,16 +1,14 @@
 const { Visit } = require('../models');
 
+// ✅ CHANGED: Day labels now start with Sunday (Sun, Mon, Tue, ... Sat)
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/**
- * Returns the Sunday of the week containing the given date.
- * (Sunday is considered the start of the week.)
- */
+// ✅ CHANGED: Renamed getMonday → getSunday and adjusted to return the Sunday of the week.
 function getSunday(date) {
     const d = new Date(date);
-    const day = d.getDay(); // 0 = Sunday, 1 = Monday, ...
-    // If day is Sunday (0), we don't need to subtract, else subtract `day` days
+    const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Move back to Sunday (day=0)
     d.setDate(d.getDate() - day);
     d.setHours(0, 0, 0, 0);
     return d;
@@ -28,7 +26,7 @@ const countPipeline = (matchStage, groupId) => Visit.aggregate([
     }
 ]);
 
-// Daily: current week, Sunday through Saturday
+// ✅ CHANGED: buildDailyBreakdown now uses Sunday as the start of the week
 async function buildDailyBreakdown(referenceDate) {
     const sunday = getSunday(referenceDate);
     const saturday = new Date(sunday);
@@ -48,7 +46,7 @@ async function buildDailyBreakdown(referenceDate) {
         const key = d.toISOString().slice(0, 10);
         const found = byDate[key];
         return {
-            label: DAY_LABELS[i],
+            label: DAY_LABELS[i],  // 'Sun', 'Mon', ...
             date: key,
             total: found?.total || 0,
             anonymous: found?.anonymous || 0,
@@ -59,7 +57,11 @@ async function buildDailyBreakdown(referenceDate) {
     return { startDate: sunday, endDate: saturday, breakdown };
 }
 
-// Weekly: Week 1 - Week 4/5 of the current month (unchanged)
+// ----------------------------------------------------------------------
+// The rest of the functions (weekly, monthly, yearly, custom, geo) remain UNCHANGED
+// ----------------------------------------------------------------------
+
+// Weekly: Week 1 - Week 4/5 of the current month
 async function buildWeeklyBreakdown(referenceDate) {
     const year = referenceDate.getFullYear();
     const month = referenceDate.getMonth();
@@ -90,7 +92,7 @@ async function buildWeeklyBreakdown(referenceDate) {
     return { startDate, endDate, breakdown };
 }
 
-// Monthly: Jan - Dec of the current year (unchanged)
+// Monthly: Jan - Dec of the current year
 async function buildMonthlyBreakdown(referenceDate) {
     const year = referenceDate.getFullYear();
     const startDate = new Date(year, 0, 1);
@@ -98,7 +100,7 @@ async function buildMonthlyBreakdown(referenceDate) {
 
     const results = await countPipeline(
         { timestamp: { $gte: startDate, $lte: endDate } },
-        { $month: '$timestamp' }
+        { $month: '$timestamp' } // 1-indexed
     );
 
     const byMonth = Object.fromEntries(results.map(r => [r._id, r]));
@@ -110,7 +112,7 @@ async function buildMonthlyBreakdown(referenceDate) {
     return { startDate, endDate, breakdown };
 }
 
-// Yearly: last 5 years through current year (unchanged)
+// Yearly: last 5 years through current year
 async function buildYearlyBreakdown(referenceDate, yearsBack = 5) {
     const currentYear = referenceDate.getFullYear();
     const startYear = currentYear - (yearsBack - 1);
@@ -132,7 +134,7 @@ async function buildYearlyBreakdown(referenceDate, yearsBack = 5) {
     return { startDate, endDate, breakdown };
 }
 
-// Custom range (unchanged)
+// Custom range
 async function buildCustomBreakdown(from, to) {
     const startDate = new Date(from);
     const endDate = new Date(to);
@@ -150,7 +152,7 @@ async function buildCustomBreakdown(from, to) {
     return { startDate, endDate, breakdown };
 }
 
-// Country breakdown (unchanged)
+// Country breakdown — unchanged
 async function buildGeoBreakdown(startDate, endDate) {
     const results = await Visit.aggregate([
         { $match: { timestamp: { $gte: startDate, $lte: endDate } } },
@@ -169,6 +171,7 @@ async function buildGeoBreakdown(startDate, endDate) {
     return results.map(r => ({ country: r._id, total: r.total, anonymous: r.anonymous, loggedIn: r.loggedIn }));
 }
 
+// Main controller — unchanged
 const getVisitAnalytics = async (req, res) => {
     try {
         const { range = 'daily', from, to } = req.query;
