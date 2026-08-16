@@ -2,7 +2,7 @@
  * frontend.js
  * Handles: loading skeletons, forex ticker, back-to-top button,
  * mobile nav (hamburger), header clock, social icon injection,
- * and copyright year updater.
+ * copyright year updater, AND global ads loader.
  *
  * Note: Featured/category/sidebar post rendering is handled by homepage.js.
  */
@@ -81,7 +81,7 @@ const ForexTicker = (() => {
 
     const fetchRates = async () => {
         try {
-            const response = await fetch("https://wrytix.onrender.com/api/forex");
+            const response = await fetch(`${API_BASE}/api/forex`);
             const data = await response.json();
 
             const usdEl = document.getElementById("usd-rate");
@@ -283,7 +283,160 @@ const CopyrightUpdater = (() => {
 })();
 
 /* =========================================================
-   Init
+   ================ GLOBAL ADS LOADER =====================
+   (Added here so every page can call it without duplication)
+   ========================================================= */
+
+// ----- Shared, deduplicated fetches -----
+window.WrytixPosts = (() => {
+    let promise = null;
+
+    function getPosts() {
+        if (!promise) {
+            promise = fetch(`${API_BASE}/posts`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`API: ${res.status}`);
+                    return res.json();
+                })
+                .catch(err => {
+                    promise = null; // allow retry on next call if it failed
+                    throw err;
+                });
+        }
+        return promise;
+    }
+
+    return { getPosts };
+})();
+
+window.WrytixAds = (() => {
+    let promise = null;
+
+    function getAds() {
+        if (!promise) {
+            promise = fetch(`${API_BASE}/ads`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`API: ${res.status}`);
+                    return res.json();
+                })
+                .catch(err => {
+                    promise = null; // allow retry on next call if it failed
+                    throw err;
+                });
+        }
+        return promise;
+    }
+
+    return { getAds };
+})();
+
+// ----- Cloudinary URL transform helper -----
+window.optimizeThumbnail = (url, width = 400) => {
+    if (!url || !url.includes('/upload/')) return url;
+    return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`);
+};
+
+// ----- Render ad slides into a slider container -----
+window.renderAdSlides = (sliderId, ads) => {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+
+    slider.innerHTML = '';
+    if (ads.length === 0) {
+        slider.innerHTML = '<p>No media to display.</p>';
+        return;
+    }
+
+    ads.forEach(ad => {
+        const slide = document.createElement('div');
+        slide.className = 'media-item';
+        let content = '';
+        if (ad.type === 'image' && ad.file) {
+            content = `<a href="${ad.link || '#'}" target="_blank"><img src="${ad.file}" alt="Media Image" loading="lazy"></a>`;
+        } else if (ad.type === 'video' && ad.file) {
+            content = `<video src="${ad.file}" controls></video>`;
+        } else if (ad.type === 'html' && ad.html) {
+            content = `<div class="custom-content">${ad.html}</div>`;
+        } else if (ad.type === 'text' && ad.text) {
+            content = `<div class="promo-text">${ad.text}</div>`;
+        }
+        slide.innerHTML = content;
+        slider.appendChild(slide);
+    });
+
+    if (ads.length > 1) {
+        window.enableVerticalSlider(slider, ads.length);
+    }
+};
+
+// ----- Enable vertical sliding carousel -----
+window.enableVerticalSlider = (slider, count, wrapperId = 'rotContainer') => {
+    let index = 0;
+    let paused = false;
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return;
+
+    wrapper.addEventListener('mouseenter', () => (paused = true));
+    wrapper.addEventListener('mouseleave', () => (paused = false));
+
+    setInterval(() => {
+        if (paused) return;
+        index = (index + 1) % count;
+        slider.style.transform = `translateY(-${index * 600}px)`;
+    }, 4000);
+};
+
+// ----- Main ads loader (caching + filtering) -----
+window.loadSidebarAds = async ({
+                                   sliderId,
+                                   wrapperId = 'rotContainer',
+                                   category,
+                                   defaultCategory = 'homepage'
+                               } = {}) => {
+    // Determine category if not provided
+    if (!category) {
+        const articleCat = document.querySelector('article')?.dataset.category;
+        category = articleCat || defaultCategory;
+    }
+
+    const cacheKey = `wrytix-ads-${category}`;
+    const CACHE_TTL = 300000; // 5 minutes
+
+    // Check localStorage cache
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        try {
+            const { ads, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_TTL) {
+                window.renderAdSlides(sliderId, ads);
+                return;
+            }
+        } catch {
+            localStorage.removeItem(cacheKey);
+        }
+    }
+
+    try {
+        const allAds = await window.WrytixAds.getAds();
+        const now = new Date();
+        const filtered = allAds.filter(ad =>
+            ad.category === category &&
+            ad.active &&
+            new Date(ad.startDate) <= now &&
+            new Date(ad.endDate) >= now
+        );
+
+        localStorage.setItem(cacheKey, JSON.stringify({ ads: filtered, timestamp: Date.now() }));
+        window.renderAdSlides(sliderId, filtered);
+    } catch (err) {
+        console.error('Failed to load ads:', err);
+        const slider = document.getElementById(sliderId);
+        if (slider) slider.innerHTML = '<p>⚠️ Failed to load media.</p>';
+    }
+};
+
+/* =========================================================
+   Init (runs on all pages)
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -293,5 +446,5 @@ document.addEventListener("DOMContentLoaded", () => {
     MobileNav.init();
     HeaderClock.init();
     SocialIcons.init();
-    CopyrightUpdater.init();  // <-- now runs on every page
+    CopyrightUpdater.init();
 });
