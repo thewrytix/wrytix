@@ -4,43 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="google-site-verification" content="GmBySya8LLMsv-Lnku0eGa9zB-JB0p38NZnnBfUA8Co" />
-
-    <!-- Default/fallback meta tags -->
-    <title>Loading...</title>
-    <meta name="description" content="Loading post details..." />
-
-    <!-- Open Graph -->
-    <meta property="og:title" content="Loading..." />
-    <meta property="og:description" content="Loading post details..." />
-    <meta property="og:image" content="" />
-    <meta property="og:url" content="" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="Wrytix" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@YourTwitterHandle" />
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="" />
-
+    <title>Opinion</title>
     <link rel="icon" sizes="32x32" href="../images/favicon-32.svg">
-    <link rel="stylesheet" href="../css/frontend.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link rel="stylesheet" href="view-post.css"/>
+    <link rel="stylesheet" href="../css/frontend.css" />
     <link rel="stylesheet" href="../css/footer.css" />
     <link rel="stylesheet" href="../css/header.css" />
     <link rel="stylesheet" href="../css/login.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-   </head>
+</head>
 <body>
 
 <header>
     <section class="top-header">
         <div class="top-left">
 
-            <a href="../html/about.html">About Us</a>
-            <a href="../html/contact.html">Contact Us</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact Us</a>
             <div id="date-time">
                 <!-- Date will be injected with JavaScript -->
             </div>
@@ -55,59 +35,43 @@
         </div>
 
         <div class="top-right">
-            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
-                <i class="fab fa-facebook-f"></i>
-            </a>
-            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
-                <i class="fab fa-x-twitter"></i>
-            </a>
-            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
-            <a href="https://youtube.com" target="_blank" aria-label="YouTube">
-                <i class="fab fa-youtube"></i>
-            </a>
-            <a href="https://tiktok.com" target="_blank" aria-label="TikTok">
-                <i class="fab fa-tiktok"></i>
-            </a>
+            <div class="header-social-icons"></div>
         </div>
     </section>
     <nav class="main-nav">
         <a href="../index.html" class="logo"> <img src="../images/wrytix-logo.svg"> <span>Wrytix</span> </a>
 
-
         <div class="nav-links">
             <a href="../index.html" >Home</a>
-            <a href="../html/news.html">News</a>
-            <a href="../html/business.html">Business</a>
-            <a href="../html/foreign.html">World</a>
-            <a href="../html/opinion.html">Opinions</a>
-            <a href="../html/sports.html">Sports</a>
-            <a href="../html/technology.html">Technology</a>
-            <a href="../html/lifestyle.html">Lifestyle</a>
+            <a href="news.html">News</a>
+            <a href="business.html">Business</a>
+            <a href="foreign.html">World</a>
+            <a href="opinion.html" class="active">Opinions</a>
+            <a href="sports.html">Sports</a>
+            <a href="technology.html">Technology</a>
+            <a href="lifestyle.html" >Lifestyle</a>
         </div>
 
-        <!-- Top-Bar with Seamless Auth (Viewer/Profile Swap) -->
-        <div class="top-bar">
-            <!-- Unified viewer/profile container: Morphs based on auth state -->
-            <div class="viewer" id="viewerContainer">
-                <!-- Guest state: Login trigger -->
-                <a id="loginBtn" class="loginBtn" style="display: block;">
-                    <span>Login / Sign Up</span><i class="fa-solid fa-user"></i>
-                </a>
 
-                <!-- Logged-in state: Profile dropdown -->
-                <div class="profile-dropdown" id="profileDropdown" style="display: none;">
-                    <button class="profile-btn" id="profileBtn">
-                        <span id="profileText">Loading...</span>
-                        <i class="fa-solid fa-user" id="profileIcon"></i>
-                    </button>
-                    <div class="profile-menu" id="profileMenu">
-                        <a href="#profile" id="viewProfile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
-                        <a href="#settings" id="viewSettings"><i class="fa-solid fa-gear"></i> Settings</a>
-                        <hr>
-                        <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
-                    </div>
+
+        <!-- Unified viewer/profile container: Morphs based on auth state -->
+        <div class="viewer" id="viewerContainer">
+            <!-- Guest state: Login trigger -->
+            <a id="loginBtn" class="loginBtn" style="display: block;">
+                <span>Login / Sign Up</span><i class="fa-solid fa-user"></i>
+            </a>
+
+            <!-- Logged-in state: Profile dropdown -->
+            <div class="profile-dropdown" id="profileDropdown" style="display: none;">
+                <button class="profile-btn" id="profileBtn">
+                    <span id="profileText">Loading...</span>
+                    <i class="fa-solid fa-user" id="profileIcon"></i>
+                </button>
+                <div class="profile-menu" id="profileMenu">
+                    <a href="#profile" id="viewProfile"><i class="fa-solid fa-user-circle"></i> My Profile</a>
+                    <a href="#settings" id="viewSettings"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <hr>
+                    <button id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
                 </div>
             </div>
         </div>
@@ -156,12 +120,12 @@
                 </form>
             </div>
         </div>
-
-
         <div class="hamburger">
             <span></span>
             <span></span>
-            <span></span></div>
+            <span></span>
+        </div>
+
     </nav>
 
     <section class="headline-section">
@@ -171,10 +135,43 @@
         </marquee>
     </section>
 </header>
-<main class="main-container">
-    <div class="main-content">
 
+<main class="main-container">
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-text">
+            <h1>Voices, Perspectives & Ideas</h1>
+            <p>Bold opinions, thoughtful analysis, and diverse viewpoints on the issues that shape our world.</p>
+            <a href="#opinion" class="btn-primary">Join the Conversation</a>
+        </div>
+    </section>
+
+    <div class="main-content">
+        <!-- Blog Posts -->
+        <section class="blog-posts">
+
+            <h2 class="blog-posts-h2"> Latest Opinions</h2>
+            <!-- Latest News -->
+            <section class="category-section" id="latest-opinion">
+
+            </section>
+
+
+            <!-- Add more blog previews -->
+        </section>
+        <aside class="sidebar">
+            <div class="sidebar-section media-panel"> <!-- Obfuscated: no "ad" -->
+                <div class="rotator-container" id="rotContainer"> <!-- Neutral -->
+                    <div class="media-track" id="mediaTrack"> <!-- Dynamic JS swap -->
+                        <p class="placeholder">Loading media...</p>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
     </div>
+    <div id="pagination-controls"></div>
 </main>
 
 <footer>
@@ -183,24 +180,19 @@
         <div class="footer-column footer-logo-social">
             <a href="../index.html" class="footer-logo" > <img src="../images/wrytix-logo.svg" alt="" /><span>Wrytix</span> </a>
             <div class="social-icons">
-                <a href="#" aria-label="Facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" aria-label="Twitter" title="Twitter"> <i class="fab fa-x-twitter"></i></a>
-                <a href="#" aria-label="Instagram" title="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="#" aria-label="YouTube" title="YouTube"><i class="fab fa-youtube"></i></a>
-                <a href="#" aria-label="TikTok" title="TikTok"><i class="fab fa-tiktok"></i></a>
-            </div>
+                <div class="social-icons"></div> </div>
         </div>
 
         <!-- Column 2: Quick Links -->
         <div class="footer-column footer-quick-links">
             <h3>Quick Links</h3>
             <ul>
-                <li><a href="/html/news.html">News</a></li>
-                <li><a href="/html/business.html">Business</a></li>
-                <li><a href="/html/foreign.html">Foreign</a></li>
-                <li><a href="/html/sports.html">Sports</a></li>
-                <li><a href="/html/technology.html">Technology</a></li>
-                <li><a href="/html/lifestyle.html">Lifestyle</a></li>
+                <li><a href="news.html">News</a></li>
+                <li><a href="business.html">Business</a></li>
+                <li><a href="foreign.html">Foreign</a></li>
+                <li><a href="sports.html">Sports</a></li>
+                <li><a href="technology.html">Technology</a></li>
+                <li><a href="lifestyle.html">Lifestyle</a></li>
             </ul>
         </div>
 
@@ -222,14 +214,11 @@
 <div id="backToTop">
     <span ><i class="fa-solid fa-angle-up"></i></span> </div>
 <script src="../js/config.js"></script>
-<script src="../js/frontend.js"></script>
 <script src="../js/postsCache.js"></script>
-<script src="../js/view-post.js"></script>
-<script src="../js/comments.js"></script>
+<script src="../js/frontend.js"></script>
+<script src="../js/marquee.js"></script>
 <script src="../js/security-utils.js"></script>
 <script src="../js/viewer-login.js"></script>
-<script src="../js/marquee.js"></script>
-<script src="../js/post-share-icons.js"></script>
-
+<script src="../js/opinion.js"></script>
 </body>
 </html>
