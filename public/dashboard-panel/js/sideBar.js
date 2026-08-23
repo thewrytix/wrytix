@@ -65,3 +65,15 @@ function setupSidebarCollapse() {
         localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
     });
 }
+
+
+/* =========================================================
+   Copyright Year Updater
+   ========================================================= */
+
+(function updateCopyright() {
+    const el = document.querySelector('p.copyright');
+    if (!el) return;
+    const year = new Date().getFullYear();
+    el.innerHTML = `&copy; ${year} Wrytix. All rights reserved.`;
+})();

@@ -52,9 +52,14 @@ window.RoleConfig = {
     editor: {
         title: 'Editor Dashboard',
         sidebar: [
-            { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
-            {
-                label: 'Posts', icon: 'fa-newspaper',
+            { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html',
+                children: [
+                    { label: 'Dashboard', href: '../dashboard/dashboard.html'},
+
+                ]
+            },            {
+
+            label: 'Posts', icon: 'fa-newspaper',
                 children: [
                     { label: 'Posts', href: '../posts/posts.html?status=all' },
                    
@@ -78,7 +83,12 @@ window.RoleConfig = {
     author: {
         title: 'Author Dashboard',
         sidebar: [
-            { label: 'Dashboard', href: '../dashboard/dashboard.html', icon: 'fa-gauge' },
+            { label: 'Dashboard', icon: 'fa-gauge', href: '../dashboard/dashboard.html',
+                children: [
+                    { label: 'Dashboard', href: '../dashboard/dashboard.html'},
+
+                ]
+            },
             { label: 'Posts', icon: 'fa-newspaper',
                       children: [
                   { label: 'My Posts', href: '../posts/posts.html?status=all' },

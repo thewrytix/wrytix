@@ -191,9 +191,15 @@ a.quick-links i {
 
 /* ---- Sidebar ---- */
 .admin-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;      /* prevents flex stretching */
+    height: 100vh;               /* full viewport height */
+    overflow-y: auto;            /* scroll inside sidebar if content overflows */
+    background: var(--background-dark); /* ensure opaque background */
     transition: width var(--transition-medium);
-    overflow: hidden;
 }
+
 
 .sidebar-header {
     display: flex;
@@ -278,6 +284,13 @@ a.quick-links i {
     padding: 10px 14px;
     border-radius: 6px;
     transition: background 0.3s, color 0.3s;
+}
+
+.admin-sidebar  footer p{
+    color: var(--neutral-color);
+padding: var(--spacing-sm);
+    margin-top: var(--spacing-xl);
+
 }
 
 .sidebar-caret {
