@@ -24,8 +24,8 @@
     "vite": "^6.4.1"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "vite public",
+    "build": "node -e \"require('node:fs').accessSync('public/index.html'); console.log('Static site ready in public')\"",
+    "preview": "vite public"
   }
 }
